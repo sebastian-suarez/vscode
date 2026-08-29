@@ -23,3 +23,16 @@
 }
 
 /* icon rules are dynamically created by the platform theme service (see iconsStyleSheet.ts) */
+
+
+
+/*** Handcrafted for Custom Font Size ***/
+.monaco-workbench .part.titlebar .codicon[class*='codicon-'] {
+    font-size: 16px;
+}
+.monaco-workbench .part.sidebar .codicon[class*='codicon-'], .monaco-workbench .part.auxiliarybar .codicon[class*='codicon-'] {
+    font-size: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769)
+}
+.monaco-workbench .part .codicon[class*='codicon-'] {
+    font-size: calc(var(--vscode-workbench-font-size) * 1.230769)
+}

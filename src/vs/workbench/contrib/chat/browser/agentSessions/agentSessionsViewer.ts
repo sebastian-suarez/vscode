@@ -55,6 +55,7 @@ import { CancellationTokenSource } from '../../../../../base/common/cancellation
 import { IChatSessionsService } from '../../common/chatSessionsService.js';
 import { createPixelSpinner } from '../../../../../base/browser/ui/pixelSpinner/pixelSpinner.js';
 import { IAccessibilityService } from '../../../../../platform/accessibility/common/accessibility.js';
+import { FONT } from '../../../../../base/common/font.js';
 
 export type AgentSessionListItem = IAgentSession | IAgentSessionSection | IAgentSessionShowMore | IAgentSessionShowLess;
 
@@ -942,23 +943,20 @@ export class AgentSessionShowLessRenderer implements ICompressibleTreeRenderer<I
 
 export class AgentSessionsListDelegate implements IListVirtualDelegate<AgentSessionListItem> {
 
-	static readonly ITEM_HEIGHT = 54;
-	static readonly SECTION_HEIGHT = 26;
-
 	constructor(private readonly _approvalModel?: AgentSessionApprovalModel,
 		private readonly _compactShowMore?: boolean,
 	) { }
 
 	getHeight(element: AgentSessionListItem): number {
 		if (isAgentSessionSection(element)) {
-			return AgentSessionsListDelegate.SECTION_HEIGHT;
+			return FONT.sidebarSize26;
 		}
 
 		if (isAgentSessionShowMore(element) || isAgentSessionShowLess(element)) {
 			return this._compactShowMore ? AgentSessionShowMoreRenderer.COLLAPSED_HEIGHT : AgentSessionShowMoreRenderer.HEIGHT;
 		}
 
-		let height = AgentSessionsListDelegate.ITEM_HEIGHT;
+		let height = FONT.sidebarSize54;
 		const approval = this._approvalModel?.getApproval(element.resource).get();
 		if (approval) {
 			height += AgentSessionRenderer.getApprovalRowHeight(approval.label);

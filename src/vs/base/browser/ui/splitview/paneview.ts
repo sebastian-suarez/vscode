@@ -19,6 +19,7 @@ import './paneview.css';
 import { localize } from '../../../../nls.js';
 import { IView, Sizing, SplitView } from './splitview.js';
 import { applyDragImage } from '../dnd/dnd.js';
+import { FONT } from '../../../common/font.js';
 
 export interface IPaneOptions {
 	minimumBodySize?: number;
@@ -47,12 +48,6 @@ export interface IPaneStyles {
  * before the `render()` call, thus forbidding their use.
  */
 export abstract class Pane extends Disposable implements IView {
-
-	/**
-	 * Fallback header size (in px) used when the `--pane-header-size` CSS variable
-	 * is not resolvable (e.g. before the element is attached to the document).
-	 */
-	private static readonly HEADER_SIZE = 22;
 
 	readonly element: HTMLElement;
 	private header: HTMLElement | undefined;
@@ -149,7 +144,7 @@ export abstract class Pane extends Disposable implements IView {
 	private resolveHeaderSize(): number {
 		if (this._headerSize === undefined) {
 			const size = parseInt(getWindow(this.element).getComputedStyle(this.element).getPropertyValue('--pane-header-size'), 10);
-			this._headerSize = isNaN(size) ? Pane.HEADER_SIZE : size;
+			this._headerSize = isNaN(size) ? FONT.sidebarSize22 : size;
 		}
 		return this._headerSize;
 	}
