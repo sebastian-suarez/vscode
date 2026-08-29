@@ -382,6 +382,13 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration)
 				scope: ConfigurationScope.APPLICATION,
 				tags: ['advanced', 'usesOnlineServices']
 			},
+			'extensions.excludeUnsafes': {
+				scope: ConfigurationScope.MACHINE,
+				type: 'boolean',
+				default: true,
+				description: localize('extensionsExcludeUnsafes', "When enabled, it will download and cache the list of malicious and deprecated extensions. It's recommended to leave it enabled."),
+				tags: ['usesOnlineServices']
+			},
 		}
 	});
 

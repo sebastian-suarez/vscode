@@ -1936,6 +1936,12 @@ export abstract class AbstractExtensionGalleryService implements IExtensionGalle
 			return { malicious: [], deprecated: {}, search: [], autoUpdate: {} };
 		}
 
+		const excludeUnsafes = this.configurationService.getValue('extensions.excludeUnsafes') ?? true;
+
+		if (!excludeUnsafes) {
+			return { malicious: [], deprecated: {}, search: [] };
+		}
+
 		const context = await this.requestService.request({
 			type: 'GET',
 			url: this.extensionsControlUrl,
