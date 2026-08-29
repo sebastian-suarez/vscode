@@ -305,6 +305,7 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 				json.date = readISODate(out);
 				json.checksums = checksums;
 				json.version = version;
+				json.serverDownloadUrlTemplate = 'https://github.com/!!ASSETS_REPOSITORY!!/releases/download/!!RELEASE_VERSION!!/!!APP_NAME_LC!!-reh-${os}-${arch}-!!RELEASE_VERSION!!.tar.gz';
 				// Stamp agentSdks from the per-platform results file produced
 				// by `build/agent-sdk/produce.ts` (an earlier pipeline step).
 				// Local dev: file absent → empty → not stamped.
