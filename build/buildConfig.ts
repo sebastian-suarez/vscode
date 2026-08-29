@@ -9,4 +9,4 @@
  *
  * When `false`, gulp-tsb does both transpilation and type-checking (old behavior).
  */
-export const useEsbuildTranspile = true;
+export const useEsbuildTranspile = false;
