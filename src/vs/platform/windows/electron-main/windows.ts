@@ -236,11 +236,15 @@ export function defaultBrowserWindowOptions(accessor: ServicesAccessor, windowSt
 	}
 
 	// Inset titlebar with the traffic lights vertically centered in the title
-	// area. Windows that ask for the stock native chrome (devtools, GPU info,
-	// process explorer) are left untouched.
+	// area, over an under-window vibrancy background. Windows that ask for the
+	// stock native chrome (devtools, GPU info, process explorer) are left
+	// untouched. `visualEffectState` is deliberately left unset so that the
+	// blur dims while the window is unfocused.
 	if (isMacintosh && !overrides?.forceNativeTitlebar) {
 		options.titleBarStyle = 'hiddenInset';
 		options.trafficLightPosition = { x: 18, y: 16 };
+		options.vibrancy = 'under-window';
+		options.backgroundColor = '#00000000'; // vibrancy only shows through a fully transparent background
 	}
 
 	if (overrides?.alwaysOnTop) {
