@@ -235,6 +235,14 @@ export function defaultBrowserWindowOptions(accessor: ServicesAccessor, windowSt
 		}
 	}
 
+	// Inset titlebar with the traffic lights vertically centered in the title
+	// area. Windows that ask for the stock native chrome (devtools, GPU info,
+	// process explorer) are left untouched.
+	if (isMacintosh && !overrides?.forceNativeTitlebar) {
+		options.titleBarStyle = 'hiddenInset';
+		options.trafficLightPosition = { x: 18, y: 16 };
+	}
+
 	if (overrides?.alwaysOnTop) {
 		options.alwaysOnTop = true;
 	}
