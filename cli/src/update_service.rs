@@ -8,7 +8,7 @@ use std::{fmt, path::Path};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-	constants::VSCODE_CLI_UPDATE_ENDPOINT,
+	constants::{VSCODE_CLI_APP_NAME, VSCODE_CLI_DOWNLOAD_ENDPOINT, VSCODE_CLI_UPDATE_ENDPOINT},
 	log, options,
 	util::{
 		errors::{wrap, AnyError, CodeError, WrappedError},
@@ -16,7 +16,7 @@ use crate::{
 		io::ReportCopyProgress,
 		tar::{self, has_gzip_header},
 		zipper,
-	},
+	}
 };
 
 /// Implementation of the VS Code Update service for use in the CLI.
@@ -56,6 +56,14 @@ fn quality_download_segment(quality: options::Quality) -> &'static str {
 	}
 }
 
+fn get_app_name() -> Result<&'static str, CodeError> {
+	VSCODE_CLI_APP_NAME.ok_or_else(|| CodeError::UpdatesNotConfigured("no app name"))
+}
+
+fn get_download_endpoint() -> Result<&'static str, CodeError> {
+	VSCODE_CLI_DOWNLOAD_ENDPOINT.ok_or_else(|| CodeError::UpdatesNotConfigured("no download url"))
+}
+
 fn get_update_endpoint() -> Result<String, CodeError> {
 	if let Ok(url) = std::env::var("VSCODE_CLI_UPDATE_URL") {
 		if !url.is_empty() {
@@ -64,49 +72,12 @@ fn get_update_endpoint() -> Result<String, CodeError> {
 	}
 	VSCODE_CLI_UPDATE_ENDPOINT
 		.map(|s| s.to_string())
-		.ok_or(CodeError::UpdatesNotConfigured("no service url"))
+		.ok_or(CodeError::UpdatesNotConfigured("no update url"))
 }
 
 impl UpdateService {
 	pub fn new(log: log::Logger, http: BoxedHttp) -> Self {
 		UpdateService { client: http, log }
-	}
-
-	pub async fn get_release_by_semver_version(
-		&self,
-		platform: Platform,
-		target: TargetKind,
-		quality: options::Quality,
-		version: &str,
-	) -> Result<Release, AnyError> {
-		let update_endpoint = get_update_endpoint()?;
-		let download_segment = target
-			.download_segment(platform)
-			.ok_or_else(|| CodeError::UnsupportedPlatform(platform.to_string()))?;
-		let download_url = format!(
-			"{}/api/versions/{}/{}/{}",
-			&update_endpoint,
-			version,
-			download_segment,
-			quality_download_segment(quality),
-		);
-
-		let mut response = self.client.make_request("GET", download_url).await?;
-
-		if !response.status_code.is_success() {
-			return Err(response.into_err().await.into());
-		}
-
-		let res = response.json::<UpdateServerVersion>().await?;
-		debug!(self.log, "Resolved version {} to {}", version, res.version);
-
-		Ok(Release {
-			target,
-			platform,
-			quality,
-			name: res.name,
-			commit: res.version,
-		})
 	}
 
 	/// Gets the latest commit for the target of the given quality.
@@ -117,14 +88,12 @@ impl UpdateService {
 		quality: options::Quality,
 	) -> Result<Release, AnyError> {
 		let update_endpoint = get_update_endpoint()?;
-		let download_segment = target
-			.download_segment(platform)
-			.ok_or_else(|| CodeError::UnsupportedPlatform(platform.to_string()))?;
 		let download_url = format!(
-			"{}/api/latest/{}/{}",
+			"{}/{}/{}/{}/latest.json",
 			&update_endpoint,
-			download_segment,
 			quality_download_segment(quality),
+			platform.os(),
+			platform.arch(),
 		);
 
 		let mut response = self.client.make_request("GET", download_url).await?;
@@ -145,21 +114,26 @@ impl UpdateService {
 		})
 	}
 
-	/// Gets the download stream for the release.
-	pub async fn get_download_stream(&self, release: &Release) -> Result<SimpleResponse, AnyError> {
-		let update_endpoint = get_update_endpoint()?;
-		let download_segment = release
-			.target
-			.download_segment(release.platform)
-			.ok_or_else(|| CodeError::UnsupportedPlatform(release.platform.to_string()))?;
+	pub fn get_download_url(&self, release: &Release) -> Result<String, AnyError> {
+		let app_name = get_app_name()?;
+		let download_endpoint = get_download_endpoint()?;
 
 		let download_url = format!(
-			"{}/commit:{}/{}/{}",
-			&update_endpoint,
-			release.commit,
-			download_segment,
-			quality_download_segment(release.quality),
+			"{}/download/{}/{}-reh-web-{}-{}-{}.tar.gz",
+			download_endpoint,
+			release.name,
+			app_name,
+			release.platform.os(),
+			release.platform.arch(),
+			release.name,
 		);
+
+		Ok(download_url)
+	}
+
+	/// Gets the download stream for the release.
+	pub async fn get_download_stream(&self, release: &Release) -> Result<SimpleResponse, AnyError> {
+		let download_url = self.get_download_url(release)?;
 
 		let response = self.client.make_request("GET", download_url).await?;
 		if !response.status_code.is_success() {
@@ -193,17 +167,6 @@ pub enum TargetKind {
 	Cli,
 }
 
-impl TargetKind {
-	fn download_segment(&self, platform: Platform) -> Option<String> {
-		match *self {
-			TargetKind::Server => platform.headless(),
-			TargetKind::Archive => platform.archive(),
-			TargetKind::Web => platform.web(),
-			TargetKind::Cli => Some(platform.cli()),
-		}
-	}
-}
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Platform {
 	LinuxAlpineX64,
@@ -222,60 +185,42 @@ pub enum Platform {
 }
 
 impl Platform {
-	pub fn archive(&self) -> Option<String> {
+	pub fn arch(&self) -> String {
 		match self {
-			Platform::LinuxX64 => Some("linux-x64".to_owned()),
-			Platform::LinuxARM64 => Some("linux-arm64".to_owned()),
-			Platform::LinuxARM32 => Some("linux-armhf".to_owned()),
-			Platform::DarwinX64 => Some("darwin".to_owned()),
-			Platform::DarwinARM64 => Some("darwin-arm64".to_owned()),
-			Platform::WindowsX64 => Some("win32-x64-archive".to_owned()),
-			Platform::WindowsX86 => Some("win32-archive".to_owned()),
-			Platform::WindowsARM64 => Some("win32-arm64-archive".to_owned()),
-			_ => None,
-		}
-	}
-	pub fn headless(&self) -> Option<String> {
-		let name = match self {
-			Platform::LinuxAlpineARM64 => "server-alpine-arm64",
-			Platform::LinuxAlpineX64 => "server-linux-alpine",
-			Platform::LinuxX64 => "server-linux-x64",
-			Platform::LinuxX64Legacy => "server-linux-legacy-x64",
-			Platform::LinuxARM64 => "server-linux-arm64",
-			Platform::LinuxARM64Legacy => "server-linux-legacy-arm64",
-			// No remote server is built for arm32 since Node.js dropped
-			// 32-bit Linux on armv7 in v24.
-			Platform::LinuxARM32 | Platform::LinuxARM32Legacy => return None,
-			Platform::DarwinX64 => "server-darwin",
-			Platform::DarwinARM64 => "server-darwin-arm64",
-			Platform::WindowsX64 => "server-win32-x64",
-			Platform::WindowsX86 => "server-win32",
-			Platform::WindowsARM64 => "server-win32-arm64",
-		};
-		Some(name.to_owned())
-	}
-
-	pub fn cli(&self) -> String {
-		match self {
-			Platform::LinuxAlpineARM64 => "cli-alpine-arm64",
-			Platform::LinuxAlpineX64 => "cli-alpine-x64",
-			Platform::LinuxX64 => "cli-linux-x64",
-			Platform::LinuxX64Legacy => "cli-linux-x64",
-			Platform::LinuxARM64 => "cli-linux-arm64",
-			Platform::LinuxARM64Legacy => "cli-linux-arm64",
-			Platform::LinuxARM32 => "cli-linux-armhf",
-			Platform::LinuxARM32Legacy => "cli-linux-armhf",
-			Platform::DarwinX64 => "cli-darwin-x64",
-			Platform::DarwinARM64 => "cli-darwin-arm64",
-			Platform::WindowsARM64 => "cli-win32-arm64",
-			Platform::WindowsX64 => "cli-win32-x64",
-			Platform::WindowsX86 => "cli-win32",
+			Platform::LinuxAlpineARM64 => "arm64",
+			Platform::LinuxAlpineX64 => "x64",
+			Platform::LinuxX64 => "x64",
+			Platform::LinuxX64Legacy => "x64",
+			Platform::LinuxARM64 => "arm64",
+			Platform::LinuxARM64Legacy => "arm64",
+			Platform::LinuxARM32 => "armhf",
+			Platform::LinuxARM32Legacy => "armhf",
+			Platform::DarwinX64 => "x64",
+			Platform::DarwinARM64 => "arm64",
+			Platform::WindowsX64 => "x64",
+			Platform::WindowsX86 => "ia42",
+			Platform::WindowsARM64 => "arm64",
 		}
 		.to_owned()
 	}
 
-	pub fn web(&self) -> Option<String> {
-		self.headless().map(|h| format!("{h}-web"))
+	pub fn os(&self) -> String {
+		match self {
+			Platform::LinuxAlpineARM64 => "alpine",
+			Platform::LinuxAlpineX64 => "alpine",
+			Platform::LinuxX64 => "linux",
+			Platform::LinuxX64Legacy => "linux",
+			Platform::LinuxARM64 => "linux",
+			Platform::LinuxARM64Legacy => "linux",
+			Platform::LinuxARM32 => "linux",
+			Platform::LinuxARM32Legacy => "linux",
+			Platform::DarwinX64 => "darwin",
+			Platform::DarwinARM64 => "darwin",
+			Platform::WindowsX64 => "win32",
+			Platform::WindowsX86 => "win32",
+			Platform::WindowsARM64 => "win32",
+		}
+		.to_owned()
 	}
 
 	pub fn env_default() -> Option<Platform> {

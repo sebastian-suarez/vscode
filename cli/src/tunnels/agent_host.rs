@@ -231,7 +231,7 @@ impl AgentHostManager {
 			server_dir
 				.join(SERVER_FOLDER_NAME)
 				.join("bin")
-				.join(release.quality.server_entrypoint())
+				.join(release.quality.server_entrypoint().unwrap())
 		};
 
 		let agent_host_socket = get_socket_name();

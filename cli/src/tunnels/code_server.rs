@@ -497,7 +497,7 @@ impl<'a> ServerBuilder<'a> {
 					let output = capture_command_and_check_status(
 						server_dir
 							.join("bin")
-							.join(self.server_params.release.quality.server_entrypoint()),
+							.join(self.server_params.release.quality.server_entrypoint().unwrap()),
 						&["--version"],
 					)
 					.await

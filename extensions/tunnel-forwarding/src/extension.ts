@@ -35,7 +35,7 @@ if (process.env.VSCODE_FORWARDING_IS_DEV) {
 		binPath = '../../bin';
 	}
 
-	const cliName = vscode.env.appQuality === 'stable' ? 'code-tunnel' : 'code-tunnel-insiders';
+	const cliName = '!!TUNNEL_APP_NAME!!';
 	const extension = process.platform === 'win32' ? '.exe' : '';
 
 	cliPath = path.join(vscode.env.appRoot, binPath, cliName) + extension;
