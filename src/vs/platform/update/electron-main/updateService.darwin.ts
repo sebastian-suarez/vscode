@@ -14,7 +14,7 @@ import { IEnvironmentMainService } from '../../environment/electron-main/environ
 import { ILifecycleMainService, IRelaunchHandler, IRelaunchOptions } from '../../lifecycle/electron-main/lifecycleMainService.js';
 import { ILogService } from '../../log/common/log.js';
 import { IProductService } from '../../product/common/productService.js';
-import { asJson, IRequestService } from '../../request/common/request.js';
+import { asJson, IRequestService, NO_FETCH_TELEMETRY } from '../../request/common/request.js';
 import { IApplicationStorageMainService } from '../../storage/electron-main/storageMainService.js';
 import { ITelemetryService } from '../../telemetry/common/telemetry.js';
 import { AvailableForDownload, IUpdate, State, StateType, UpdateType } from '../common/update.js';
@@ -91,22 +91,11 @@ export class DarwinUpdateService extends AbstractUpdateService implements IRelau
 		this.setState(State.Idle(UpdateType.Archive, message));
 	}
 
-	protected buildUpdateFeedUrl(quality: string, commit: string, options?: IUpdateURLOptions): string | undefined {
-		const assetID = this.productService.darwinUniversalAssetId ?? (process.arch === 'x64' ? 'darwin' : 'darwin-arm64');
-		const url = createUpdateURL(this.productService.updateUrl!, assetID, quality, commit, options);
-		const headers = getUpdateRequestHeaders(this.productService.version);
-		try {
-			this.logService.trace('update#buildUpdateFeedUrl - setting feed URL for Electron autoUpdater', { url, assetID, quality, commit, headers });
-			electron.autoUpdater.setFeedURL({ url, headers });
-		} catch (e) {
-			// application is very likely not signed
-			this.logService.error('Failed to set update feed URL', e);
-			return undefined;
-		}
-		return url;
+	protected buildUpdateFeedUrl(quality: string, _options?: IUpdateURLOptions): string | undefined {
+		return createUpdateURL(this.productService, quality, process.platform, process.arch);
 	}
 
-	protected doCheckForUpdates(explicit: boolean, pendingCommit?: string): void {
+	protected doCheckForUpdates(explicit: boolean, pendingVersion?: string): void {
 		if (!this.quality) {
 			return;
 		}
@@ -115,7 +104,7 @@ export class DarwinUpdateService extends AbstractUpdateService implements IRelau
 
 		const internalOrg = this.getInternalOrg();
 		const background = !explicit && !internalOrg;
-		const url = this.buildUpdateFeedUrl(this.quality, pendingCommit ?? this.productService.commit!, { background, internalOrg });
+		const url = this.buildUpdateFeedUrl(this.quality, { background, internalOrg });
 
 		if (!url) {
 			this.setState(State.Idle(UpdateType.Archive));
@@ -129,8 +118,36 @@ export class DarwinUpdateService extends AbstractUpdateService implements IRelau
 			return;
 		}
 
-		this.logService.trace('update#doCheckForUpdates - using Electron autoUpdater', { url, explicit, background });
-		electron.autoUpdater.checkForUpdates();
+		this.logService.info('update#doCheckForUpdates', { url, explicit, background });
+
+		this._isLatestVersion(url, explicit, pendingVersion)
+			.then((result) => {
+				if(!result) {
+					this.setState(State.Idle(UpdateType.Archive));
+
+					return Promise.resolve(null);
+				}
+
+				if(result.lastest) {
+					this.setState(State.Idle(UpdateType.Setup, undefined, explicit || undefined));
+				}
+				else {
+					this.logService.info('update#doCheckForUpdates - using Electron autoUpdater');
+
+					electron.autoUpdater.setFeedURL({ url });
+					electron.autoUpdater.checkForUpdates();
+				}
+
+				return Promise.resolve(null);
+			})
+			.then(undefined, (error) => {
+				this.logService.error(error);
+
+				// only show message when explicitly checking for updates
+				const message: string | undefined = explicit ? (error.message || error) : undefined;
+
+				this.setState(State.Idle(UpdateType.Archive, message));
+			});
 	}
 
 	/**
@@ -143,7 +160,7 @@ export class DarwinUpdateService extends AbstractUpdateService implements IRelau
 		this.logService.trace('update#checkForUpdateNoDownload - checking update server', { url, headers });
 
 		try {
-			const context = await this.requestService.request({ url, headers, callSite: 'updateService.darwin.checkForUpdates' }, CancellationToken.None);
+			const context = await this.requestService.request({ url, headers, callSite: NO_FETCH_TELEMETRY }, CancellationToken.None);
 			const statusCode = context.res.statusCode;
 			this.logService.trace('update#checkForUpdateNoDownload - response', { statusCode });
 
@@ -196,7 +213,7 @@ export class DarwinUpdateService extends AbstractUpdateService implements IRelau
 
 	protected override async doDownloadUpdate(state: AvailableForDownload): Promise<void> {
 		// Rebuild feed URL and trigger download via Electron's auto-updater
-		this.buildUpdateFeedUrl(this.quality!, state.update.version, { internalOrg: this.getInternalOrg() });
+		this.buildUpdateFeedUrl(this.quality!, { internalOrg: this.getInternalOrg() });
 		this.setState(State.CheckingForUpdates(true));
 		electron.autoUpdater.checkForUpdates();
 	}

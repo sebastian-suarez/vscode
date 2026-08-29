@@ -15,11 +15,12 @@ import { IEnvironmentMainService } from '../../environment/electron-main/environ
 import { ILifecycleMainService, LifecycleMainPhase } from '../../lifecycle/electron-main/lifecycleMainService.js';
 import { ILogService } from '../../log/common/log.js';
 import { IProductService } from '../../product/common/productService.js';
-import { IRequestService } from '../../request/common/request.js';
+import { asJson, IRequestService, NO_FETCH_TELEMETRY } from '../../request/common/request.js';
 import { StorageScope, StorageTarget } from '../../storage/common/storage.js';
 import { IApplicationStorageMainService } from '../../storage/electron-main/storageMainService.js';
 import { ITelemetryService } from '../../telemetry/common/telemetry.js';
-import { AvailableForDownload, DisablementReason, IUpdateService, State, StateType, UpdateType } from '../common/update.js';
+import { Architecture, AvailableForDownload, DisablementReason, IUpdate, IUpdateService, Platform, State, StateType, Target, UpdateType } from '../common/update.js';
+import * as semver from 'semver';
 
 const LAST_KNOWN_VERSION_STORAGE_KEY = 'abstractUpdateService/lastKnownVersion';
 
@@ -28,16 +29,12 @@ export interface IUpdateURLOptions {
 	readonly internalOrg?: string;
 }
 
-export function createUpdateURL(baseUpdateUrl: string, platform: string, quality: string, commit: string, options?: IUpdateURLOptions): string {
-	const url = new URL(`${baseUpdateUrl}/api/update/${platform}/${quality}/${commit}`);
-
-	if (options?.background) {
-		url.searchParams.set('bg', 'true');
+export function createUpdateURL(productService: IProductService, quality: string, platform: Platform, architecture: Architecture, target?: Target): string {
+	if (target) {
+		return `${productService.updateUrl}/${quality}/${platform}/${architecture}/${target}/latest.json`;
+	} else {
+		return `${productService.updateUrl}/${quality}/${platform}/${architecture}/latest.json`;
 	}
-
-	url.searchParams.set('u', options?.internalOrg ?? 'none');
-
-	return url.toString();
 }
 
 /**
@@ -176,7 +173,7 @@ export abstract class AbstractUpdateService implements IUpdateService {
 			return;
 		}
 
-		if (!this.buildUpdateFeedUrl(quality, this.productService.commit!)) {
+		if (!this.buildUpdateFeedUrl(quality)) {
 			this.setState(State.Disabled(DisablementReason.InvalidConfiguration));
 			this.logService.info('update#ctor - updates are disabled as the update URL is badly formed');
 			return;
@@ -371,9 +368,9 @@ export abstract class AbstractUpdateService implements IUpdateService {
 			return false;
 		}
 
-		const pendingUpdateCommit = this._state.update.version;
+		const pendingUpdateVersion = this._state.update.productVersion;
 
-		if (!pendingUpdateCommit || pendingUpdateCommit === 'unknown') {
+		if (!pendingUpdateVersion) {
 			return false;
 		}
 
@@ -382,7 +379,7 @@ export abstract class AbstractUpdateService implements IUpdateService {
 		try {
 			const cts = new CancellationTokenSource();
 			const timeoutPromise = timeout(2000).then(() => { cts.cancel(); return undefined; });
-			isLatest = await Promise.race([this.isLatestVersion(pendingUpdateCommit, cts.token), timeoutPromise]);
+			isLatest = await Promise.race([this.isLatestVersion(pendingUpdateVersion, cts.token), timeoutPromise]);
 			cts.dispose();
 		} catch (error) {
 			this.logService.warn('update#checkForOverwriteUpdates(): failed to check for updates, proceeding with restart');
@@ -403,46 +400,75 @@ export abstract class AbstractUpdateService implements IUpdateService {
 
 			this._overwrite = true;
 			this.setState(State.Overwriting(this._state.update, explicit));
-			this.doCheckForUpdates(explicit, pendingUpdateCommit);
+			this.doCheckForUpdates(explicit, pendingUpdateVersion);
 			return true;
 		}
 
 		return false;
 	}
 
-	async isLatestVersion(commit?: string, token: CancellationToken = CancellationToken.None): Promise<boolean | undefined> {
+	async isLatestVersion(pendingVersion?: string, token: CancellationToken = CancellationToken.None): Promise<boolean | undefined> {
 		if (!this.quality) {
 			return undefined;
 		}
 
 		const mode = this.configurationService.getValue<'none' | 'manual' | 'start' | 'default'>('update.mode');
 
-		if (mode === 'none') {
+		if (mode === 'none' || mode === 'manual') {
 			return undefined;
 		}
 
-		const url = this.buildUpdateFeedUrl(this.quality, commit ?? this.productService.commit!, { internalOrg: this.getInternalOrg() });
+		const url = this.buildUpdateFeedUrl(this.quality, { internalOrg: this.getInternalOrg() });
 
 		if (!url) {
 			return undefined;
 		}
 
+		return this._isLatestVersion(url, false, pendingVersion, token)
+			.then((result) => {
+				return Promise.resolve(result ? result.lastest : result);
+			})
+			.then(undefined, (error) => {
+				this.logService.error('update#isLatestVersion(): failed to check for updates');
+				this.logService.error(error);
+
+				return Promise.resolve(undefined);
+			});
+	}
+
+	_isLatestVersion(url: string, explicit: boolean, pendingVersion?: string, token: CancellationToken = CancellationToken.None): Promise<{lastest: boolean, update: IUpdate} | undefined> {
 		const headers = getUpdateRequestHeaders(this.productService.version);
-		this.logService.trace('update#isLatestVersion() - checking update server', { url, headers });
 
-		try {
-			const context = await this.requestService.request({ url, headers, callSite: 'updateService.isLatestVersion' }, token);
-			const statusCode = context.res.statusCode;
-			this.logService.trace('update#isLatestVersion() - response', { statusCode });
-			// The update server replies with 204 (No Content) when no
-			// update is available - that's all we want to know.
-			return statusCode === 204;
+		this.logService.info('update#isLatestVersion() - checking update server', { url, headers });
 
-		} catch (error) {
-			this.logService.error('update#isLatestVersion(): failed to check for updates');
-			this.logService.error(error);
-			return undefined;
-		}
+		return this.requestService.request({ url, headers, callSite: NO_FETCH_TELEMETRY }, CancellationToken.None)
+			.then<IUpdate | null>(asJson)
+			.then(update => {
+				if (!update || !update.url || !update.version || !update.productVersion || token.isCancellationRequested) {
+					this.setState(State.Idle(UpdateType.Setup, undefined, explicit || undefined));
+
+					return Promise.resolve(undefined);
+				}
+
+				const fetchedVersion = normalizeVersion(update.productVersion);
+
+				let currentVersion: string;
+
+				if(pendingVersion) {
+					currentVersion = normalizeVersion(pendingVersion);
+
+					this.logService.info(`update#isLatestVersion() - found: ${fetchedVersion}, pending: ${currentVersion}`);
+				}
+				else {
+					currentVersion = normalizeVersion(this.productService.version);
+
+					this.logService.info(`update#isLatestVersion() - found: ${fetchedVersion}, current: ${currentVersion}`);
+				}
+
+				const lastest = semver.compareBuild(currentVersion, fetchedVersion) >= 0;
+
+				return Promise.resolve({ lastest, update });
+			})
 	}
 
 	async _applySpecificUpdate(packagePath: string): Promise<void> {
@@ -478,6 +504,14 @@ export abstract class AbstractUpdateService implements IUpdateService {
 		// noop
 	}
 
-	protected abstract buildUpdateFeedUrl(quality: string, commit: string, options?: IUpdateURLOptions): string | undefined;
-	protected abstract doCheckForUpdates(explicit: boolean, pendingCommit?: string): void;
+	protected abstract buildUpdateFeedUrl(quality: string, options?: IUpdateURLOptions): string | undefined;
+	protected abstract doCheckForUpdates(explicit: boolean, pendingVersion?: string): void;
+}
+
+function normalizeVersion(version: string): string {
+	const normalizedVersion = version
+		.replace(/(\d+\.\d+\.\d+)\.\d+(\-\w+)?/, '$1$2')
+		.replace(/(\d+\.\d+\.)0+(\d+)(\-\w+)?/, '$1$2$3');
+
+	return normalizedVersion;
 }
