@@ -14,6 +14,15 @@
 	overflow: hidden;
 }
 
+/* macOS: the statusbar is the window drag surface because the native titlebar strip is inert for CSS drag regions */
+.monaco-workbench.mac:not(.web) .part.statusbar {
+	-webkit-app-region: drag;
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar .statusbar-item {
+	-webkit-app-region: no-drag;
+}
+
 .monaco-workbench.monaco-enable-motion .part.statusbar {
 	transition: background-color 0.15s ease-out;
 }
