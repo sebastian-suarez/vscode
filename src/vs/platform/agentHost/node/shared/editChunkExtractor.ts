@@ -139,9 +139,8 @@ function readStrReplaceEditor(input: unknown): string[] {
 }
 
 /**
- * Headers of the V4A patch format the Copilot `apply_patch` tool
- * accepts. Mirrors {@link copilotToolDisplay.APPLY_PATCH_FILE_HEADERS};
- * kept duplicated here so this module stays free of cross-provider
+ * Headers of the V4A patch format the `apply_patch` tool accepts.
+ * Kept local here so this module stays free of cross-provider
  * imports.
  */
 const APPLY_PATCH_FILE_HEADERS = [

@@ -14,8 +14,7 @@ import type { StringOrMarkdown } from '../../common/state/protocol/state.js';
 /**
  * Phase 7 S4 — pure tool-name → display/permission helpers for Claude.
  *
- * Mirrors the shape of [copilotToolDisplay.ts](../copilot/copilotToolDisplay.ts)
- * but is keyed off the SDK's built-in tool list. The mapping table lives
+ * Keyed off the SDK's built-in tool list. The mapping table lives
  * here (and is snapshot-tested in
  * [claudeToolDisplay.test.ts](../../test/node/claudeToolDisplay.test.ts))
  * so renames of either the SDK tool names or the host's `permissionKind`
@@ -44,8 +43,7 @@ export type ClaudePermissionKind =
  * Phase 8.5 — rendering hint for the workbench. Drives terminal /
  * search / subagent renderers (the workbench picks a renderer off
  * `_meta.toolKind`; unknown values fall through to the generic tool
- * renderer). Mirror of
- * [`copilotToolDisplay.getToolKind`](../copilot/copilotToolDisplay.ts).
+ * renderer).
  */
 export type ClaudeToolKind = ToolKind;
 
@@ -272,9 +270,7 @@ export function getClaudeToolKind(toolName: string): ClaudeToolKind | undefined 
  * Phase 8.5 — build the `_meta` bag stamped at the tool-open seam.
  * Returns `undefined` for tools that have no `toolKind` hint so the
  * resulting envelope stays minimal (a `Read` row gets no `_meta` at
- * all). Mirrors Copilot's
- * [`mapSessionEvents.ts:197`](../copilot/mapSessionEvents.ts#L197)
- * single-write pattern.
+ * all). Follows a single-write pattern.
  */
 export function buildClaudeToolMeta(toolName: string): Record<string, unknown> | undefined {
 	const meta = buildClaudeToolCallMeta(toolName);
@@ -329,8 +325,7 @@ function firstShellLine(input: unknown): string | undefined {
  * Phase 8.5 — rich invocation message for a `pending_confirmation`
  * card or a streaming `ChatToolCallStart` action. Reads the
  * SDK's `tool_use.input` defensively and falls back to the static
- * `displayName` on any shape mismatch. Mirror of
- * [`copilotToolDisplay.getInvocationMessage`](../copilot/copilotToolDisplay.ts#L473).
+ * `displayName` on any shape mismatch.
  */
 export function getClaudeInvocationMessage(
 	toolName: string,
@@ -411,8 +406,7 @@ export function getClaudeInvocationMessage(
 }
 
 /**
- * Phase 8.5 — success-aware rich past-tense message. Mirror of
- * [`copilotToolDisplay.getPastTenseMessage`](../copilot/copilotToolDisplay.ts#L572).
+ * Phase 8.5 — success-aware rich past-tense message.
  * Failure path returns a generic "failed" message; success path
  * mirrors the {@link getClaudeInvocationMessage} structure with
  * past-tense verbs.
