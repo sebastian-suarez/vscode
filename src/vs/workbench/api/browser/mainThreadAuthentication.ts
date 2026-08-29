@@ -566,7 +566,7 @@ export class MainThreadAuthentication extends Disposable implements MainThreadAu
 		if (containsVSCodeClientIdScope) {
 			type ClientIdUsageClassification = {
 				owner: 'TylerLeonhardt';
-				comment: 'Used to see which extensions are using the VSCode client id override';
+				comment: 'Used to see which extensions are using the !!APP_NAME!! client id override';
 				extensionId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The extension id.' };
 			};
 			this.telemetryService.publicLog2<{ extensionId: string }, ClientIdUsageClassification>('authentication.clientIdUsage', { extensionId });
