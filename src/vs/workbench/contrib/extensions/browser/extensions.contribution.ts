@@ -203,6 +203,13 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration)
 				default: false,
 				agentsWindow: { default: true, readOnly: true },
 			},
+			'extensions.minReleaseAge': {
+				type: 'integer',
+				default: 48,
+				scope: ConfigurationScope.APPLICATION,
+				description: localize('extensions.minReleaseAge', "Control how old an extension need to be before auto-updating it (in hours)."),
+				tags: ['usesOnlineServices']
+			},
 			'extensions.showRecommendationsOnlyOnDemand': {
 				type: 'boolean',
 				deprecationMessage: localize('extensionsShowRecommendationsOnlyOnDemand_Deprecated', "This setting is deprecated. Use extensions.ignoreRecommendations setting to control recommendation notifications. Use Extensions view's visibility actions to hide Recommended view by default."),

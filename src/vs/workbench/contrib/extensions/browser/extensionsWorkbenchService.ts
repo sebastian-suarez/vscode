@@ -111,7 +111,8 @@ export class Extension implements IExtension {
 		@ITelemetryService private readonly telemetryService: ITelemetryService,
 		@ILogService private readonly logService: ILogService,
 		@IFileService private readonly fileService: IFileService,
-		@IProductService private readonly productService: IProductService
+		@IProductService private readonly productService: IProductService,
+		@IConfigurationService protected configurationService: IConfigurationService
 	) {
 	}
 
@@ -347,7 +348,15 @@ export class Extension implements IExtension {
 				return false;
 			}
 			if (semver.gt(this.latestVersion, this.version)) {
-				return true;
+				const minReleaseAge = this.configurationService.getValue<number>('extensions.minReleaseAge');
+
+				if(minReleaseAge === 0) {
+					return true;
+				}
+
+				const age = Math.round(Math.abs(Date.now() - this.gallery.lastUpdated) / (1000 * 60 * 60));
+
+				return age >= minReleaseAge;
 			}
 			if (this.outdatedTargetPlatform) {
 				return true;

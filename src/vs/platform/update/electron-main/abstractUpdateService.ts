@@ -467,7 +467,30 @@ export abstract class AbstractUpdateService implements IUpdateService {
 
 				const lastest = semver.compareBuild(currentVersion, fetchedVersion) >= 0;
 
-				return Promise.resolve({ lastest, update });
+				const minReleaseAge = this.configurationService.getValue<number>('update.minReleaseAge');
+
+				if(minReleaseAge === 0) {
+					return Promise.resolve({ lastest, update });
+				}
+
+				const releaseDate = update.timestamp ? new Date(Number.parseInt(String(update.timestamp), 10)) : null;
+
+				this.logService.info(`update#isLatestVersion() - releaseDate: ${releaseDate}`);
+
+				if(!releaseDate || isNaN(releaseDate.getTime())) {
+					return Promise.resolve(undefined);
+				}
+
+				const age = Math.round(Math.abs(Date.now() - releaseDate.getTime()) / (1000 * 60 * 60));
+
+				this.logService.info(`update#isLatestVersion() - releaseAge: ${age}, minReleaseAge: ${minReleaseAge}`);
+
+				if(age >= minReleaseAge) {
+					return Promise.resolve({ lastest, update });
+				}
+				else {
+					return Promise.resolve(undefined);
+				}
 			})
 	}
 
