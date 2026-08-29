@@ -1561,7 +1561,7 @@ export default defineConfig(
 						'inspector',
 						'minimist',
 						'node:module',
-						'native-keymap',
+						'@vscodium/native-keymap',
 						'net',
 						'node-pty',
 						'os',

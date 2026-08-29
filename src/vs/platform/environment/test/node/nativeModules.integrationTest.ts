@@ -42,12 +42,12 @@ flakySuite('Native Modules (all platforms)', () => {
 	});
 
 	test('native-keymap', async () => {
-		const keyMap = await import('native-keymap');
-		assert.ok(typeof keyMap.onDidChangeKeyboardLayout === 'function', testErrorMessage('native-keymap'));
-		assert.ok(typeof keyMap.getCurrentKeyboardLayout === 'function', testErrorMessage('native-keymap'));
+		const keyMap = await import('@vscodium/native-keymap');
+		assert.ok(typeof keyMap.onDidChangeKeyboardLayout === 'function', testErrorMessage('@vscodium/native-keymap'));
+		assert.ok(typeof keyMap.getCurrentKeyboardLayout === 'function', testErrorMessage('@vscodium/native-keymap'));
 
 		const result = keyMap.getCurrentKeyboardLayout();
-		assert.ok(result, testErrorMessage('native-keymap'));
+		assert.ok(result, testErrorMessage('@vscodium/native-keymap'));
 	});
 
 	test('@vscode/native-watchdog', async () => {
