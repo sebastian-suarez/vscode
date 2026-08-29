@@ -1503,6 +1503,7 @@ export class Repository implements Disposable {
 		}
 
 		const config = workspace.getConfiguration('git', Uri.file(this.root));
+		// Make sure that AI CoAuthor is off
 		const addAICoAuthor = config.get<'off' | 'chatAndAgent' | 'all'>('addAICoAuthor', 'off');
 
 		if (addAICoAuthor === 'off') {
