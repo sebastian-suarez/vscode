@@ -80,11 +80,11 @@ native-is-elevated/deps/**
 @vscode/native-watchdog/src/**
 !@vscode/native-watchdog/build/Release/*.node
 
-@vscode/vsce-sign/**
-!@vscode/vsce-sign/src/main.d.ts
-!@vscode/vsce-sign/src/main.js
-!@vscode/vsce-sign/package.json
-!@vscode/vsce-sign/bin/**
+@vscodium/vsce-sign/**
+!@vscodium/vsce-sign/src/main.d.ts
+!@vscodium/vsce-sign/src/main.js
+!@vscodium/vsce-sign/package.json
+!@vscodium/vsce-sign/bin/**
 
 windows-foreground-love/binding.gyp
 windows-foreground-love/build/**
