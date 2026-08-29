@@ -6,7 +6,6 @@
 import * as fs from 'fs';
 import type * as http from 'http';
 import * as net from 'net';
-import { createRequire } from 'node:module';
 import { performance } from 'perf_hooks';
 import * as url from 'url';
 import { VSBuffer } from '../../base/common/buffer.js';
@@ -40,7 +39,6 @@ import { IServerEnvironmentService, ServerParsedArgs } from './serverEnvironment
 import { IServerLifetimeService } from './serverLifetimeService.js';
 import { setupServerServices, SocketServer } from './serverServices.js';
 import { CacheControl, serveError, serveFile, WebClientServer } from './webClientServer.js';
-const require = createRequire(import.meta.url);
 
 declare namespace vsda {
 	// the signer is a native module that for historical reasons uses a lower case class name
@@ -694,18 +692,7 @@ export async function createServer(address: string | net.AddressInfo | null, arg
 		}
 	});
 
-	const vsdaMod = instantiationService.invokeFunction((accessor) => {
-		const logService = accessor.get(ILogService);
-		const hasVSDA = fs.existsSync(join(FileAccess.asFileUri('').fsPath, '../node_modules/vsda'));
-		if (hasVSDA) {
-			try {
-				return require('vsda');
-			} catch (err) {
-				logService.error(err);
-			}
-		}
-		return null;
-	});
+	const vsdaMod = instantiationService.invokeFunction(() => null);
 
 	let serverBasePath = args['server-base-path'];
 	if (serverBasePath && !serverBasePath.startsWith('/')) {
