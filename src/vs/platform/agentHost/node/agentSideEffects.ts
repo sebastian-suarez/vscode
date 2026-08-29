@@ -49,7 +49,6 @@ import { updateAgentHostTelemetryLevelFromConfig } from './agentHostTelemetrySer
 import { AgentHostTelemetryReporter } from './agentHostTelemetryReporter.js';
 import { AgentHostTurnTracker } from './agentHostTurnTracker.js';
 import { AgentHostSessionTitleController } from './agentHostSessionTitleController.js';
-import type { ICopilotApiService } from './shared/copilotApiService.js';
 
 /**
  * Options for constructing an {@link AgentSideEffects} instance.
@@ -63,8 +62,6 @@ export interface IAgentSideEffectsOptions {
 	readonly sessionDataService: ISessionDataService;
 	/** Get the GitHub token used for Copilot utility title generation. */
 	readonly getGitHubCopilotToken?: () => string | undefined;
-	/** CAPI service used for Copilot utility title generation. */
-	readonly copilotApiService?: ICopilotApiService;
 	/**
 	 * Called after each top-level session turn completes so git state can be
 	 * refreshed and published via `SessionMetaChanged`. Subagent turns are
@@ -135,7 +132,6 @@ export class AgentSideEffects extends Disposable {
 		this._titleController = this._register(instantiationService.createInstance(AgentHostSessionTitleController, this._stateManager, {
 			sessionDataService: this._options.sessionDataService,
 			getGitHubCopilotToken: this._options.getGitHubCopilotToken,
-			copilotApiService: this._options.copilotApiService,
 		}));
 
 		// Whenever the agents observable changes, publish to root state.

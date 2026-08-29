@@ -15,22 +15,12 @@ import { URI } from '../../../base/common/uri.js';
 import { generateUuid } from '../../../base/common/uuid.js';
 import * as os from 'os';
 import * as inspector from 'inspector';
-import { AgentHostClaudeAgentEnabledEnvVar, AgentHostCodexAgentEnabledEnvVar, AgentHostIpcChannels, IAgentHostInspectInfo, IAgentHostSocketInfo, IAgentService, IConnectionTrackerService, isAgentEnabled } from '../common/agentService.js';
+import { AgentHostIpcChannels, IAgentHostInspectInfo, IAgentHostSocketInfo, IAgentService, IConnectionTrackerService } from '../common/agentService.js';
 import { AgentService } from './agentService.js';
 import { IAgentConfigurationService } from './agentConfigurationService.js';
 import { IAgentHostCompletions } from './agentHostCompletions.js';
 import { IAgentHostTerminalManager } from './agentHostTerminalManager.js';
-import { CopilotAgent } from './copilot/copilotAgent.js';
-import { CopilotBranchNameGenerator, ICopilotBranchNameGenerator } from './copilot/copilotBranchNameGenerator.js';
-import { CopilotApiService, ICopilotApiService } from './shared/copilotApiService.js';
-import { ClaudeAgent } from './claude/claudeAgent.js';
-import { ClaudeAgentSdkService, ClaudeSdkPackage, IClaudeAgentSdkService } from './claude/claudeAgentSdkService.js';
-import { ClaudeProxyService, IClaudeProxyService } from './claude/claudeProxyService.js';
-import { CodexAgent, CodexSdkPackage } from './codex/codexAgent.js';
-import { CodexProxyService, ICodexProxyService } from './codex/codexProxyService.js';
 import { AgentSdkDownloader, IAgentSdkDownloader } from './agentSdkDownloader.js';
-import { IAgentHostOTelService } from '../common/otel/agentHostOTelService.js';
-import { AgentHostOTelService } from './otel/agentHostOTelService.js';
 import { ProtocolServerHandler } from './protocolServerHandler.js';
 import { WebSocketProtocolServer } from './webSocketTransport.js';
 import { INativeEnvironmentService } from '../../environment/common/environment.js';
@@ -162,17 +152,6 @@ async function startAgentHost(): Promise<void> {
 		// dev-override env var → on-disk cache → product.agentSdks download.
 		const agentSdkDownloader = instantiationService.createInstance(AgentSdkDownloader);
 		diServices.set(IAgentSdkDownloader, agentSdkDownloader);
-		const copilotApiService = instantiationService.createInstance(CopilotApiService, undefined);
-		diServices.set(ICopilotApiService, copilotApiService);
-		diServices.set(ICopilotBranchNameGenerator, instantiationService.createInstance(CopilotBranchNameGenerator));
-		const claudeProxyService = disposables.add(instantiationService.createInstance(ClaudeProxyService));
-		diServices.set(IClaudeProxyService, claudeProxyService);
-		const claudeAgentSdkService = instantiationService.createInstance(ClaudeAgentSdkService);
-		diServices.set(IClaudeAgentSdkService, claudeAgentSdkService);
-		const codexProxyService = disposables.add(instantiationService.createInstance(CodexProxyService));
-		diServices.set(ICodexProxyService, codexProxyService);
-		const agentHostOTelService = disposables.add(instantiationService.createInstance(AgentHostOTelService));
-		diServices.set(IAgentHostOTelService, agentHostOTelService);
 		agentService = new AgentService(logService, fileService, sessionDataService, productService, gitService, checkpointService, rootConfigResource, telemetryService, fileMonitorService);
 		diServices.set(IAgentService, agentService);
 		const pluginManager = new AgentPluginManager(URI.file(environmentService.userDataPath), fileService, logService);
@@ -184,25 +163,6 @@ async function startAgentHost(): Promise<void> {
 		diServices.set(IAgentHostTerminalManager, agentService.terminalManager);
 		diServices.set(IAgentConfigurationService, agentService.configurationService);
 		diServices.set(IAgentHostCompletions, agentService.completionsService);
-		agentService.registerProvider(instantiationService.createInstance(CopilotAgent));
-		// Claude and Codex providers are gated on two things:
-		//  1. The user-facing enable toggle (`chat.agentHost.<x>Agent.enabled`,
-		//     forwarded as an env var by the starters). Claude defaults to on,
-		//     Codex defaults to off.
-		//  2. The SDK being reachable. Claude is a devDependency of this repo
-		//     so the bare-import path in `ClaudeAgentSdkService._loadSdk`
-		//     always succeeds in dev; in built products the SDK ships via
-		//     `product.agentSdks.claude` and the downloader handles it. Codex
-		//     has no equivalent dev path yet, so it still requires either the
-		//     env-var override or a `product.agentSdks.codex` entry.
-		// If either gate fails, the provider is not registered and never appears
-		// in the agent picker (matches the pre-CDN UX exactly).
-		if (isAgentEnabled(process.env[AgentHostClaudeAgentEnabledEnvVar], true) && (!environmentService.isBuilt || agentSdkDownloader.isAvailable(ClaudeSdkPackage))) {
-			agentService.registerProvider(instantiationService.createInstance(ClaudeAgent));
-		}
-		if (isAgentEnabled(process.env[AgentHostCodexAgentEnabledEnvVar], false) && agentSdkDownloader.isAvailable(CodexSdkPackage)) {
-			agentService.registerProvider(instantiationService.createInstance(CodexAgent));
-		}
 	} catch (err) {
 		logService.error('Failed to create AgentService', err);
 		throw err;

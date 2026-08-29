@@ -33,19 +33,8 @@ import { IProductService } from '../../product/common/productService.js';
 import { InstantiationService } from '../../instantiation/common/instantiationService.js';
 import { ServiceCollection } from '../../instantiation/common/serviceCollection.js';
 import { registerAgentHostNetworkServices } from './agentHostBootstrap.js';
-import { CopilotAgent } from './copilot/copilotAgent.js';
-import { CopilotBranchNameGenerator, ICopilotBranchNameGenerator } from './copilot/copilotBranchNameGenerator.js';
-import { CopilotApiService, ICopilotApiService } from './shared/copilotApiService.js';
-import { ClaudeAgent } from './claude/claudeAgent.js';
-import { ClaudeAgentSdkService, ClaudeSdkPackage, IClaudeAgentSdkService } from './claude/claudeAgentSdkService.js';
-import { ClaudeProxyService, IClaudeProxyService } from './claude/claudeProxyService.js';
-import { CodexAgent, CodexSdkPackage } from './codex/codexAgent.js';
-import { CodexProxyService, ICodexProxyService } from './codex/codexProxyService.js';
-import { AgentSdkDownloader, IAgentSdkDownloader } from './agentSdkDownloader.js';
-import { IAgentHostOTelService } from '../common/otel/agentHostOTelService.js';
-import { AgentHostOTelService } from './otel/agentHostOTelService.js';
 import { AgentService } from './agentService.js';
-import { AgentHostClaudeAgentEnabledEnvVar, AgentHostClaudeSdkRootEnvVar, AgentHostCodexAgentEnabledEnvVar, IAgentService, AgentHostCodexAgentSdkRootEnvVar, isAgentEnabled } from '../common/agentService.js';
+import {  AgentHostClaudeSdkRootEnvVar, IAgentService, AgentHostCodexAgentSdkRootEnvVar } from '../common/agentService.js';
 import { IAgentConfigurationService } from './agentConfigurationService.js';
 import { IAgentHostCompletions } from './agentHostCompletions.js';
 import { IAgentHostTerminalManager } from './agentHostTerminalManager.js';
@@ -258,54 +247,6 @@ async function main(): Promise<void> {
 		diServices.set(IAgentConfigurationService, agentService.configurationService);
 		diServices.set(IAgentHostCompletions, agentService.completionsService);
 		diServices.set(IAgentHostGitService, gitService);
-		// Register `ICopilotApiService` BEFORE `IClaudeProxyService` —
-		// the proxy service constructor requires it.
-		const copilotApiService = instantiationService.createInstance(CopilotApiService, undefined);
-		diServices.set(ICopilotApiService, copilotApiService);
-		diServices.set(ICopilotBranchNameGenerator, instantiationService.createInstance(CopilotBranchNameGenerator));
-		// CLI flags become env vars BEFORE the downloader is constructed so
-		// `isAvailable()` and `loadSdkRoot()` see them as dev overrides.
-		if (options.claudeSdkRoot) {
-			process.env[AgentHostClaudeSdkRootEnvVar] = options.claudeSdkRoot;
-		}
-		if (options.codexSdkRoot) {
-			process.env[AgentHostCodexAgentSdkRootEnvVar] = options.codexSdkRoot;
-		}
-		// Register the agent SDK downloader BEFORE any service that injects it.
-		const agentSdkDownloader = instantiationService.createInstance(AgentSdkDownloader);
-		diServices.set(IAgentSdkDownloader, agentSdkDownloader);
-		const claudeProxyService = disposables.add(instantiationService.createInstance(ClaudeProxyService));
-		diServices.set(IClaudeProxyService, claudeProxyService);
-		const claudeAgentSdkService = instantiationService.createInstance(ClaudeAgentSdkService);
-		diServices.set(IClaudeAgentSdkService, claudeAgentSdkService);
-		const codexProxyService = disposables.add(instantiationService.createInstance(CodexProxyService));
-		diServices.set(ICodexProxyService, codexProxyService);
-		const agentHostOTelService = disposables.add(instantiationService.createInstance(AgentHostOTelService));
-		diServices.set(IAgentHostOTelService, agentHostOTelService);
-		const copilotAgent = disposables.add(instantiationService.createInstance(CopilotAgent));
-		agentService.registerProvider(copilotAgent);
-		log('CopilotAgent registered');
-		// Claude and Codex providers are gated on two things:
-		//  1. The user-facing enable toggle (`chat.agentHost.<x>Agent.enabled`,
-		//     forwarded as an env var by the renderer-side starters; the remote
-		//     server reads the env directly). Claude defaults to on, Codex
-		//     defaults to off.
-		//  2. The SDK being reachable. Claude is a devDependency of this repo
-		//     so the bare-import path in `ClaudeAgentSdkService._loadSdk`
-		//     always succeeds in dev; in built/shipped server installs the
-		//     SDK comes from the CLI flag / env var dev override or a
-		//     `product.agentSdks.claude` entry. Codex still requires the
-		//     env-var override or product config.
-		if (isAgentEnabled(process.env[AgentHostClaudeAgentEnabledEnvVar], true) && (!environmentService.isBuilt || agentSdkDownloader.isAvailable(ClaudeSdkPackage))) {
-			const claudeAgent = disposables.add(instantiationService.createInstance(ClaudeAgent));
-			agentService.registerProvider(claudeAgent);
-			log('ClaudeAgent registered');
-		}
-		if (isAgentEnabled(process.env[AgentHostCodexAgentEnabledEnvVar], false) && agentSdkDownloader.isAvailable(CodexSdkPackage)) {
-			const codexAgent = disposables.add(instantiationService.createInstance(CodexAgent));
-			agentService.registerProvider(codexAgent);
-			log('CodexAgent registered');
-		}
 	}
 
 	if (options.enableMockAgent) {

@@ -17,7 +17,6 @@ import { IAgentHostChangesetSubscriptionService } from '../common/agentHostChang
 import { IAgentHostGitStateService } from '../common/agentHostGitStateService.js';
 import { IInstantiationService } from '../../instantiation/common/instantiation.js';
 import { AgentHostPullRequestOperationContribution } from './agentHostPullRequestOperationProvider.js';
-import { AgentHostCommitOperationContribution } from './agentHostCommitOperationProvider.js';
 import { AgentHostDiscardChangesOperationContribution } from './agentHostDiscardChangesOperationProvider.js';
 
 export class AgentHostChangesetOperationService extends Disposable implements IAgentHostChangesetOperationService {
@@ -42,7 +41,6 @@ export class AgentHostChangesetOperationService extends Disposable implements IA
 		};
 
 		this._register(this.registerContribution(instantiationService.createInstance(AgentHostPullRequestOperationContribution, this._stateManager)));
-		this._register(this.registerContribution(instantiationService.createInstance(AgentHostCommitOperationContribution, this._stateManager)));
 		this._register(this.registerContribution(instantiationService.createInstance(AgentHostDiscardChangesOperationContribution, this._stateManager)));
 	}
 

@@ -3,11 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import type { SectionOverride, SystemMessageConfig, SystemMessageSection } from '@github/copilot-sdk';
 import { agentHostCustomizationConfigSchema } from '../../../common/agentHostCustomizationConfig.js';
 import type { SchemaValue } from '../../../common/agentHostSchema.js';
 import type { ModelSelection } from '../../../common/state/protocol/state.js';
-import { COPILOT_AGENT_HOST_SYSTEM_MESSAGE, fullSystemPrompt, sectionOverrides } from './systemMessage.js';
 
 type CustomizationConfigDefinition = typeof agentHostCustomizationConfigSchema.definition;
 
@@ -46,12 +44,6 @@ export interface IAgentHostPrompt {
 	 * drops the SDK foundation prompt and its guardrails.
 	 */
 	resolveFullSystemPrompt?(model: ModelSelection, context: IAgentHostPromptContext): string | undefined;
-
-	/**
-	 * Section-level overrides. Resolved into `{ mode: 'customize' }`, keeping the
-	 * SDK foundation prompt and guardrails intact.
-	 */
-	resolveSectionOverrides?(model: ModelSelection, context: IAgentHostPromptContext): Partial<Record<SystemMessageSection, SectionOverride>> | undefined;
 }
 
 /**
@@ -92,52 +84,6 @@ export class AgentHostPromptRegistry {
 		for (const prefix of ctor.familyPrefixes) {
 			this._familyPrefixList.push({ prefix, ctor });
 		}
-	}
-
-	private _getContributor(model: ModelSelection): IAgentHostPromptCtor | undefined {
-		for (const ctor of this._promptsWithMatcher) {
-			if (ctor.matchesModel(model)) {
-				return ctor;
-			}
-		}
-		for (const { prefix, ctor } of this._familyPrefixList) {
-			if (model.id.startsWith(prefix)) {
-				return ctor;
-			}
-		}
-		return undefined;
-	}
-
-	/**
-	 * Resolves the {@link SystemMessageConfig} for a session's model.
-	 *
-	 * Falls back to {@link COPILOT_AGENT_HOST_SYSTEM_MESSAGE} when the model is
-	 * unknown (e.g. server-side "Auto" selection where no model is chosen at
-	 * create time), when no contributor matches, or when the matching
-	 * contributor opts out for the current {@link context} (e.g. a setting that
-	 * gates it is disabled).
-	 */
-	resolveSystemMessageConfig(model: ModelSelection | undefined, context: IAgentHostPromptContext): SystemMessageConfig {
-		if (!model) {
-			return COPILOT_AGENT_HOST_SYSTEM_MESSAGE;
-		}
-		const ctor = this._getContributor(model);
-		if (!ctor) {
-			return COPILOT_AGENT_HOST_SYSTEM_MESSAGE;
-		}
-		const contributor = new ctor();
-		const fullPrompt = contributor.resolveFullSystemPrompt?.(model, context);
-		if (fullPrompt !== undefined) {
-			return fullSystemPrompt(fullPrompt);
-		}
-		const sections = contributor.resolveSectionOverrides?.(model, context);
-		// An empty overrides object is treated as "no override" so we keep the
-		// default identity customization rather than emitting a
-		// `{ mode: 'customize', sections: {} }` that drops it.
-		if (sections && Object.keys(sections).length > 0) {
-			return sectionOverrides(sections);
-		}
-		return COPILOT_AGENT_HOST_SYSTEM_MESSAGE;
 	}
 }
 

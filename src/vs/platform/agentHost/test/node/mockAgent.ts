@@ -10,11 +10,10 @@ import type { IAuthorizationProtectedResourceMetadata } from '../../../../base/c
 import { URI } from '../../../../base/common/uri.js';
 import { type ISyncedCustomization } from '../../common/agentPluginManager.js';
 import { AgentSession, type AgentProvider, type AgentSignal, type IAgent, type IAgentActionSignal, type IAgentCreateSessionConfig, type IAgentCreateSessionResult, type IAgentDescriptor, type IAgentModelInfo, type IAgentResolveSessionConfigParams, type IAgentSessionConfigCompletionsParams, type IAgentSessionMetadata, type IAgentToolPendingConfirmationSignal } from '../../common/agentService.js';
-import { buildSubagentTurnsFromHistory, buildTurnsFromHistory, type IHistoryRecord } from './historyRecordFixtures.js';
 import { ProtectedResourceMetadata, ToolCallContributorKind, type AgentSelection, type MessageAttachment, type ModelSelection } from '../../common/state/protocol/state.js';
 import type { ResolveSessionConfigResult, SessionConfigCompletionsResult } from '../../common/state/protocol/commands.js';
 import { ActionType } from '../../common/state/sessionActions.js';
-import { ResponsePartKind, ToolCallConfirmationReason, ToolCallStatus, ToolResultContentType, CustomizationLoadStatus, parseSubagentSessionUri, type ClientPluginCustomization, type Customization, type PendingMessage, type StringOrMarkdown, type ToolCallResult, type Turn, type UsageInfo } from '../../common/state/sessionState.js';
+import { ResponsePartKind, ToolCallConfirmationReason, ToolCallStatus, ToolResultContentType, CustomizationLoadStatus, type ClientPluginCustomization, type Customization, type PendingMessage, type StringOrMarkdown, type ToolCallResult, type Turn, type UsageInfo } from '../../common/state/sessionState.js';
 import { hasKey } from '../../../../base/common/types.js';
 
 /** Well-known auto-generated title used by the 'with-title' prompt. */
@@ -63,14 +62,6 @@ export class MockAgent implements IAgent {
 	private readonly _onDidCustomizationsChange = new Emitter<void>();
 	readonly onDidCustomizationsChange = this._onDidCustomizationsChange.event;
 	getSessionCustomizations?: (session: URI) => Promise<readonly Customization[]>;
-
-	/**
-	 * Configurable session history. Tests construct {@link IHistoryRecord}
-	 * entries (the agent-internal intermediate shape) and the mock converts
-	 * them to {@link Turn}s on demand. Subagent URIs are routed to filtered
-	 * subagent turns via {@link buildSubagentTurnsFromHistory}.
-	 */
-	sessionMessages: IHistoryRecord[] = [];
 
 	/** Optional overrides applied to session metadata from listSessions. */
 	sessionMetadataOverrides: Partial<Omit<IAgentSessionMetadata, 'session'>> = {};
@@ -135,11 +126,7 @@ export class MockAgent implements IAgent {
 	}
 
 	async getSessionMessages(session: URI): Promise<readonly Turn[]> {
-		const subagentInfo = parseSubagentSessionUri(session);
-		if (subagentInfo) {
-			return buildSubagentTurnsFromHistory(this.sessionMessages, subagentInfo.toolCallId, session.toString());
-		}
-		return buildTurnsFromHistory(this.sessionMessages);
+		return []
 	}
 
 	async disposeSession(session: URI): Promise<void> {
@@ -256,13 +243,6 @@ export class ScriptedMockAgent implements IAgent {
 	 * Message history for the pre-existing session: a single user→assistant
 	 * turn with a tool call.
 	 */
-	private readonly _preExistingMessages: IHistoryRecord[] = [
-		{ type: 'message', role: 'user', session: PRE_EXISTING_SESSION_URI, messageId: 'h-msg-1', content: 'What files are here?' },
-		{ type: 'tool_start', session: PRE_EXISTING_SESSION_URI, toolCallId: 'h-tc-1', toolName: 'list_files', displayName: 'List Files', invocationMessage: 'Listing files...' },
-		{ type: 'tool_complete', session: PRE_EXISTING_SESSION_URI, toolCallId: 'h-tc-1', result: { pastTenseMessage: 'Listed files', content: [{ type: ToolResultContentType.Text, text: 'file1.ts\nfile2.ts' }], success: true } satisfies ToolCallResult },
-		{ type: 'message', role: 'assistant', session: PRE_EXISTING_SESSION_URI, messageId: 'h-msg-2', content: 'Here are the files: file1.ts and file2.ts' },
-	];
-
 	// Track pending permission requests
 	private readonly _pendingPermissions = new Map<string, (approved: boolean) => void>();
 	// Track the active turn ID per session, captured from sendMessage().
@@ -742,13 +722,6 @@ export class ScriptedMockAgent implements IAgent {
 	}
 
 	async getSessionMessages(session: URI): Promise<readonly Turn[]> {
-		const subagentInfo = parseSubagentSessionUri(session);
-		if (subagentInfo) {
-			return buildSubagentTurnsFromHistory(this._preExistingMessages, subagentInfo.toolCallId, session.toString());
-		}
-		if (session.toString() === PRE_EXISTING_SESSION_URI.toString()) {
-			return buildTurnsFromHistory(this._preExistingMessages);
-		}
 		return [];
 	}
 

@@ -49,7 +49,6 @@ import { AgentHostFileCompletionProvider } from './agentHostFileCompletionProvid
 import { AgentHostRenameCompletionProvider } from './agentHostRenameCommand.js';
 import { AgentHostSkillCompletionProvider } from './agentHostSkillCompletionProvider.js';
 import { AgentHostWorkspaceFiles } from './agentHostWorkspaceFiles.js';
-import { CopilotApiService, ICopilotApiService } from './shared/copilotApiService.js';
 import { parseMcpChannelUri } from './shared/mcpCustomizationController.js';
 import { toAgentClientUri } from '../common/agentClientUri.js';
 import { AgentHostChangesetOperationService } from './agentHostChangesetOperationService.js';
@@ -211,7 +210,6 @@ export class AgentService extends Disposable implements IAgentService {
 		private readonly _rootConfigResource?: URI,
 		private readonly _telemetryService: ITelemetryService = NullTelemetryService,
 		_fileMonitorService?: IAgentHostFileMonitorService,
-		copilotApiService?: ICopilotApiService,
 	) {
 		super();
 		this._logService.info('AgentService initialized');
@@ -252,8 +250,6 @@ export class AgentService extends Disposable implements IAgentService {
 		const instantiationService = this._register(new InstantiationService(services, /*strict*/ true));
 		const agentHostOctoKitService = instantiationService.createInstance(AgentHostOctoKitService, undefined);
 		services.set(IAgentHostOctoKitService, agentHostOctoKitService);
-		const effectiveCopilotApiService = copilotApiService ?? instantiationService.createInstance(CopilotApiService, undefined);
-		services.set(ICopilotApiService, effectiveCopilotApiService);
 
 		this._gitStateService = instantiationService.createInstance(AgentHostGitStateService, this._stateManager);
 		services.set(IAgentHostGitStateService, this._gitStateService);
@@ -301,7 +297,6 @@ export class AgentService extends Disposable implements IAgentService {
 			getAgent: session => this._findProviderForSession(session),
 			sessionDataService: this._sessionDataService,
 			agents: this._agents,
-			copilotApiService: effectiveCopilotApiService,
 			getGitHubCopilotToken: () => {
 				return this.getAuthToken({
 					resource: GITHUB_COPILOT_PROTECTED_RESOURCE.resource,
