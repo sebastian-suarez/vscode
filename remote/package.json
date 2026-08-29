@@ -45,6 +45,7 @@
     "ssh2": "^1.16.0",
     "tar": "^7.5.9",
     "tas-client": "0.3.1",
+    "tslib": "^2.6.3",
     "vscode-oniguruma": "1.7.0",
     "vscode-regexpp": "^3.1.0",
     "vscode-textmate": "^9.3.2",
