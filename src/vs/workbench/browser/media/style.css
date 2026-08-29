@@ -68,6 +68,20 @@ body {
 	--vscode-shadow-depth-y: 0 5px 10px -4px rgba(0, 0, 0, 0.04);
 }
 
+/* macOS: the workbench root stays transparent so under-window vibrancy reaches the parts
+ * that opt into translucent backgrounds. Editor, panel and statusbar are pinned to an
+ * opaque backstop underneath their inline theme colors so that content surfaces never go
+ * see-through, even when a theme leaves the corresponding color undefined. */
+.monaco-workbench.mac:not(.web) {
+	background-color: transparent;
+}
+
+.monaco-workbench.mac:not(.web) .part.editor,
+.monaco-workbench.mac:not(.web) .part.panel,
+.monaco-workbench.mac:not(.web) .part.statusbar {
+	background-color: var(--vscode-editor-background);
+}
+
 /* Disable panel/part shadows when the setting is off (preserves floating modals, notifications, etc.) */
 .monaco-workbench.no-shadows .part.titlebar,
 .monaco-workbench.no-shadows .part.activitybar,
