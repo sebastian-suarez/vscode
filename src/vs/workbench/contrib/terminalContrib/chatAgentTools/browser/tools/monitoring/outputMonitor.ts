@@ -703,7 +703,7 @@ export function detectsHighConfidenceInputPattern(cursorLine: string): boolean {
 		//   "? Do you want to install jsdom? <chevron>"  (prompts)
 		//   "? Pick a color <chevron> "                  (enquirer)
 		// allow-any-unicode-next-line
-		/^(?:\s|\x1b\[[0-9;]*m)*\?.*[›❯▸▶]\s*$/,
+		/^(?:\s|\x1b\[[0-9;]*m)*\?.*[\u{203A}\u{276F}\u{25B8}\u{25B6}]\s*$/u,
 	].some(e => e.test(cursorLine));
 }
 
