@@ -1942,12 +1942,18 @@ export abstract class AbstractExtensionGalleryService implements IExtensionGalle
 			return { malicious: [], deprecated: {}, search: [] };
 		}
 
-		const context = await this.requestService.request({
+		const requestOptions: IRequestOptions = {
 			type: 'GET',
 			url: this.extensionsControlUrl,
 			timeout: this.getRequestTimeout(),
 			callSite: 'extensionGalleryService.getExtensionsControlManifest'
-		}, CancellationToken.None);
+		};
+
+		if (!isWeb) {
+			requestOptions.headers = { Connection: 'close' };
+		}
+
+		const context = await this.requestService.request(requestOptions, CancellationToken.None);
 
 		if (context.res.statusCode !== 200) {
 			throw new Error('Could not get extensions report.');
