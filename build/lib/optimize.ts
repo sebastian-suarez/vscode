@@ -224,7 +224,7 @@ export function bundleTask(opts: IBundleTaskOpts): () => NodeJS.ReadWriteStream 
 }
 
 export function minifyTask(src: string, sourceMapBaseUrl?: string): (cb: any) => void {
-	const sourceMappingURL = sourceMapBaseUrl ? ((f: any) => `${sourceMapBaseUrl}/${f.relative}.map`) : undefined;
+	const sourceMappingURL = sourceMapBaseUrl ? ((f: any) => `${sourceMapBaseUrl}-${f.relative.replaceAll('/', '-')}.map`) : undefined;
 	const target = getBuildTarget();
 
 	return cb => {
