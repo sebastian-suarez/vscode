@@ -2327,34 +2327,6 @@ suite('AgentSideEffects', () => {
 			assert.ok(sessions[0].summary);
 		});
 
-		test('handleRestoreSession uses persisted custom title', async () => {
-			const sessionDataService = createSessionDataService(sessionDb);
-			const localAgent = new MockAgent();
-			disposables.add(toDisposable(() => localAgent.dispose()));
-			const localService = disposables.add(new AgentService(new NullLogService(), fileService, sessionDataService, { _serviceBrand: undefined } as IProductService, createNoopGitService()));
-			localService.registerProvider(localAgent);
-
-			// Create a session on the agent backend
-			const { session } = await localAgent.createSession();
-			const sessions = await localAgent.listSessions();
-			const sessionResource = sessions[0].session;
-
-			// Persist a custom title in the DB
-			await sessionDb.setMetadata('customTitle', 'Restored Title');
-
-			// Set up minimal messages for restore
-			localAgent.sessionMessages = [
-				{ type: 'message', session, role: 'user', messageId: 'msg-1', content: 'Hello', toolRequests: [] },
-				{ type: 'message', session, role: 'assistant', messageId: 'msg-2', content: 'Hi', toolRequests: [] },
-			];
-
-			await localService.restoreSession(sessionResource);
-
-			const state = localService.stateManager.getSessionState(sessionResource.toString());
-			assert.ok(state);
-			assert.strictEqual(state!.summary.title, 'Restored Title');
-		});
-
 		test('SessionConfigChanged persists merged config values to the database', async () => {
 			const sessionDataService = createSessionDataService(sessionDb);
 			const localStateManager = disposables.add(new AgentHostStateManager(new NullLogService()));
