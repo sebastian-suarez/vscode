@@ -22,7 +22,7 @@ suite('CopilotManagedSettingsService', () => {
 
 	test('watches managed-settings keys from policy definitions and exposes raw managed settings', async () => {
 		let onDidChange: ((update: Record<string, PolicyValue | undefined>) => void) | undefined;
-		const watcherFactory: CopilotPolicyWatcherFactory = (_productName, policies, callback) => {
+		const watcherFactory: CopilotPolicyWatcherFactory = (_vendorName, _productName, policies, callback) => {
 			assert.deepStrictEqual(policies, { [COPILOT_DISABLE_BYPASS_PERMISSIONS_MODE_KEY]: { type: 'string' } });
 			onDidChange = callback;
 			callback({});
@@ -62,7 +62,7 @@ suite('CopilotManagedSettingsService', () => {
 	test('clears stale watcher values when managed-settings definitions are removed', async () => {
 		let onDidChange: ((update: Record<string, PolicyValue | undefined>) => void) | undefined;
 		let disposeCount = 0;
-		const watcherFactory: CopilotPolicyWatcherFactory = (_productName, _policies, callback) => {
+		const watcherFactory: CopilotPolicyWatcherFactory = (_vendorName, _productName, _policies, callback) => {
 			onDidChange = callback;
 			callback({});
 			return { dispose: () => disposeCount++ };
@@ -87,7 +87,7 @@ suite('CopilotManagedSettingsService', () => {
 	test('keeps raw managed settings while definitions are unchanged', async () => {
 		let onDidChange: ((update: Record<string, PolicyValue | undefined>) => void) | undefined;
 		let watcherCreateCount = 0;
-		const watcherFactory: CopilotPolicyWatcherFactory = (_productName, _policies, callback) => {
+		const watcherFactory: CopilotPolicyWatcherFactory = (_vendorName, _productName, _policies, callback) => {
 			watcherCreateCount++;
 			onDidChange = callback;
 			callback({});
@@ -126,7 +126,7 @@ suite('CopilotManagedSettingsService', () => {
 	test('removes raw managed settings whose definitions are no longer watched', async () => {
 		let onDidChange: ((update: Record<string, PolicyValue | undefined>) => void) | undefined;
 		const otherManagedSettingKey = 'permissions.otherManagedSetting';
-		const watcherFactory: CopilotPolicyWatcherFactory = (_productName, _policies, callback) => {
+		const watcherFactory: CopilotPolicyWatcherFactory = (_vendorName, _productName, _policies, callback) => {
 			onDidChange = callback;
 			callback({});
 			return Disposable.None;

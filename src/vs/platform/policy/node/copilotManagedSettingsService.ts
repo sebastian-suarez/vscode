@@ -11,13 +11,14 @@ import { IManagedSettingsPolicyDefinitions, ManagedSettingsData } from '../../..
 import { ILogService } from '../../log/common/log.js';
 import { collectManagedSettingsDefinitions, ICopilotManagedSettingsService } from '../common/copilotManagedSettings.js';
 import { PolicyDefinition, PolicyValue } from '../common/policy.js';
-import type { Watcher } from '@vscode/policy-watcher';
+import type { Watcher } from '@vscodium/policy-watcher';
 
 export interface ICopilotPolicyWatcherOptions {
 	readonly registryPath?: string;
 }
 
 export type CopilotPolicyWatcherFactory = (
+	vendorName: string,
 	productName: string,
 	policies: Record<string, { type: 'string' | 'number' | 'boolean' }>,
 	onDidChange: (update: Record<string, PolicyValue | undefined>) => void,
@@ -89,11 +90,11 @@ export class CopilotManagedSettingsService extends Disposable implements ICopilo
 			return;
 		}
 
-		const { createWatcher } = this.watcherFactory ? { createWatcher: this.watcherFactory } : (await import('@vscode/policy-watcher') as { createWatcher: CopilotPolicyWatcherFactory });
+		const { createWatcher } = this.watcherFactory ? { createWatcher: this.watcherFactory } : (await import('@vscodium/policy-watcher') as { createWatcher: CopilotPolicyWatcherFactory });
 		await this.throttler.queue(() => new Promise<void>((c, e) => {
 			try {
 				this.logService.trace(`Creating Copilot managed-settings watcher for productName ${this.productName}`);
-				this.watcher.value = createWatcher(this.productName, managedSettingDefinitions, update => {
+				this.watcher.value = createWatcher('!!ORG_NAME!!', this.productName, managedSettingDefinitions, update => {
 					this._onDidManagedSettingsChange(update as Record<string, PolicyValue | undefined>);
 					c();
 				}, this.watcherOptions);

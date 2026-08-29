@@ -151,13 +151,15 @@ vsda/**
 !vsda/rust/web/**
 !vsda/rust/bundler/**
 
-@vscode/policy-watcher/build/**
-@vscode/policy-watcher/.husky/**
-@vscode/policy-watcher/src/**
-@vscode/policy-watcher/binding.gyp
-@vscode/policy-watcher/README.md
-@vscode/policy-watcher/index.d.ts
-!@vscode/policy-watcher/build/Release/vscode-policy-watcher.node
+@vscodium/policy-watcher/.github/**
+@vscodium/policy-watcher/.husky/**
+@vscodium/policy-watcher/build/**
+@vscodium/policy-watcher/src/**
+@vscodium/policy-watcher/.release-it.yml
+@vscodium/policy-watcher/binding.gyp
+@vscodium/policy-watcher/README.md
+@vscodium/policy-watcher/index.d.ts
+!@vscodium/policy-watcher/build/Release/vscodium-policy-watcher.node
 
 @vscode/windows-ca-certs/**/*
 !@vscode/windows-ca-certs/package.json

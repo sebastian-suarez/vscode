@@ -1542,7 +1542,7 @@ export default defineConfig(
 						'@vscode/ripgrep-universal',
 						'@vscode/iconv-lite-umd',
 						'@vscode/native-watchdog',
-						'@vscode/policy-watcher',
+						'@vscodium/policy-watcher',
 						'@vscode/proxy-agent',
 						'@vscode/spdlog',
 						'@vscode/windows-process-tree',

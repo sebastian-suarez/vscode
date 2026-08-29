@@ -60,9 +60,9 @@ flakySuite('Native Modules (all platforms)', () => {
 		assert.ok(typeof prompt.exec === 'function', testErrorMessage('@vscode/sudo-prompt'));
 	});
 
-	test('@vscode/policy-watcher', async () => {
-		const watcher = await import('@vscode/policy-watcher');
-		assert.ok(typeof watcher.createWatcher === 'function', testErrorMessage('@vscode/policy-watcher'));
+	test('@vscodium/policy-watcher', async () => {
+		const watcher = await import('@vscodium/policy-watcher');
+		assert.ok(typeof watcher.createWatcher === 'function', testErrorMessage('@vscodium/policy-watcher'));
 	});
 
 	test('node-pty', async () => {
