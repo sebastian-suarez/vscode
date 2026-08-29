@@ -72,6 +72,7 @@ const chatViewDescriptor: IViewDescriptor = {
 		ChatContextKeys.accountPolicyGateActive.negate(),
 		ContextKeyExpr.or(
 			ContextKeyExpr.and(
+				ContextKeyExpr.has('config.chat.disableAIFeatures').negate(),
 				ChatContextKeys.Setup.hidden.negate(),
 				ChatContextKeys.Setup.disabledInWorkspace.negate(),
 			),
