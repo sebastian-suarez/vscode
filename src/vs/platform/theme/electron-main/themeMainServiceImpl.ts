@@ -327,6 +327,14 @@ export class ThemeMainService extends Disposable implements IThemeMainService {
 	}
 
 	private updateBackgroundColor(windowId: number, splash: IPartsSplash): void {
+
+		// The window is created with a transparent background so that the
+		// vibrancy behind it stays visible, and repainting it opaque here would
+		// undo that. The splash is still persisted for the next startup.
+		if (isMacintosh) {
+			return;
+		}
+
 		for (const window of getAllWindowsExcludingOffscreen()) {
 			if (window.id === windowId) {
 				window.setBackgroundColor(splash.colorInfo.background);
