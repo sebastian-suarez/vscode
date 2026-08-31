@@ -82,6 +82,16 @@ body {
 	background-color: var(--vscode-editor-background);
 }
 
+/* macOS with the custom title bar hidden: the inset window controls sit over the first row
+ * of the workbench, so that row has to make room for them. The controls do not scale with
+ * the window zoom level, hence physical points divided by the live zoom factor — which
+ * `InlineTitleBarLayout` keeps on the container, along with the class scoping these rules.
+ * The point sizes mirror the constants in `inlineTitleBar.ts`. */
+.monaco-workbench.mac:not(.web).inline-titlebar {
+	--titlebar-height: calc(46px / var(--zoom-factor, 1));
+	--traffic-lights-width: calc(86px / var(--zoom-factor, 1));
+}
+
 /* Disable panel/part shadows when the setting is off (preserves floating modals, notifications, etc.) */
 .monaco-workbench.no-shadows .part.titlebar,
 .monaco-workbench.no-shadows .part.activitybar,
