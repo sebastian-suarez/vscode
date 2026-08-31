@@ -56,9 +56,9 @@
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .monaco-icon-label::before {
-    background-size: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
-    width: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
-    padding-right: calc(var(--vscode-workbench-tabs-font-size) * 0.4615384615);
+	background-size: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
+	width: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
+	padding-right: calc(var(--vscode-workbench-tabs-font-size) * 0.4615384615);
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs.show-file-icons .file-icon::before,
@@ -68,11 +68,11 @@
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .codicon[class*='codicon-'] {
-    font-size: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
+	font-size: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
 }
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .monaco-action-bar .action-item .codicon {
-    width: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
-    height: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
+	width: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
+	height: calc(var(--vscode-workbench-tabs-font-size) * 1.2307692308);
 }
 
 
@@ -80,5 +80,5 @@
 /*** Generated for Custom Font Size ***/
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .title-label a, .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .tabs-container > .tab .tab-label a {
-    font-size: calc(var(--vscode-workbench-tabs-font-size) * 1)
+	font-size: calc(var(--vscode-workbench-tabs-font-size) * 1)
 }

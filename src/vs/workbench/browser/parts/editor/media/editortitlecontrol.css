@@ -51,24 +51,24 @@
 /*** Generated for Custom Font Size ***/
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .breadcrumbs-below-tabs .breadcrumbs-control {
-    height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
+	height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
 }
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .breadcrumbs-below-tabs .breadcrumbs-control .monaco-icon-label {
-    height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308);
-    line-height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
+	height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308);
+	line-height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
 }
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .breadcrumbs-below-tabs .breadcrumbs-control .monaco-icon-label::before {
-    height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
+	height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
 }
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .breadcrumbs-below-tabs .breadcrumbs-control .outline-element-icon {
-    padding-right: calc(var(--vscode-workbench-tabs-font-size) * 0.230769);
-    height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308);
-    line-height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
+	padding-right: calc(var(--vscode-workbench-tabs-font-size) * 0.230769);
+	height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308);
+	line-height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
 }
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .breadcrumbs-below-tabs .breadcrumbs-control .monaco-breadcrumb-item::before {
-    width: calc(var(--vscode-workbench-tabs-font-size) * 1.230769);
-    height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
+	width: calc(var(--vscode-workbench-tabs-font-size) * 1.230769);
+	height: calc(var(--vscode-workbench-tabs-font-size) * 1.692308)
 }
 .monaco-workbench .part.editor > .content .editor-group-container > .title.tabs .breadcrumbs-below-tabs .breadcrumbs-control .monaco-breadcrumb-item:last-child {
-    padding-right: calc(var(--vscode-workbench-tabs-font-size) * 0.615385)
+	padding-right: calc(var(--vscode-workbench-tabs-font-size) * 0.615385)
 }

@@ -1089,7 +1089,14 @@
 		"--vscode-workbench-font-size",
 		"--vscode-workbench-sidebar-font-size",
 		"--vscode-workbench-statusbar-font-family",
-		"--vscode-workbench-statusbar-font-size"
+		"--vscode-workbench-statusbar-font-size",
+		"--vscode-workbench-activitybar-font-family",
+		"--vscode-workbench-activitybar-font-size",
+		"--vscode-workbench-bottompane-font-family",
+		"--vscode-workbench-bottompane-font-size",
+		"--vscode-workbench-sidebar-font-family",
+		"--vscode-workbench-tabs-font-family",
+		"--vscode-workbench-tabs-font-size"
 	],
 	"sizes": [
 		"--vscode-agents-fontSize-body1",
