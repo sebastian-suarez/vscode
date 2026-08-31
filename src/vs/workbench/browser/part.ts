@@ -107,6 +107,15 @@ export abstract class Part<MementoType extends object = object> extends Componen
 	}
 
 	/**
+	 * Whether this part currently shows a header area. Kept in step with the DOM at all
+	 * times, including while the layout that `setHeaderArea` and `removeHeaderArea` trigger
+	 * is running, so subclasses can size the rest of the part against it.
+	 */
+	protected get hasHeaderArea(): boolean {
+		return !!this.headerArea;
+	}
+
+	/**
 	 * Subclasses override to provide a title area implementation.
 	 */
 	protected createTitleArea(parent: HTMLElement, options?: object): HTMLElement | undefined {

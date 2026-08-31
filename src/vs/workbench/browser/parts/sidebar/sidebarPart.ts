@@ -163,11 +163,14 @@ export class SidebarPart extends AbstractPaneCompositePart {
 	 * With an inline title bar the composite bar header takes the place of the title bar
 	 * row and hosts the native window controls, so it gets the height of that row, and the
 	 * title underneath it shrinks to a caption row. This only concerns the left hand side
-	 * bar, which is the one the window controls sit above. Both heights have to agree with
-	 * what `sidebarpart.css` gives those rows.
+	 * bar, which is the one the window controls sit above, and only while it actually has
+	 * that header: without one the title is the side bar's only row and keeps its default
+	 * height. Both heights have to agree with what `sidebarpart.css` gives those rows,
+	 * which is why the header is asked for rather than the setting that usually brings it:
+	 * `hasHeaderArea` is what the stylesheet's `:has()` matches on.
 	 */
 	private get hasInlineTitleBarLayout(): boolean {
-		return isInlineTitleBar(mainWindow) && this.layoutService.getSideBarPosition() === SideBarPosition.LEFT;
+		return isInlineTitleBar(mainWindow) && this.layoutService.getSideBarPosition() === SideBarPosition.LEFT && this.hasHeaderArea;
 	}
 
 	private get inlineTitleBarHeaderHeight(): number | undefined {

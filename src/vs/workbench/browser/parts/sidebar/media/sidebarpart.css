@@ -26,25 +26,26 @@
  * becomes a slim caption row with a centered label. The two rows together still add up to
  * the height the part layout reserves for a header and a title at zoom level 0, so the side
  * bar content stays flush with the status bar. `SidebarPart` feeds the layout the same two
- * heights. */
+ * heights, off the same condition: the caption row only applies while the header is there,
+ * so a side bar whose title is its only row keeps the default height. */
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header {
 	height: var(--titlebar-height);
 }
 
-.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title,
-.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title > .title-actions,
-.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title > .global-actions,
-.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title .monaco-toolbar {
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title,
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title > .title-actions,
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title > .global-actions,
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title .monaco-toolbar {
 	height: 24px; /* INLINE_TITLE_BAR_CAPTION_HEIGHT */
 }
 
-.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title > .title-label {
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title > .title-label {
 	flex: 1 1 auto;
 	text-align: center;
 	line-height: 24px;
 }
 
-.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title > .title-actions {
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title > .title-actions {
 	flex: 0 0 auto;
 }
 

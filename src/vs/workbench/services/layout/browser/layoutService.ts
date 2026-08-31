@@ -439,6 +439,30 @@ export function shouldShowCustomTitleBar(configurationService: IConfigurationSer
 	}
 }
 
+/**
+ * Whether the custom title bar is turned off by configuration, as opposed to being hidden
+ * for the state the window happens to be in: `shouldShowCustomTitleBar` also answers `false`
+ * while the window is in full screen. Consumers that lay out for the window chrome the user
+ * configured, rather than for what is on screen right now, want this one.
+ */
+export function isCustomTitleBarDisabled(configurationService: IConfigurationService): boolean {
+	if (!hasCustomTitlebar(configurationService)) {
+		return true;
+	}
+
+	if (!hasNativeTitlebar(configurationService)) {
+		return false; // the custom title bar is the only chrome the window has
+	}
+
+	// Turned off explicitly
+	if (configurationService.getValue<CustomTitleBarVisibility>(TitleBarSetting.CUSTOM_TITLE_BAR_VISIBILITY) === CustomTitleBarVisibility.NEVER) {
+		return true;
+	}
+
+	// Nothing left to put in it and the menu is native
+	return isTitleBarEmpty(configurationService) && hasNativeMenu(configurationService);
+}
+
 function isTitleBarEmpty(configurationService: IConfigurationService): boolean {
 
 	// with the command center enabled, we should always show

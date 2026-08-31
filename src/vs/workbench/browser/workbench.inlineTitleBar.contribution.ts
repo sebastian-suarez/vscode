@@ -3,22 +3,21 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { getZoomFactor, onDidChangeFullscreen, onDidChangeZoomLevel } from '../../base/browser/browser.js';
+import { getZoomFactor, onDidChangeZoomLevel } from '../../base/browser/browser.js';
 import { getWindow } from '../../base/browser/dom.js';
-import { mainWindow } from '../../base/browser/window.js';
 import { Disposable } from '../../base/common/lifecycle.js';
 import { isMacintosh, isNative } from '../../base/common/platform.js';
 import { IConfigurationService } from '../../platform/configuration/common/configuration.js';
 import { TitleBarSetting } from '../../platform/window/common/window.js';
 import { IWorkbenchContribution, registerWorkbenchContribution2, WorkbenchPhase } from '../common/contributions.js';
-import { IWorkbenchLayoutService, Parts, shouldShowCustomTitleBar } from '../services/layout/browser/layoutService.js';
+import { isCustomTitleBarDisabled, IWorkbenchLayoutService, LayoutSettings } from '../services/layout/browser/layoutService.js';
 import { INLINE_TITLE_BAR_CLASS, setInlineTitleBar } from './inlineTitleBar.js';
 
 /**
  * On macOS the window controls are inset into the window rather than drawn in a title bar of
- * their own (see `defaultBrowserWindowOptions`). When the workbench hides its custom title
- * bar on top of that, the controls end up over the first row of the workbench itself, which
- * then has to reserve room for them.
+ * their own (see `defaultBrowserWindowOptions`). When the workbench is configured without a
+ * custom title bar on top of that, the controls end up over the first row of the workbench
+ * itself, which then has to reserve room for them.
  *
  * This tracks that state on the workbench container of every window, together with the zoom
  * factor the reserved sizes are relative to: the native controls keep their size when the
@@ -28,6 +27,20 @@ import { INLINE_TITLE_BAR_CLASS, setInlineTitleBar } from './inlineTitleBar.js';
 export class InlineTitleBarLayout extends Disposable implements IWorkbenchContribution {
 
 	static readonly ID = 'workbench.contrib.inlineTitleBarLayout';
+
+	/**
+	 * The settings `isCustomTitleBarDisabled` reads on macOS. The menu settings are not
+	 * among them because `hasNativeMenu` is unconditionally true on this platform.
+	 */
+	private static readonly TITLE_BAR_CONFIGURATIONS = [
+		TitleBarSetting.TITLE_BAR_STYLE,
+		TitleBarSetting.CUSTOM_TITLE_BAR_VISIBILITY,
+		LayoutSettings.COMMAND_CENTER,
+		LayoutSettings.ACTIVITY_BAR_LOCATION,
+		LayoutSettings.EDITOR_ACTIONS_LOCATION,
+		LayoutSettings.EDITOR_TABS_MODE,
+		LayoutSettings.LAYOUT_ACTIONS
+	];
 
 	constructor(
 		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
@@ -57,16 +70,12 @@ export class InlineTitleBarLayout extends Disposable implements IWorkbenchContri
 			}
 		}));
 
-		// Custom title bar visibility: the main window reports it as part visibility,
-		// auxiliary windows and full screen transitions have to be picked up separately
-		this._register(this.layoutService.onDidChangePartVisibility(e => {
-			if (e.partId === Parts.TITLEBAR_PART) {
-				this.updateContainers();
-			}
-		}));
-		this._register(onDidChangeFullscreen(() => this.updateContainers()));
+		// Whether the custom title bar is configured away. Neither full screen nor the title
+		// bar part's own visibility is listened to: those hide the title bar for the state
+		// the window is in, and the geometry has to survive that — macOS takes the window
+		// controls away in full screen, it does not move the workbench underneath them.
 		this._register(this.configurationService.onDidChangeConfiguration(e => {
-			if (e.affectsConfiguration(TitleBarSetting.TITLE_BAR_STYLE) || e.affectsConfiguration(TitleBarSetting.CUSTOM_TITLE_BAR_VISIBILITY)) {
+			if (InlineTitleBarLayout.TITLE_BAR_CONFIGURATIONS.some(setting => e.affectsConfiguration(setting))) {
 				this.updateContainers();
 			}
 		}));
@@ -83,19 +92,10 @@ export class InlineTitleBarLayout extends Disposable implements IWorkbenchContri
 
 		container.style.setProperty('--zoom-factor', `${getZoomFactor(targetWindow)}`);
 
-		const inlineTitleBar = !this.isCustomTitleBarVisible(targetWindow);
+		// Configuration, not window state: every window of the session lays out the same way
+		const inlineTitleBar = isCustomTitleBarDisabled(this.configurationService);
 		container.classList.toggle(INLINE_TITLE_BAR_CLASS, inlineTitleBar);
 		setInlineTitleBar(inlineTitleBar, targetWindow);
-	}
-
-	private isCustomTitleBarVisible(targetWindow: Window): boolean {
-		if (targetWindow === mainWindow) {
-			return this.layoutService.isVisible(Parts.TITLEBAR_PART, targetWindow);
-		}
-
-		// Auxiliary windows are not part of the workbench grid, they evaluate the same
-		// predicate for their own title bar directly (see `AuxiliaryEditorPart`)
-		return shouldShowCustomTitleBar(this.configurationService, targetWindow);
 	}
 }
 
