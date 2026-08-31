@@ -26,7 +26,6 @@ product.overrides.json
 *.tsbuildinfo
 .eslintcache
 .vscode-test
-.chat-simulation-data
 vscode-telemetry-docs/
 test-output.json
 test/componentFixtures/.screenshots/*
