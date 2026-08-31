@@ -1097,7 +1097,8 @@
 		"--vscode-workbench-sidebar-font-family",
 		"--vscode-workbench-tabs-font-family",
 		"--vscode-workbench-tabs-font-size",
-		"--titlebar-height"
+		"--titlebar-height",
+		"--traffic-lights-width"
 	],
 	"sizes": [
 		"--vscode-agents-fontSize-body1",

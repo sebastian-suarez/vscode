@@ -88,3 +88,11 @@ export const onDidChangeInlineTitleBar = InlineTitleBarManager.INSTANCE.onDidCha
 export function getInlineTitleBarHeight(targetWindow: Window): number {
 	return INLINE_TITLE_BAR_HEIGHT / getZoomFactor(targetWindow);
 }
+
+/**
+ * Width the native window controls take up in the target window, in pixels. Matches what the
+ * `--traffic-lights-width` variable resolves to for that window.
+ */
+export function getInlineTitleBarControlsWidth(targetWindow: Window): number {
+	return INLINE_TITLE_BAR_CONTROLS_WIDTH / getZoomFactor(targetWindow);
+}

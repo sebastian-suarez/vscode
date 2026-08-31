@@ -111,6 +111,16 @@ export abstract class AbstractPaneCompositePart extends CompositePart<PaneCompos
 	private static readonly MIN_COMPOSITE_BAR_WIDTH = 50;
 
 	/**
+	 * Horizontal padding `part.css` gives the title area, per side.
+	 */
+	private static readonly TITLE_PADDING = 8;
+
+	/**
+	 * Horizontal padding `paneCompositePart.css` gives the header and footer areas, per side.
+	 */
+	protected static readonly HEADER_FOOTER_PADDING = 4;
+
+	/**
 	 * Additional right margin for the secondary side bar (it sits at the window
 	 * edge), doubling the standard margin. Must match the `margin-right` override
 	 * in `part.css`.
@@ -644,12 +654,19 @@ export abstract class AbstractPaneCompositePart extends CompositePart<PaneCompos
 
 	private layoutCompositeBar(): void {
 		if (this.contentDimension && this.dimension && this.paneCompositeBar.value) {
-			const padding = this.compositeBarPosition === CompositeBarPosition.TITLE ? 16 : 8;
 			const borderWidth = this.partId === Parts.PANEL_PART ? 0 : 1;
-			let availableWidth = this.contentDimension.width - padding - borderWidth;
+			let availableWidth = this.contentDimension.width - this.getCompositeBarPadding() - borderWidth;
 			availableWidth = Math.max(AbstractPaneCompositePart.MIN_COMPOSITE_BAR_WIDTH, availableWidth - this.getToolbarWidth());
 			this.paneCompositeBar.value.layout(availableWidth, this.dimension.height);
 		}
+	}
+
+	/**
+	 * Horizontal room the stylesheets take away from the area the composite bar lays its
+	 * composites out in, so that its overflow computation agrees with what is on screen.
+	 */
+	protected getCompositeBarPadding(): number {
+		return 2 * (this.compositeBarPosition === CompositeBarPosition.TITLE ? AbstractPaneCompositePart.TITLE_PADDING : AbstractPaneCompositePart.HEADER_FOOTER_PADDING);
 	}
 
 	private layoutEmptyMessage(): void {

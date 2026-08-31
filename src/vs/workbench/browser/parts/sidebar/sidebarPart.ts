@@ -37,7 +37,7 @@ import { Extensions } from '../../panecomposite.js';
 import { FONT, getFontSize, updateSidebarSize } from '../../../../base/common/font.js';
 import { onDidChangeZoomLevel } from '../../../../base/browser/browser.js';
 import { mainWindow } from '../../../../base/browser/window.js';
-import { getInlineTitleBarHeight, INLINE_TITLE_BAR_CAPTION_HEIGHT, isInlineTitleBar, onDidChangeInlineTitleBar } from '../../inlineTitleBar.js';
+import { getInlineTitleBarControlsWidth, getInlineTitleBarHeight, INLINE_TITLE_BAR_CAPTION_HEIGHT, isInlineTitleBar, onDidChangeInlineTitleBar } from '../../inlineTitleBar.js';
 
 export class SidebarPart extends AbstractPaneCompositePart {
 
@@ -179,6 +179,18 @@ export class SidebarPart extends AbstractPaneCompositePart {
 
 	private get inlineTitleBarTitleHeight(): number | undefined {
 		return this.hasInlineTitleBarLayout ? INLINE_TITLE_BAR_CAPTION_HEIGHT : undefined;
+	}
+
+	protected override getCompositeBarPadding(): number {
+		if (this.hasInlineTitleBarLayout) {
+
+			// The indent that clears the native window controls takes the place of the
+			// header's left padding rather than adding to it (see `sidebarpart.css`), so the
+			// composite bar is left with that indent plus the padding on the other side
+			return getInlineTitleBarControlsWidth(mainWindow) + AbstractPaneCompositePart.HEADER_FOOTER_PADDING;
+		}
+
+		return super.getCompositeBarPadding();
 	}
 
 	private onDidChangeAutoHideViewContainers(e: { before: number; after: number }): void {

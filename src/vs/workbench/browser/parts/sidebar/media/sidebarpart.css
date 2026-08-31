@@ -49,6 +49,59 @@
 	flex: 0 0 auto;
 }
 
+/* The view switcher in that header reads as a row of pills centered in the space the native
+ * window controls leave: the header is indented past them — `SidebarPart` takes the same
+ * indent off the width the composite bar lays its items out in — and the items lose the side
+ * padding and the underline indicator the bottom band gives them, so six of them still fit a
+ * side bar of ordinary width. The icon size is set through the variable the composite bar
+ * generates its icon masks against, so glyphs drawn as masks match the codicons. */
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header {
+	padding-left: var(--traffic-lights-width);
+	--activity-bar-icon-size: 20px;
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container {
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container > .composite-bar {
+	flex: 0 0 auto;
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item .action-label {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 28px;
+	margin: 0;
+	padding: 0;
+	border-radius: 6px;
+	font-size: 20px;
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item .active-item-indicator {
+	display: none;
+}
+
+/* Pin the count badge to the corner of the pill instead of letting it float into the gap
+ * between two of them, which is where the taller bottom band puts it. */
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item .badge.compact .badge-content {
+	top: calc(50% - 13px);
+	right: 1px;
+	bottom: auto;
+	left: auto;
+}
+
 .monaco-workbench .part.sidebar > .content {
 	font-size: var(--vscode-workbench-sidebar-font-size);
 	line-height: 1.4em;
