@@ -724,6 +724,32 @@ export function translucentSurfaceOnMac(color: Color): Color {
 	return new Color(new RGBA(color.rgba.r, color.rgba.g, color.rgba.b, MAC_TRANSLUCENT_SURFACE_ALPHA));
 }
 
+const MAC_TRANSPARENT_SURFACE_ALPHA = 0;
+
+/**
+ * The surfaces that sit on top of a translucent one and must not paint at all, so that the
+ * translucency below them — and the vibrancy below that — stays unbroken. The sticky scroll
+ * widget is such a surface: its rows are styled like the rows they stand in for, and the
+ * rows scrolling underneath are clipped away rather than covered.
+ */
+export const MAC_TRANSPARENT_SURFACES = new Set<ColorIdentifier>([
+	SIDE_BAR_STICKY_SCROLL_BACKGROUND,
+	SIDE_BAR_STICKY_SCROLL_SHADOW
+]);
+
+/**
+ * Clears a resolved surface color on macOS desktop, alongside `translucentSurfaceOnMac` and
+ * with the same absolute alpha, so that themes and color customizations cannot paint the
+ * surface back in. A no-op on every other platform and in the web.
+ */
+export function transparentSurfaceOnMac(color: Color): Color {
+	if (!isMacintosh || !isNative) {
+		return color;
+	}
+
+	return new Color(new RGBA(color.rgba.r, color.rgba.g, color.rgba.b, MAC_TRANSPARENT_SURFACE_ALPHA));
+}
+
 // < --- Menubar --- >
 
 export const MENUBAR_SELECTION_FOREGROUND = registerColor('menubar.selectionForeground', TITLE_BAR_ACTIVE_FOREGROUND, localize('menubarSelectionForeground', "Foreground color of the selected menu item in the menubar."));

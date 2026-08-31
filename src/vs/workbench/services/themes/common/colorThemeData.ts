@@ -24,7 +24,7 @@ import { CharCode } from '../../../../base/common/charCode.js';
 import { StorageScope, IStorageService, StorageTarget } from '../../../../platform/storage/common/storage.js';
 import { ThemeConfiguration } from './themeConfiguration.js';
 import { ColorScheme, ThemeTypeSelector } from '../../../../platform/theme/common/theme.js';
-import { MAC_TRANSLUCENT_SURFACES, translucentSurfaceOnMac } from '../../../common/theme.js';
+import { MAC_TRANSLUCENT_SURFACES, MAC_TRANSPARENT_SURFACES, translucentSurfaceOnMac, transparentSurfaceOnMac } from '../../../common/theme.js';
 import { ColorId, FontStyle, MetadataConsts } from '../../../../editor/common/encodedTokenAttributes.js';
 import { toStandardTokenType } from '../../../../editor/common/languages/supports/tokenization.js';
 
@@ -157,6 +157,12 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 		// of them, the generated CSS variables and the parts painting their container.
 		if (color && MAC_TRANSLUCENT_SURFACES.has(colorId)) {
 			return translucentSurfaceOnMac(color);
+		}
+
+		// The surfaces layered on top of a translucent one are cleared at the same point, so
+		// that they do not paint the translucency over a second time.
+		if (color && MAC_TRANSPARENT_SURFACES.has(colorId)) {
+			return transparentSurfaceOnMac(color);
 		}
 
 		return color;

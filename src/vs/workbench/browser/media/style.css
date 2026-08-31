@@ -461,3 +461,43 @@ body {
 	outline: calc(var(--vscode-workbench-sidebar-font-size) * 0.076923) dashed var(--vscode-toolbar-hoverOutline);
 	outline-offset: calc(var(--vscode-workbench-sidebar-font-size) * -0.076923)
 }
+
+/* macOS: the side bar reads as a source list — rows inset from both edges and rounded,
+ * indent guides sitting on the twistie chevrons, no scroll shadows and a wider header
+ * gutter. Unlike the title bar geometry above, none of this is tied to the inline title
+ * bar: it applies wherever the window is a native macOS one. The auxiliary bar keeps the
+ * stock look on purpose. */
+
+/* Sticky (parent folder) headers paint on the bare translucent side bar, so the rows
+ * scrolling underneath them have to be clipped away rather than covered up — a translucent
+ * header would let them ghost through. `--tree-sticky-scroll-clip` is the bottom edge of the
+ * sticky widget in the rows' own coordinate space, published on the list root by the tree's
+ * sticky scroll controller; the 0px fallback makes this a no-op for every list that does not
+ * publish it. */
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-list-rows {
+	mask-image: linear-gradient(to bottom, transparent var(--tree-sticky-scroll-clip, 0px), black var(--tree-sticky-scroll-clip, 0px));
+}
+
+/* Sticky rows are list rows too, so they take the same inset and radius — which is what
+ * lets them pass for the rows they stand in for. */
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-list-row {
+	width: calc(100% - 16px);
+	margin-left: 8px;
+	border-radius: 7px;
+}
+
+/* Guides line up with the chevrons rather than sitting to their left. */
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-tl-indent {
+	transform: translateX(3px);
+}
+
+/* No inset shadow at the scrolled edges: the side bar is translucent, and a shadow over it
+ * reads as a smudge rather than as depth. */
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-scrollable-element > .shadow {
+	display: none;
+}
+
+/* Section titles clear the inset rows below them. */
+.monaco-workbench.mac:not(.web) .part.sidebar .pane-header {
+	padding-left: 12px;
+}
