@@ -373,39 +373,39 @@ body {
 
 
 .monaco-workbench .part.sidebar body, .monaco-workbench .part.auxiliarybar body {
-    font-size: calc(var(--vscode-workbench-sidebar-font-size) * 0.846154)
+	font-size: calc(var(--vscode-workbench-sidebar-font-size) * 0.846154)
 }
 .monaco-workbench .part.sidebar, .monaco-workbench .part.auxiliarybar {
-    font-size: calc(var(--vscode-workbench-sidebar-font-size) * 1)
+	font-size: calc(var(--vscode-workbench-sidebar-font-size) * 1)
 }
 .monaco-workbench .part.sidebar .codicon[class*='codicon-'], .monaco-workbench .part.auxiliarybar .codicon[class*='codicon-'] {
-    font-size: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769)
+	font-size: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769)
 }
 .monaco-workbench .part.sidebar .predefined-file-icon[class*='codicon-']::before, .monaco-workbench .part.auxiliarybar .predefined-file-icon[class*='codicon-']::before {
-    width: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
-    padding-left: calc(var(--vscode-workbench-sidebar-font-size) * 0.230769);
-    padding-right: calc(var(--vscode-workbench-sidebar-font-size) * 0.230769)
+	width: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
+	padding-left: calc(var(--vscode-workbench-sidebar-font-size) * 0.230769);
+	padding-right: calc(var(--vscode-workbench-sidebar-font-size) * 0.230769)
 }
 .monaco-workbench .part.sidebar .select-container:after, .monaco-workbench .part.auxiliarybar .select-container:after {
-    font-size: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
-    width: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
-    height: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
-    line-height: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
-    right: calc(var(--vscode-workbench-sidebar-font-size) * 0.307692)
+	font-size: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
+	width: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
+	height: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
+	line-height: calc(var(--vscode-workbench-sidebar-font-size) * 1.230769);
+	right: calc(var(--vscode-workbench-sidebar-font-size) * 0.307692)
 }
 .monaco-workbench .part.sidebar [tabindex="0"]:focus, .monaco-workbench .part.sidebar [tabindex="-1"]:focus, .monaco-workbench .part.sidebar .synthetic-focus, .monaco-workbench .part.sidebar select:focus, .monaco-workbench .part.sidebar input[type="button"]:focus, .monaco-workbench .part.sidebar input[type="text"]:focus, .monaco-workbench .part.sidebar button:focus, .monaco-workbench .part.sidebar textarea:focus, .monaco-workbench .part.sidebar input[type="search"]:focus, .monaco-workbench .part.sidebar input[type="checkbox"]:focus, .monaco-workbench .part.auxiliarybar [tabindex="0"]:focus, .monaco-workbench .part.auxiliarybar [tabindex="-1"]:focus, .monaco-workbench .part.auxiliarybar .synthetic-focus, .monaco-workbench .part.auxiliarybar select:focus, .monaco-workbench .part.auxiliarybar input[type="button"]:focus, .monaco-workbench .part.auxiliarybar input[type="text"]:focus, .monaco-workbench .part.auxiliarybar button:focus, .monaco-workbench .part.auxiliarybar textarea:focus, .monaco-workbench .part.auxiliarybar input[type="search"]:focus, .monaco-workbench .part.auxiliarybar input[type="checkbox"]:focus {
-    outline-width: calc(var(--vscode-workbench-sidebar-font-size) * 0.076923);
-    outline-offset: calc(var(--vscode-workbench-sidebar-font-size) * -0.076923)
+	outline-width: calc(var(--vscode-workbench-sidebar-font-size) * 0.076923);
+	outline-offset: calc(var(--vscode-workbench-sidebar-font-size) * -0.076923)
 }
 .monaco-workbench .part.sidebar input[type="checkbox"]:focus, .monaco-workbench .part.auxiliarybar input[type="checkbox"]:focus {
-    outline-offset: calc(var(--vscode-workbench-sidebar-font-size) * 0.153846)
+	outline-offset: calc(var(--vscode-workbench-sidebar-font-size) * 0.153846)
 }
 .monaco-workbench .part.sidebar .monaco-list:not(.element-focused):not(:active):focus:before, .monaco-workbench .part.auxiliarybar .monaco-list:not(.element-focused):not(:active):focus:before {
-    outline: calc(var(--vscode-workbench-sidebar-font-size) * 0.076923) solid;
-    outline-width: calc(var(--vscode-workbench-sidebar-font-size) * 0.076923);
-    outline-offset: calc(var(--vscode-workbench-sidebar-font-size) * -0.076923)
+	outline: calc(var(--vscode-workbench-sidebar-font-size) * 0.076923) solid;
+	outline-width: calc(var(--vscode-workbench-sidebar-font-size) * 0.076923);
+	outline-offset: calc(var(--vscode-workbench-sidebar-font-size) * -0.076923)
 }
 .monaco-workbench .part.sidebar .monaco-action-bar:not(.vertical) .action-item .action-label:hover:not(.disabled), .monaco-workbench .part.auxiliarybar .monaco-action-bar:not(.vertical) .action-item .action-label:hover:not(.disabled) {
-    outline: calc(var(--vscode-workbench-sidebar-font-size) * 0.076923) dashed var(--vscode-toolbar-hoverOutline);
-    outline-offset: calc(var(--vscode-workbench-sidebar-font-size) * -0.076923)
+	outline: calc(var(--vscode-workbench-sidebar-font-size) * 0.076923) dashed var(--vscode-toolbar-hoverOutline);
+	outline-offset: calc(var(--vscode-workbench-sidebar-font-size) * -0.076923)
 }

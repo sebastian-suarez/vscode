@@ -1083,7 +1083,13 @@
 		"--vscode-inline-chat-affordance-height",
 		"--collapse-from-width",
 		"--slide-from-x",
-		"--slide-from-y"
+		"--slide-from-y",
+		"--monaco-font",
+		"--vscode-workbench-font-family",
+		"--vscode-workbench-font-size",
+		"--vscode-workbench-sidebar-font-size",
+		"--vscode-workbench-statusbar-font-family",
+		"--vscode-workbench-statusbar-font-size"
 	],
 	"sizes": [
 		"--vscode-agents-fontSize-body1",
