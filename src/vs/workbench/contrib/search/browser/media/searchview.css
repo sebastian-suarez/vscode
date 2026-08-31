@@ -39,6 +39,14 @@
 	background-color: unset;
 }
 
+/* The chevron belongs to the search input row, not to the widget: at 100% it stretches over
+ * the replace row too once that is open. 26px is the input row height below, so with the
+ * stock top: 0 the button ends up centered on the first row and the flex centering above
+ * keeps the glyph centered inside it. */
+.monaco-workbench.mac:not(.web) .search-view .search-widget .toggle-replace-button {
+	height: 26px;
+}
+
 .monaco-workbench .search-view .search-widget .toggle-replace-button:hover {
 	background-color: var(--vscode-toolbar-hoverBackground)
 }
