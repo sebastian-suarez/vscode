@@ -34,6 +34,13 @@ export const INLINE_TITLE_BAR_CONTROLS_WIDTH = 86;
  */
 export const INLINE_TITLE_BAR_CAPTION_HEIGHT = 24;
 
+/**
+ * Height of the breadcrumbs row underneath a full height tab row, in pixels. That row carries
+ * content rather than the window controls, so unlike the row above it this is a plain size
+ * that the zoom level scales along with everything else.
+ */
+export const INLINE_TITLE_BAR_BREADCRUMBS_HEIGHT = 25;
+
 class InlineTitleBarManager {
 
 	static readonly INSTANCE = new InlineTitleBarManager();

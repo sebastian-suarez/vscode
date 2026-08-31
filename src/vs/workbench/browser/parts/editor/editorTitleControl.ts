@@ -4,7 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import './media/editortitlecontrol.css';
-import { $, Dimension, clearNode } from '../../../../base/browser/dom.js';
+import { $, Dimension, clearNode, getWindow } from '../../../../base/browser/dom.js';
+import { INLINE_TITLE_BAR_BREADCRUMBS_HEIGHT, isInlineTitleBar } from '../../inlineTitleBar.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { IThemeService, Themable } from '../../../../platform/theme/common/themeService.js';
 import { BreadcrumbsControl, BreadcrumbsControlFactory } from './breadcrumbsControl.js';
@@ -41,6 +42,16 @@ export class EditorTitleControl extends Themable {
 	private breadcrumbsControlFactory: BreadcrumbsControlFactory | undefined;
 	private readonly breadcrumbsControlDisposables = this._register(new DisposableStore());
 	private get breadcrumbsControl() { return this.breadcrumbsControlFactory?.control; }
+
+	/**
+	 * Under an inline title bar the breadcrumbs get a row of their own beneath the full height
+	 * tab row, tall enough to read as one, and `editortitlecontrol.css` sizes that row to the
+	 * same value. The tabs control relayouts the group whenever that state changes, which is
+	 * what brings this back in step, so there is no listener of our own here.
+	 */
+	private get breadcrumbsHeight(): number {
+		return isInlineTitleBar(getWindow(this.parent)) ? INLINE_TITLE_BAR_BREADCRUMBS_HEIGHT : BreadcrumbsControl.HEIGHT;
+	}
 
 	constructor(
 		private readonly parent: HTMLElement,
@@ -206,7 +217,7 @@ export class EditorTitleControl extends Themable {
 		// Layout breadcrumbs if visible
 		let breadcrumbsControlDimension: Dimension | undefined = undefined;
 		if (this.breadcrumbsControl?.isHidden() === false) {
-			breadcrumbsControlDimension = new Dimension(dimensions.container.width, BreadcrumbsControl.HEIGHT);
+			breadcrumbsControlDimension = new Dimension(dimensions.container.width, this.breadcrumbsHeight);
 			this.breadcrumbsControl.layout(breadcrumbsControlDimension);
 		}
 
@@ -218,7 +229,7 @@ export class EditorTitleControl extends Themable {
 
 	getHeight(): IEditorGroupTitleHeight {
 		const tabsControlHeight = this.editorTabsControl.getHeight();
-		const breadcrumbsControlHeight = this.breadcrumbsControl?.isHidden() === false ? BreadcrumbsControl.HEIGHT : 0;
+		const breadcrumbsControlHeight = this.breadcrumbsControl?.isHidden() === false ? this.breadcrumbsHeight : 0;
 
 		return {
 			total: tabsControlHeight + breadcrumbsControlHeight,
