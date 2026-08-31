@@ -814,6 +814,12 @@ export class BrowserTitlebarPart extends Part implements ITitlebarPart {
 			}
 
 			const titleBackground = this.getColor(this.isInactive ? TITLE_BAR_INACTIVE_BACKGROUND : TITLE_BAR_ACTIVE_BACKGROUND, (color, theme) => {
+				// On macOS the color resolves translucent so that the title bar reveals the
+				// under-window vibrancy, which the LCD rendering support below would undo.
+				if (isMacintosh && isNative) {
+					return color;
+				}
+
 				// LCD Rendering Support: the title bar part is a defining its own GPU layer.
 				// To benefit from LCD font rendering, we must ensure that we always set an
 				// opaque background color. As such, we compute an opaque color given we know

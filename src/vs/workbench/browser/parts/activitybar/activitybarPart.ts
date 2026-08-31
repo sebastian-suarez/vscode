@@ -45,15 +45,15 @@ export class ActivitybarPart extends Part {
 
 	static readonly ACTION_HEIGHT = 48;
 	static readonly COMPACT_ACTION_HEIGHT = 32;
-	static readonly COMPACT_ACTION_HEIGHT_RATIO = 32/48;
+	static readonly COMPACT_ACTION_HEIGHT_RATIO = 32 / 48;
 
 	static readonly ACTIVITYBAR_WIDTH = 48;
 	static readonly COMPACT_ACTIVITYBAR_WIDTH = 36;
-	static readonly COMPACT_ACTIVITYBAR_WIDTH_RATIO = 36/48;
+	static readonly COMPACT_ACTIVITYBAR_WIDTH_RATIO = 36 / 48;
 
 	static readonly ICON_SIZE = 24;
 	static readonly COMPACT_ICON_SIZE = 16;
-	static readonly COMPACT_ICON_SIZE_RATIO = 16/24;
+	static readonly COMPACT_ICON_SIZE_RATIO = 16 / 24;
 
 	/**
 	 * Gutter reserved on the left and bottom edges under the floating panels

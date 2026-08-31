@@ -4,9 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from '../../nls.js';
-import { registerColor, editorBackground, contrastBorder, transparent, editorWidgetBackground, textLinkForeground, lighten, darken, focusBorder, activeContrastBorder, editorWidgetForeground, editorErrorForeground, editorWarningForeground, editorInfoForeground, treeIndentGuidesStroke, errorForeground, listActiveSelectionBackground, listActiveSelectionForeground, editorForeground, toolbarHoverBackground, inputBorder, widgetBorder, scrollbarShadow } from '../../platform/theme/common/colorRegistry.js';
+import { ColorIdentifier, registerColor, editorBackground, contrastBorder, transparent, editorWidgetBackground, textLinkForeground, lighten, darken, focusBorder, activeContrastBorder, editorWidgetForeground, editorErrorForeground, editorWarningForeground, editorInfoForeground, treeIndentGuidesStroke, errorForeground, listActiveSelectionBackground, listActiveSelectionForeground, editorForeground, toolbarHoverBackground, inputBorder, widgetBorder, scrollbarShadow } from '../../platform/theme/common/colorRegistry.js';
 import { IColorTheme } from '../../platform/theme/common/themeService.js';
-import { Color } from '../../base/common/color.js';
+import { Color, RGBA } from '../../base/common/color.js';
+import { isMacintosh, isNative } from '../../base/common/platform.js';
 import { ColorScheme } from '../../platform/theme/common/theme.js';
 
 // < --- Workbench (not customizable) --- >
@@ -689,6 +690,39 @@ export const TITLE_BAR_BORDER = registerColor('titleBar.border', {
 	hcDark: contrastBorder,
 	hcLight: contrastBorder
 }, localize('titleBarBorder', "Title bar border color."));
+
+// < --- macOS Vibrancy Surfaces --- >
+
+const MAC_TRANSLUCENT_SURFACE_ALPHA = 0.3;
+
+/**
+ * The workbench surfaces that reveal the macOS under-window vibrancy. The color theme
+ * resolves them through `translucentSurfaceOnMac`, so that every consumer sees the same
+ * translucent value: colors defaulting to one of them, the generated CSS variables and
+ * the parts painting their container.
+ */
+export const MAC_TRANSLUCENT_SURFACES = new Set<ColorIdentifier>([
+	SIDE_BAR_BACKGROUND,
+	SIDE_BAR_TITLE_BACKGROUND,
+	ACTIVITY_BAR_BACKGROUND,
+	ACTIVITY_BAR_TOP_BACKGROUND,
+	TITLE_BAR_ACTIVE_BACKGROUND,
+	TITLE_BAR_INACTIVE_BACKGROUND
+]);
+
+/**
+ * Bakes translucency into a resolved surface color on macOS desktop, where the window is
+ * backed by a vibrancy material that only shows through surfaces painting with alpha. The
+ * alpha is absolute so that themes and color customizations keep tinting the surface
+ * without being able to paint it opaque again. A no-op on every other platform and in the web.
+ */
+export function translucentSurfaceOnMac(color: Color): Color {
+	if (!isMacintosh || !isNative) {
+		return color;
+	}
+
+	return new Color(new RGBA(color.rgba.r, color.rgba.g, color.rgba.b, MAC_TRANSLUCENT_SURFACE_ALPHA));
+}
 
 // < --- Menubar --- >
 

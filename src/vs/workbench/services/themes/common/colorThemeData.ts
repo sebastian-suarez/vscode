@@ -24,6 +24,7 @@ import { CharCode } from '../../../../base/common/charCode.js';
 import { StorageScope, IStorageService, StorageTarget } from '../../../../platform/storage/common/storage.js';
 import { ThemeConfiguration } from './themeConfiguration.js';
 import { ColorScheme, ThemeTypeSelector } from '../../../../platform/theme/common/theme.js';
+import { MAC_TRANSLUCENT_SURFACES, translucentSurfaceOnMac } from '../../../common/theme.js';
 import { ColorId, FontStyle, MetadataConsts } from '../../../../editor/common/encodedTokenAttributes.js';
 import { toStandardTokenType } from '../../../../editor/common/languages/supports/tokenization.js';
 
@@ -149,6 +150,19 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 	}
 
 	public getColor(colorId: ColorIdentifier, useDefault?: boolean): Color | undefined {
+		const color = this.resolveColor(colorId, useDefault);
+
+		// Resolve the surfaces that reveal the macOS under-window vibrancy translucent
+		// here, at the single point every consumer goes through: colors defaulting to one
+		// of them, the generated CSS variables and the parts painting their container.
+		if (color && MAC_TRANSLUCENT_SURFACES.has(colorId)) {
+			return translucentSurfaceOnMac(color);
+		}
+
+		return color;
+	}
+
+	private resolveColor(colorId: ColorIdentifier, useDefault?: boolean): Color | undefined {
 		const customColor = this.customColorMap[colorId];
 		if (customColor instanceof Color) {
 			return customColor;
