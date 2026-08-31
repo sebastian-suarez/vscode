@@ -18,6 +18,20 @@ import { IDisposable, toDisposable } from '../../base/common/lifecycle.js';
 export interface IPartOptions {
 	readonly hasTitle?: boolean;
 	readonly borderWidth?: () => number;
+
+	/**
+	 * Height of the header area when it should differ from the default. The value has to
+	 * agree with the height the stylesheets give the header area of this part, the layout
+	 * only subtracts it from the content area.
+	 */
+	readonly headerHeight?: () => number | undefined;
+
+	/**
+	 * Height of the title area when it should differ from the default. The value has to
+	 * agree with the height the stylesheets give the title area of this part, the layout
+	 * only subtracts it from the content area.
+	 */
+	readonly titleHeight?: () => number | undefined;
 }
 
 export interface ILayoutContentResult {
@@ -160,7 +174,7 @@ export abstract class Part<MementoType extends object = object> extends Componen
 		}
 	}
 
-	private relayout() {
+	protected relayout() {
 		if (this.dimension && this.contentPosition) {
 			this.layout(this.dimension.width, this.dimension.height, this.contentPosition.top, this.contentPosition.left);
 		}
@@ -216,7 +230,7 @@ class PartLayout {
 		// Title Size: Width (Fill), Height (Variable)
 		let titleSize: Dimension;
 		if (this.options.hasTitle) {
-			titleSize = new Dimension(width, Math.min(height, PartLayout.TITLE_HEIGHT));
+			titleSize = new Dimension(width, Math.min(height, this.options.titleHeight?.() ?? PartLayout.TITLE_HEIGHT));
 		} else {
 			titleSize = Dimension.None;
 		}
@@ -224,7 +238,7 @@ class PartLayout {
 		// Header Size: Width (Fill), Height (Variable)
 		let headerSize: Dimension;
 		if (this.headerVisible) {
-			headerSize = new Dimension(width, Math.min(height, PartLayout.HEADER_HEIGHT));
+			headerSize = new Dimension(width, Math.min(height, this.options.headerHeight?.() ?? PartLayout.HEADER_HEIGHT));
 		} else {
 			headerSize = Dimension.None;
 		}

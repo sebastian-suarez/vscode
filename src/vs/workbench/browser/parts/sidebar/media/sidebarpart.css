@@ -20,6 +20,34 @@
 	background-color: var(--vscode-sideBarTitle-background);
 }
 
+/* With an inline title bar the header of the left hand side bar — the composite bar, when
+ * the activity bar is configured to sit on top — takes the place of the title bar row and
+ * hosts the native window controls, so it takes that row's height. The title underneath it
+ * becomes a slim caption row with a centered label. The two rows together still add up to
+ * the height the part layout reserves for a header and a title at zoom level 0, so the side
+ * bar content stays flush with the status bar. `SidebarPart` feeds the layout the same two
+ * heights. */
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header {
+	height: var(--titlebar-height);
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title,
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title > .title-actions,
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title > .global-actions,
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title .monaco-toolbar {
+	height: 24px; /* INLINE_TITLE_BAR_CAPTION_HEIGHT */
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title > .title-label {
+	flex: 1 1 auto;
+	text-align: center;
+	line-height: 24px;
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .composite.title > .title-actions {
+	flex: 0 0 auto;
+}
+
 .monaco-workbench .part.sidebar > .content {
 	font-size: var(--vscode-workbench-sidebar-font-size);
 	line-height: 1.4em;

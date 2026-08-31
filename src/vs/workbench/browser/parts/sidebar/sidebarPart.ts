@@ -35,6 +35,9 @@ import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { VisibleViewContainersTracker } from '../visibleViewContainersTracker.js';
 import { Extensions } from '../../panecomposite.js';
 import { FONT, getFontSize, updateSidebarSize } from '../../../../base/common/font.js';
+import { onDidChangeZoomLevel } from '../../../../base/browser/browser.js';
+import { mainWindow } from '../../../../base/browser/window.js';
+import { getInlineTitleBarHeight, INLINE_TITLE_BAR_CAPTION_HEIGHT, isInlineTitleBar, onDidChangeInlineTitleBar } from '../../inlineTitleBar.js';
 
 export class SidebarPart extends AbstractPaneCompositePart {
 
@@ -88,7 +91,13 @@ export class SidebarPart extends AbstractPaneCompositePart {
 	) {
 		super(
 			Parts.SIDEBAR_PART,
-			{ hasTitle: true, trailingSeparator: false, borderWidth: () => (this.getColor(SIDE_BAR_BORDER) || this.getColor(contrastBorder)) ? 1 : 0 },
+			{
+				hasTitle: true,
+				trailingSeparator: false,
+				borderWidth: () => (this.getColor(SIDE_BAR_BORDER) || this.getColor(contrastBorder)) ? 1 : 0,
+				headerHeight: () => this.inlineTitleBarHeaderHeight,
+				titleHeight: () => this.inlineTitleBarTitleHeight
+			},
 			SidebarPart.activeViewletSettingsKey,
 			ActiveViewletContext.bindTo(contextKeyService),
 			SidebarFocusContext.bindTo(contextKeyService),
@@ -134,7 +143,39 @@ export class SidebarPart extends AbstractPaneCompositePart {
 			}
 		}));
 
+		// The inline title bar geometry is expressed in physical points, so it moves
+		// with the zoom level as well as with the title bar going away and coming back
+		this._register(onDidChangeZoomLevel(targetWindowId => {
+			if (targetWindowId === mainWindow.vscodeWindowId) {
+				this.relayout();
+			}
+		}));
+		this._register(onDidChangeInlineTitleBar(targetWindowId => {
+			if (targetWindowId === mainWindow.vscodeWindowId) {
+				this.relayout();
+			}
+		}));
+
 		this.registerActions();
+	}
+
+	/**
+	 * With an inline title bar the composite bar header takes the place of the title bar
+	 * row and hosts the native window controls, so it gets the height of that row, and the
+	 * title underneath it shrinks to a caption row. This only concerns the left hand side
+	 * bar, which is the one the window controls sit above. Both heights have to agree with
+	 * what `sidebarpart.css` gives those rows.
+	 */
+	private get hasInlineTitleBarLayout(): boolean {
+		return isInlineTitleBar(mainWindow) && this.layoutService.getSideBarPosition() === SideBarPosition.LEFT;
+	}
+
+	private get inlineTitleBarHeaderHeight(): number | undefined {
+		return this.hasInlineTitleBarLayout ? getInlineTitleBarHeight(mainWindow) : undefined;
+	}
+
+	private get inlineTitleBarTitleHeight(): number | undefined {
+		return this.hasInlineTitleBarLayout ? INLINE_TITLE_BAR_CAPTION_HEIGHT : undefined;
 	}
 
 	private onDidChangeAutoHideViewContainers(e: { before: number; after: number }): void {

@@ -29,7 +29,7 @@ import { EditorInput } from '../../../common/editor/editorInput.js';
 import { ResourceContextKey, ActiveEditorPinnedContext, ActiveEditorStickyContext, ActiveEditorGroupLockedContext, ActiveEditorCanSplitInGroupContext, SideBySideEditorActiveContext, ActiveEditorFirstInGroupContext, ActiveEditorAvailableEditorIdsContext, applyAvailableEditorIds, ActiveEditorLastInGroupContext } from '../../../common/contextkeys.js';
 import { AnchorAlignment } from '../../../../base/browser/ui/contextview/contextview.js';
 import { assertReturnsDefined } from '../../../../base/common/types.js';
-import { isFirefox } from '../../../../base/browser/browser.js';
+import { isFirefox, onDidChangeZoomLevel } from '../../../../base/browser/browser.js';
 import { isCancellationError } from '../../../../base/common/errors.js';
 import { SideBySideEditorInput } from '../../../common/editor/sideBySideEditorInput.js';
 import { WorkbenchToolBar, HiddenItemStrategy } from '../../../../platform/actions/browser/toolbar.js';
@@ -49,6 +49,7 @@ import { IManagedHoverTooltipMarkdownString } from '../../../../base/browser/ui/
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { FONT, getFontSize, updateTabsSize } from '../../../../base/common/font.js';
 import { applyDragImage } from '../../../../base/browser/ui/dnd/dnd.js';
+import { getInlineTitleBarHeight, isInlineTitleBar, onDidChangeInlineTitleBar } from '../../inlineTitleBar.js';
 
 export class EditorCommandsContextActionRunner extends ActionRunner {
 
@@ -168,6 +169,19 @@ export abstract class EditorTabsControl extends Themable implements IEditorTabsC
 				this.groupView.relayout();
 			}
 		}));
+
+		// The inline title bar tab height is expressed in physical points, so it moves with
+		// the zoom level as well as with the title bar going away and coming back
+		const updateTabHeightForWindow = (targetWindowId: number) => {
+			if (targetWindowId !== getWindow(this.parent).vscodeWindowId) {
+				return; // ignore all but our window
+			}
+
+			this.updateTabHeight();
+			this.groupView.relayout();
+		};
+		this._register(onDidChangeZoomLevel(targetWindowId => updateTabHeightForWindow(targetWindowId)));
+		this._register(onDidChangeInlineTitleBar(targetWindowId => updateTabHeightForWindow(targetWindowId)));
 
 		// Context Keys
 		this.contextMenuContextKeyService = this._register(this.contextKeyService.createScoped(container));
@@ -594,7 +608,19 @@ export abstract class EditorTabsControl extends Themable implements IEditorTabsC
 	}
 
 	protected get tabHeight() {
-		return this.groupsView.partOptions.tabHeight !== 'compact' ? EditorTabsControl.EDITOR_TAB_HEIGHT.normal : EditorTabsControl.EDITOR_TAB_HEIGHT.compact;
+		if (this.groupsView.partOptions.tabHeight === 'compact') {
+			return EditorTabsControl.EDITOR_TAB_HEIGHT.compact;
+		}
+
+		// With an inline title bar the tab row is the row the native window controls sit in,
+		// so it takes that row's height rather than the font relative one: the controls keep
+		// their size no matter the zoom level or the configured workbench font size.
+		const targetWindow = getWindow(this.parent);
+		if (isInlineTitleBar(targetWindow)) {
+			return getInlineTitleBarHeight(targetWindow);
+		}
+
+		return EditorTabsControl.EDITOR_TAB_HEIGHT.normal;
 	}
 
 	protected getHoverTitle(editor: EditorInput): string | IManagedHoverTooltipMarkdownString {
