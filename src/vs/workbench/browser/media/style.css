@@ -92,6 +92,48 @@ body {
 	--traffic-lights-width: calc(86px / var(--zoom-factor, 1));
 }
 
+/* With the side bar closed the editor is what reaches the window's left edge, so the tab row
+ * takes over the job of clearing the window controls. */
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen).nosidebar .part.editor > .content .editor-group-container > .title.tabs > .tabs-and-actions-container {
+	padding-left: calc(var(--traffic-lights-width) + 8px);
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.banner {
+	padding-left: var(--traffic-lights-width);
+	-webkit-app-region: drag;
+}
+
+/* Surfaces the window can be dragged by. None of this applies in full screen, where there are
+ * no window controls to work around and no window to drag.
+ *
+ * Worth knowing before touching the list: with the window controls centered in the 46pt row,
+ * macOS lays a native strip of roughly 45.5pt over that row, and it takes the events before a
+ * CSS drag region ever sees them — so the entries covering that row do nothing today. They are
+ * kept so that moving the controls back up to y <= 12 brings them back without another pass.
+ * The status bar is the drag surface that carries the feature today, and it is declared in
+ * `statusbarpart.css` without the full screen condition on purpose.
+ *
+ * The selectors are flat on purpose. Writing them as a nested list expands each entry against
+ * every outer selector, which silently drops the combinations nobody spelled out — that is a
+ * bug this list has had before. */
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.activitybar,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.editor > .content .editor-group-container > .title.tabs .tabs-container,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.sidebar > .composite.title,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.sidebar > .header-or-footer.header {
+	-webkit-app-region: drag;
+}
+
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.banner .icon-container,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.banner .message-actions-container,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.banner .action-container,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.activitybar > .content .monaco-action-bar,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.editor > .content .editor-group-container > .title.tabs .tabs-container > .tab,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.sidebar > .composite.title > .title-actions,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.sidebar > .composite.title > .global-actions,
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.sidebar > .header-or-footer.header > .composite-bar-container > .composite-bar {
+	-webkit-app-region: no-drag;
+}
+
 /* Disable panel/part shadows when the setting is off (preserves floating modals, notifications, etc.) */
 .monaco-workbench.no-shadows .part.titlebar,
 .monaco-workbench.no-shadows .part.activitybar,
