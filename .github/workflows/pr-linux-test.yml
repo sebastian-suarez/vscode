@@ -335,16 +335,16 @@ jobs:
         working-directory: test/smoke
         run: npm run compile
 
-      # Remove the musl-libc Claude Code native binary so the bundled
-      # @anthropic-ai/claude-agent-sdk in extensions/copilot falls through to the
-      # glibc variant (or its bundled ./cli.js fallback). The musl binary is
-      # pulled in by the root devDependency @anthropic-ai/claude-agent-sdk@0.2.x,
-      # whose package metadata declares both "linux-x64" and "linux-x64-musl" as
+      # Remove the musl-libc Claude Code native binary so that
+      # @anthropic-ai/claude-agent-sdk — a root devDependency consumed by
+      # src/vs/platform/agentHost — falls through to the glibc variant (or its
+      # bundled ./cli.js fallback). The musl binary is pulled in because the
+      # SDK's package metadata declares both "linux-x64" and "linux-x64-musl" as
       # optionalDependencies with `os: ["linux"]` and no libc filter, so npm
       # installs both variants on any Linux. The SDK probes the musl variant
       # first; spawning a musl-linked ELF on the glibc-based GitHub Actions
-      # runner returns ENOENT (missing ELF interpreter), which causes Claude
-      # session smoke tests to time out. See
+      # runner returns ENOENT (missing ELF interpreter), which hangs anything
+      # that starts the Claude Code CLI. See
       # https://github.com/anthropics/claude-agent-sdk-typescript for the SDK
       # resolution order.
       - name: Remove musl Claude binary on glibc Linux

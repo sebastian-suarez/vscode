@@ -85,11 +85,6 @@ extensions/vscode-colorize-tests/test/colorize-fixtures/test.js
 extensions/vscode-colorize-tests/test/colorize-fixtures/test6916.js
 extensions/yaml/build/update-grammar.js
 gulpfile.mjs
-scripts/chat-simulation/common/perf-scenarios.js
-scripts/chat-simulation/common/utils.js
-scripts/chat-simulation/merge-ci-summary.js
-scripts/chat-simulation/test-chat-mem-leaks.js
-scripts/chat-simulation/test-chat-perf-regression.js
 scripts/code-agent-host.js
 scripts/code-perf.js
 scripts/code-server.js
