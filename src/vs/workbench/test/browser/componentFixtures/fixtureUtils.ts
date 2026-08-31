@@ -12,6 +12,10 @@ import { ModifierKeyEmitter } from '../../../../base/browser/dom.js';
 // eslint-disable-next-line local/code-import-patterns
 import '../../../../../../build/vite/style.css';
 import '../../../browser/media/style.css';
+// The ui-custom-font rules for base/editor-layer widgets live in this stylesheet
+// rather than next to the widgets themselves; in the product they arrive via
+// `workbench/browser/style.ts`, which fixtures do not load.
+import '../../../browser/media/uiCustomFontWidgets.css';
 // Import auxiliaryBarPart.css here (before any contrib/chat CSS) so the cascade
 // matches the product: chat.css loads later and overrides the auxiliarybar
 // rules where applicable. Fixtures that wrap content in `.part.auxiliarybar`
