@@ -1349,6 +1349,12 @@ class DefaultStickyScrollDelegate<T, TFilterData> implements IStickyScrollDelega
 	}
 }
 
+/**
+ * Bottom edge of the sticky widget, expressed in the coordinate space of the list rows container,
+ * so that rows scrolling underneath the sticky rows can be masked out in CSS.
+ */
+const stickyScrollClipProperty = '--tree-sticky-scroll-clip';
+
 class StickyScrollController<T, TFilterData, TRef> extends Disposable {
 
 	readonly onDidChangeHasFocus: Event<boolean>;
@@ -1362,6 +1368,7 @@ class StickyScrollController<T, TFilterData, TRef> extends Disposable {
 	private readonly _widget: StickyScrollWidget<T, TFilterData, TRef>;
 
 	private paddingTop: number;
+	private stickyScrollClip: string | undefined;
 
 	constructor(
 		private readonly tree: AbstractTree<T, TFilterData, TRef>,
@@ -1410,6 +1417,11 @@ class StickyScrollController<T, TFilterData, TRef> extends Disposable {
 			}
 		}));
 
+		this._register(toDisposable(() => {
+			this.view.getHTMLElement().style.removeProperty(stickyScrollClipProperty);
+			this.stickyScrollClip = undefined;
+		}));
+
 		this.update();
 	}
 
@@ -1446,11 +1458,25 @@ class StickyScrollController<T, TFilterData, TRef> extends Disposable {
 		// Don't render anything if there are no elements
 		if (!firstVisibleNode || this.tree.scrollTop <= this.paddingTop || this.view.renderHeight === 0) {
 			this._widget.setState(undefined);
+			this.updateStickyScrollClip();
 			return;
 		}
 
 		const stickyState = this.findStickyState(firstVisibleNode);
 		this._widget.setState(stickyState);
+		this.updateStickyScrollClip();
+	}
+
+	private updateStickyScrollClip(): void {
+		// The rows container is offset by `-scrollTop`, so the bottom edge of the sticky widget
+		// sits at `scrollTop + height` within the rows container
+		const stickyScrollClip = `${this.view.scrollTop + this.height}px`;
+		if (this.stickyScrollClip === stickyScrollClip) {
+			return;
+		}
+
+		this.stickyScrollClip = stickyScrollClip;
+		this.view.getHTMLElement().style.setProperty(stickyScrollClipProperty, stickyScrollClip);
 	}
 
 	private findStickyState(firstVisibleNode: ITreeNode<T, TFilterData>): StickyScrollState<T, TFilterData, TRef> | undefined {

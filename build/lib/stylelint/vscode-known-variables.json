@@ -995,6 +995,7 @@
 		"--testMessageDecorationFontSize",
 		"--title-border-bottom-color",
 		"--title-wco-width",
+		"--tree-sticky-scroll-clip",
 		"--update-progress",
 		"--reveal-button-size",
 		"--part-background",
