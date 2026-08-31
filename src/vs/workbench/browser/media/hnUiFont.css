@@ -1,0 +1,46 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* "HN UI" -- the workbench UI font on macOS.
+ *
+ * This ports the injection-era setup into product CSS: the `hn-weight-shift.css` stylesheet
+ * that Custom UI Style loaded through `custom-ui-style.external.imports`, plus the
+ * `custom-ui-style.font.sansSerif: "HN UI"` setting that pointed the workbench at it. Both
+ * settings are gone; the family is defined and applied here instead.
+ *
+ * "HN UI" is Helvetica Neue with the whole weight scale shifted one face lighter: normal (400)
+ * renders HelveticaNeue-Light and every heavier variant steps down one stock face (500 Medium
+ * -> Regular, 600/700 Semibold/Bold -> Medium), so the UI reads in Light while bolder variants
+ * keep hierarchy one step down. All sources are `local()` -- no font files are added to the
+ * repo. Editor and terminal monospace fonts do not flow through this variable and are untouched.
+ */
+
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue-UltraLight"), local("Helvetica Neue UltraLight"); font-weight: 100 299; }
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue-Thin"), local("Helvetica Neue Thin"); font-weight: 300 399; }
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue-Light"), local("Helvetica Neue Light"); font-weight: 400 499; }
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue"), local("Helvetica Neue"); font-weight: 500 599; }
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue-Medium"), local("Helvetica Neue Medium"); font-weight: 600 1000; }
+
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue-UltraLightItalic"), local("Helvetica Neue UltraLight Italic"); font-weight: 100 299; font-style: italic; }
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue-ThinItalic"), local("Helvetica Neue Thin Italic"); font-weight: 300 399; font-style: italic; }
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue-LightItalic"), local("Helvetica Neue Light Italic"); font-weight: 400 499; font-style: italic; }
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue-Italic"), local("Helvetica Neue Italic"); font-weight: 500 599; font-style: italic; }
+@font-face { font-family: "HN UI"; src: local("HelveticaNeue-MediumItalic"), local("Helvetica Neue Medium Italic"); font-weight: 600 1000; font-style: italic; }
+
+/* The product default on native macOS. Deliberately not gated on the inline-titlebar class:
+ * the UI font is native-always, not a layout mode.
+ *
+ * The fallback tail after "HN UI" mirrors the stock macOS `--monaco-font` stack from
+ * ./media/style.css, so an absent Helvetica Neue lands on exactly what the workbench would
+ * have used anyway.
+ *
+ * Cascade contract: `workbench.experimental.fontFamily` (VSCodium's `00-ui-custom-font`) still
+ * wins, because `updateFontFamily()` in ../workbench.ts writes `--vscode-workbench-font-family`
+ * as an INLINE style on this same element and inline declarations beat stylesheet ones. Unset
+ * setting -> the inline property is removed and this default applies.
+ */
+.monaco-workbench.mac:not(.web) {
+	--vscode-workbench-font-family: "HN UI", -apple-system, BlinkMacSystemFont, sans-serif;
+}
