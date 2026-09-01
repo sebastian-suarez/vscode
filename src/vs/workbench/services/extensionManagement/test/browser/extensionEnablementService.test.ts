@@ -30,7 +30,7 @@ import { IHostService } from '../../../host/browser/host.js';
 import { mock } from '../../../../../base/test/common/mock.js';
 import { IExtensionBisectService } from '../../browser/extensionBisect.js';
 import { IWorkspaceTrustManagementService, IWorkspaceTrustRequestService, WorkspaceTrustRequestOptions } from '../../../../../platform/workspace/common/workspaceTrust.js';
-import { EXTENSIONS_SUPPORT_AGENTS_WINDOW, ExtensionManifestPropertiesService, IExtensionManifestPropertiesService } from '../../../extensions/common/extensionManifestPropertiesService.js';
+import { ExtensionManifestPropertiesService, IExtensionManifestPropertiesService } from '../../../extensions/common/extensionManifestPropertiesService.js';
 import { TestContextService, TestProductService, TestWorkspaceTrustEnablementService, TestWorkspaceTrustManagementService } from '../../../../test/common/workbenchTestServices.js';
 import { TestWorkspace } from '../../../../../platform/workspace/test/common/testWorkspace.js';
 import { ExtensionManagementService } from '../../common/extensionManagementService.js';
@@ -1198,55 +1198,6 @@ suite('ExtensionEnablementService Test', () => {
 		assert.strictEqual(testObject.getEnablementState(local), EnablementState.DisabledByMalicious);
 	});
 
-	test('test extensions are disabled in sessions window unless they only contribute themes', () => {
-		instantiationService.stub(IWorkbenchEnvironmentService, { isSessionsWindow: true });
-		testObject = disposableStore.add(new TestExtensionEnablementService(instantiationService));
-
-		const themeOnly = aLocalExtension2('pub.themeOnly', { contributes: aContributes('themes') });
-		const iconTheme = aLocalExtension2('pub.iconTheme', { contributes: aContributes('iconThemes') });
-		const productIconTheme = aLocalExtension2('pub.productIconTheme', { contributes: aContributes('productIconThemes') });
-		const grammar = aLocalExtension2('pub.grammar', { contributes: aContributes('grammars') });
-		const withMain = aLocalExtension2('pub.withMain', { main: 'main.js', contributes: aContributes('themes') });
-		const withBrowser = aLocalExtension2('pub.withBrowser', { browser: 'main.browser.js', contributes: aContributes('themes') });
-		const nonThemeContrib = aLocalExtension2('pub.nonThemeContrib', { contributes: aContributes('commands') });
-		const builtinWithMain = aLocalExtension2('pub.builtinWithMain', { main: 'main.js' }, { type: ExtensionType.System });
-
-		assert.deepStrictEqual([
-			themeOnly,
-			iconTheme,
-			productIconTheme,
-			grammar,
-			withMain,
-			withBrowser,
-			nonThemeContrib,
-			builtinWithMain,
-		].map(ext => testObject.getEnablementState(ext)), [
-			EnablementState.EnabledGlobally,
-			EnablementState.EnabledGlobally,
-			EnablementState.EnabledGlobally,
-			EnablementState.EnabledGlobally,
-			EnablementState.DisabledByEnvironment,
-			EnablementState.DisabledByEnvironment,
-			EnablementState.DisabledByEnvironment,
-			EnablementState.EnabledGlobally,
-		]);
-	});
-
-	test('test configured extensions are enabled in sessions window', async () => {
-		await (instantiationService.get(IConfigurationService) as TestConfigurationService).setUserConfiguration(EXTENSIONS_SUPPORT_AGENTS_WINDOW, { 'pub.withMain': true, 'pub.nonThemeContrib': true });
-		instantiationService.stub(IWorkbenchEnvironmentService, { isSessionsWindow: true });
-		testObject = disposableStore.add(new TestExtensionEnablementService(instantiationService));
-
-		const withMain = aLocalExtension2('pub.withMain', { main: 'main.js', contributes: aContributes('themes') });
-		const nonThemeContrib = aLocalExtension2('pub.nonThemeContrib', { contributes: aContributes('commands') });
-		const withBrowser = aLocalExtension2('pub.withBrowser', { browser: 'main.browser.js', contributes: aContributes('themes') });
-
-		assert.deepStrictEqual([withMain, nonThemeContrib, withBrowser].map(ext => testObject.getEnablementState(ext)), [
-			EnablementState.EnabledGlobally,
-			EnablementState.EnabledGlobally,
-			EnablementState.DisabledByEnvironment,
-		]);
-	});
 
 	test('test extensions are not disabled in non-sessions window', () => {
 		const withMain = aLocalExtension2('pub.withMain', { main: 'main.js' });

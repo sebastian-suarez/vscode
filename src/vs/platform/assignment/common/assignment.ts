@@ -103,14 +103,13 @@ export enum Filters {
 	ReleaseDate = 'X-VSCode-ReleaseDate',
 
 	/**
-	 * The kind of window VS Code is running in (`editor` or `agents`).
+	 * The kind of window VS Code is running in (`editor`).
 	 */
 	WindowKind = 'X-VSCode-WindowKind',
 }
 
 export const enum WindowKind {
 	Editor = 'editor',
-	Agents = 'agents',
 }
 
 export class AssignmentFilterProvider implements IExperimentationFilterProvider {

@@ -54,21 +54,6 @@ const BANNER_RESTRICTED_MODE = 'workbench.banner.restrictedMode';
 const STARTUP_PROMPT_SHOWN_KEY = 'workspace.trust.startupPrompt.shown';
 const BANNER_RESTRICTED_MODE_DISMISSED_KEY = 'workbench.banner.restrictedMode.dismissed';
 
-/**
- * Returns a trust note string for the sessions window explaining that trusting
- * a folder/workspace also persists trust to the parent VS Code install.
- * Returns `undefined` when not running in the sessions window.
- */
-function getSessionsWindowTrustNote(environmentService: IWorkbenchEnvironmentService, productService: IProductService, isWorkspace: boolean): string | undefined {
-	if (!environmentService.isSessionsWindow) {
-		return undefined;
-	}
-	if (isWorkspace) {
-		return localize('sessionsWindowWorkspaceTrustNote', "Trusting this workspace will also mark it as trusted in {0}.", productService.nameLong);
-	}
-	return localize('sessionsWindowFolderTrustNote', "Trusting this folder will also mark it as trusted in {0}.", productService.nameLong);
-}
-
 export class WorkspaceTrustContextKeys extends Disposable implements IWorkbenchContribution {
 
 	private readonly _ctxWorkspaceTrustEnabled: IContextKey<boolean>;
@@ -108,9 +93,7 @@ export class WorkspaceTrustRequestHandler extends Disposable implements IWorkben
 		@ILabelService private readonly labelService: ILabelService,
 		@IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
 		@IWorkspaceTrustManagementService private readonly workspaceTrustManagementService: IWorkspaceTrustManagementService,
-		@IWorkspaceTrustRequestService private readonly workspaceTrustRequestService: IWorkspaceTrustRequestService,
-		@IWorkbenchEnvironmentService private readonly environmentService: IWorkbenchEnvironmentService,
-		@IProductService private readonly productService: IProductService) {
+		@IWorkspaceTrustRequestService private readonly workspaceTrustRequestService: IWorkspaceTrustRequestService) {
 		super();
 
 		this.registerListeners();
@@ -175,11 +158,6 @@ export class WorkspaceTrustRequestHandler extends Disposable implements IWorkben
 				`\`${this.labelService.getUriLabel(options.uri)}\``
 			];
 
-			const sessionsTrustNote = getSessionsWindowTrustNote(this.environmentService, this.productService, false);
-			if (sessionsTrustNote) {
-				markdownDetails.push(sessionsTrustNote);
-			}
-
 			// Dialog
 			await this.dialogService.prompt<void>({
 				type: Severity.Info,
@@ -229,10 +207,6 @@ export class WorkspaceTrustRequestHandler extends Disposable implements IWorkben
 				{ markdown: new MarkdownString(details) },
 				{ markdown: new MarkdownString(localize('immediateTrustRequestLearnMore', "If you don't trust the authors of these files, we do not recommend continuing as the files may be malicious. See [our docs](https://aka.ms/vscode-workspace-trust) to learn more.")) }
 			];
-			const sessionsTrustNote = getSessionsWindowTrustNote(this.environmentService, this.productService, this.useWorkspaceLanguage);
-			if (sessionsTrustNote) {
-				markdownDetails.push({ markdown: new MarkdownString(sessionsTrustNote) });
-			}
 			const { result } = await this.dialogService.prompt({
 				type: Severity.Info,
 				message,
@@ -351,11 +325,7 @@ export class WorkspaceTrustUXHandler extends Disposable implements IWorkbenchCon
 					const addedFoldersTrustInfo = await Promise.all(e.changes.added.map(folder => this.workspaceTrustManagementService.getUriTrustInfo(folder.uri)));
 
 					if (!addedFoldersTrustInfo.map(info => info.trusted).every(trusted => trusted)) {
-						let detail = localize('addWorkspaceFolderDetail', "You are adding files that are not currently trusted to a trusted workspace. Do you trust the authors of these new files?");
-						const sessionsTrustNote = getSessionsWindowTrustNote(this.environmentService, this.productService, false);
-						if (sessionsTrustNote) {
-							detail += '\n\n' + sessionsTrustNote;
-						}
+						const detail = localize('addWorkspaceFolderDetail', "You are adding files that are not currently trusted to a trusted workspace. Do you trust the authors of these new files?");
 						const { confirmed } = await this.dialogService.confirm({
 							type: Severity.Info,
 							message: localize('addWorkspaceFolderMessage', "Do you trust the authors of the files in this folder?"),
@@ -415,10 +385,6 @@ export class WorkspaceTrustUXHandler extends Disposable implements IWorkbenchCon
 				!isEmptyWindow ?
 					`\`${this.labelService.getWorkspaceLabel(workspaceIdentifier, { verbose: Verbosity.LONG })}\`` : '',
 			];
-			const sessionsTrustNote = getSessionsWindowTrustNote(this.environmentService, this.productService, !isSingleFolderWorkspace);
-			if (sessionsTrustNote) {
-				markdownStrings.push(sessionsTrustNote);
-			}
 			this.doShowModal(
 				title,
 				{ label: trustOption ?? localize({ key: 'trustOption', comment: ['&& denotes a mnemonic'] }, "&&Yes, I trust the authors"), sublabel: isSingleFolderWorkspace ? localize('trustFolderOptionDescription', "Trust folder and enable all features") : localize('trustWorkspaceOptionDescription', "Trust workspace and enable all features") },

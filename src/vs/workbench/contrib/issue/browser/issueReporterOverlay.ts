@@ -590,15 +590,12 @@ export class IssueReporterOverlay {
 		this.updateExtensionOptions();
 		this.updateExtensionFieldVisibility();
 
-		// Default the target to the most likely option when the reporter opens.
-		// In the Agents Window we preselect Agents Window; otherwise default to
+		// Default the target to the most likely option when the reporter opens:
 		// VS Code (the most common target). Extension is preselected only when an
 		// extension id was already provided. The user can always override.
 		if (!this.selectedIssueSource) {
 			if (this.data.extensionId) {
 				this.selectedIssueSource = IssueSource.Extension;
-			} else if (this.data.isSessionsWindow) {
-				this.selectedIssueSource = IssueSource.AgentsWindow;
 			} else {
 				this.selectedIssueSource = IssueSource.VSCode;
 			}
@@ -729,7 +726,6 @@ export class IssueReporterOverlay {
 	private getAllSourceOptions(): { label: string; value: IssueSource }[] {
 		return [
 			{ label: product.nameLong || localize('vscode', "Visual Studio Code"), value: IssueSource.VSCode },
-			{ label: localize('agentsWindow', "Agents Window"), value: IssueSource.AgentsWindow },
 			{ label: localize('extensionSource', "A VS Code extension"), value: IssueSource.Extension },
 			{ label: localize('marketplace', "Extensions Marketplace"), value: IssueSource.Marketplace },
 		];
@@ -738,8 +734,8 @@ export class IssueReporterOverlay {
 	private getSourceOptions(): { label: string; value: IssueSource }[] {
 		const options = this.getAllSourceOptions();
 		// The Extension target only applies when there are non-builtin, non-theme
-		// extensions to report against, which never happens in the Agents Window.
-		if (this.data.isSessionsWindow || !this.hasReportableExtensions()) {
+		// extensions to report against.
+		if (!this.hasReportableExtensions()) {
 			return options.filter(o => o.value !== IssueSource.Extension);
 		}
 		return options;
@@ -813,14 +809,12 @@ export class IssueReporterOverlay {
 	private updateIssueSourceFlags(): void {
 		const fileOnExtension = this.selectedIssueSource === IssueSource.Extension;
 		const fileOnMarketplace = this.selectedIssueSource === IssueSource.Marketplace;
-		const fileOnProduct = this.selectedIssueSource === IssueSource.VSCode || this.selectedIssueSource === IssueSource.AgentsWindow || this.selectedIssueSource === IssueSource.Unknown;
-		const fileOnAgentsWindow = this.selectedIssueSource === IssueSource.AgentsWindow;
+		const fileOnProduct = this.selectedIssueSource === IssueSource.VSCode || this.selectedIssueSource === IssueSource.Unknown;
 		this.model.update({
 			issueSource: this.selectedIssueSource,
 			fileOnExtension,
 			fileOnMarketplace,
 			fileOnProduct,
-			isSessionsWindow: fileOnAgentsWindow ? true : this.data.isSessionsWindow,
 			selectedExtension: this.selectedExtension,
 		});
 		this.data.issueSource = this.selectedIssueSource;
@@ -840,9 +834,6 @@ export class IssueReporterOverlay {
 				break;
 			case IssueSource.Marketplace:
 				this.titleInput.setPlaceHolder(localize('marketplacePlaceholder', "E.g. Cannot disable installed extension"));
-				break;
-			case IssueSource.AgentsWindow:
-				this.titleInput.setPlaceHolder(localize('agentsWindowPlaceholder', "E.g. Sessions list does not refresh after creating a new session"));
 				break;
 			case IssueSource.VSCode:
 				this.titleInput.setPlaceHolder(localize('vscodePlaceholder', "E.g. Workbench is missing problems panel"));
@@ -1037,8 +1028,6 @@ export class IssueReporterOverlay {
 		switch (this.selectedIssueSource) {
 			case IssueSource.VSCode:
 				return product.nameLong || localize('vscode', "Visual Studio Code");
-			case IssueSource.AgentsWindow:
-				return localize('agentsWindow', "Agents Window");
 			case IssueSource.Extension:
 				return this.selectedExtension?.displayName || this.selectedExtension?.name || localize('extensionSource', "A VS Code extension");
 			case IssueSource.Marketplace:

@@ -257,7 +257,7 @@ export class WorkbenchAssignmentService extends Disposable implements IAssignmen
 			this.telemetryService.devDeviceId,
 			targetPopulation,
 			this.productService.date ?? '',
-			this.environmentService.isSessionsWindow ? WindowKind.Agents : WindowKind.Editor
+			WindowKind.Editor
 		);
 
 		const tasConfig = this.productService.tasConfig!;

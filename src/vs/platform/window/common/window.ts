@@ -475,8 +475,6 @@ export interface INativeWindowConfiguration extends IWindowConfiguration, Native
 
 	os: IOSConfiguration;
 	policiesData?: IStringDictionary<{ definition: PolicyDefinition; value: PolicyValue }>;
-
-	isSessionsWindow?: boolean;
 }
 
 /**

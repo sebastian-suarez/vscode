@@ -123,7 +123,6 @@ const terminalConfiguration: IStringDictionary<IConfigurationPropertySchema> = {
 		],
 		default: 'view',
 		description: localize('terminal.integrated.defaultLocation', "Controls where newly created terminals will appear."),
-		agentsWindow: { default: 'view', readOnly: true },
 	},
 	[TerminalSettingId.TabsFocusMode]: {
 		type: 'string',

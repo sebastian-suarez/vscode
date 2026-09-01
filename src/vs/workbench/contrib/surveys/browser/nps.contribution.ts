@@ -35,7 +35,7 @@ class NPSContribution implements IWorkbenchContribution {
 		@IConfigurationService configurationService: IConfigurationService,
 		@IWorkbenchEnvironmentService environmentService: IWorkbenchEnvironmentService
 	) {
-		if (!productService.npsSurveyUrl || !configurationService.getValue<boolean>('telemetry.feedback.enabled') || environmentService.isSessionsWindow) {
+		if (!productService.npsSurveyUrl || !configurationService.getValue<boolean>('telemetry.feedback.enabled')) {
 			return;
 		}
 
