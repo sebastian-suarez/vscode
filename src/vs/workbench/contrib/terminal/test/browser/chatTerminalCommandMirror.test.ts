@@ -37,7 +37,7 @@ suite('Workbench - ChatTerminalCommandMirror', () => {
 
 		async function createXterm(cols = 80, rows = 10, scrollback = 10): Promise<XtermTerminal> {
 			const capabilities = store.add(new TerminalCapabilityStore());
-			return store.add(instantiationService.createInstance(XtermTerminal, undefined, XTermBaseCtor, {
+			return store.add(instantiationService.createInstance(XtermTerminal, XTermBaseCtor, {
 				cols,
 				rows,
 				xtermColorProvider: { getBackgroundColor: () => undefined },

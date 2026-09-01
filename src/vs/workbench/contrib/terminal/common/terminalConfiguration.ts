@@ -735,26 +735,6 @@ Registry.as<IConfigurationMigrationRegistry>(WorkbenchExtensions.ConfigurationMi
 			return configurationKeyValuePairs;
 		}
 	}, {
-		key: TerminalContribSettingId.DeprecatedAgentSandboxLinuxFileSystem,
-		migrateFn: (value: { denyRead?: string[]; allowWrite?: string[]; denyWrite?: string[] }, valueAccessor) => {
-			const configurationKeyValuePairs: ConfigurationKeyValuePairs = [];
-			if (value !== undefined && valueAccessor(TerminalContribSettingId.AgentSandboxLinuxFileSystem) === undefined) {
-				configurationKeyValuePairs.push([TerminalContribSettingId.AgentSandboxLinuxFileSystem, { value }]);
-			}
-			configurationKeyValuePairs.push([TerminalContribSettingId.DeprecatedAgentSandboxLinuxFileSystem, { value: undefined }]);
-			return configurationKeyValuePairs;
-		}
-	}, {
-		key: TerminalContribSettingId.DeprecatedAgentSandboxMacFileSystem,
-		migrateFn: (value: { denyRead?: string[]; allowWrite?: string[]; denyWrite?: string[] }, valueAccessor) => {
-			const configurationKeyValuePairs: ConfigurationKeyValuePairs = [];
-			if (value !== undefined && valueAccessor(TerminalContribSettingId.AgentSandboxMacFileSystem) === undefined) {
-				configurationKeyValuePairs.push([TerminalContribSettingId.AgentSandboxMacFileSystem, { value }]);
-			}
-			configurationKeyValuePairs.push([TerminalContribSettingId.DeprecatedAgentSandboxMacFileSystem, { value: undefined }]);
-			return configurationKeyValuePairs;
-		}
-	}, {
 		key: TerminalSettingId.EnableBell,
 		migrateFn: (enableBell, accessor) => {
 			const configurationKeyValuePairs: ConfigurationKeyValuePairs = [];

@@ -1830,7 +1830,6 @@ export default defineConfig(
 						'vs/workbench/services/*/~',
 						'vs/workbench/contrib/*/~',
 						'vs/sessions/~',
-						'vs/workbench/contrib/terminal/terminalContribChatExports*',
 						'vs/workbench/contrib/terminal/terminalContribExports*',
 						'vscode-notebook-renderer', // Type only import
 						'@vscode/tree-sitter-wasm', // type import
@@ -1935,13 +1934,6 @@ export default defineConfig(
 					'layer': 'browser',
 					'restrictions': [
 						'vs/workbench/contrib/**'
-					]
-				},
-				{
-					'target': 'src/vs/workbench/contrib/terminal/terminalContribChatExports.ts',
-					'layer': 'browser',
-					'restrictions': [
-						'vs/workbench/contrib/terminalContrib/*/~'
 					]
 				},
 				{
