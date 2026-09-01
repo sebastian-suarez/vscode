@@ -486,6 +486,32 @@ body {
 	border-radius: 7px;
 }
 
+/* What sets the sticky header apart from the rows it stands in for is a hairline and the
+ * faint tint `MAC_TINTED_STICKY_SURFACES` gives it — never a fill, which would break the
+ * translucency. It fades in rather than snapping: the widget swaps `display` when it empties,
+ * and a transition cannot follow that, so the empty state keeps its box and drops to zero
+ * opacity instead. The rows inside are torn out of the DOM as the widget empties, so the box
+ * that outlives them is empty; `pointer-events` is what keeps it from swallowing clicks meant
+ * for the rows underneath. */
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-tree-sticky-container {
+	border-bottom: 1px solid rgba(204, 204, 204, 0.2);
+	opacity: 1;
+	transition: opacity 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-tree-sticky-container.empty {
+	display: block;
+	opacity: 0;
+	pointer-events: none;
+	border-bottom-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.monaco-workbench.mac:not(.web) .part.sidebar .monaco-tree-sticky-container {
+		transition: none;
+	}
+}
+
 /* Guides line up with the chevrons rather than sitting to their left. */
 .monaco-workbench.mac:not(.web) .part.sidebar .monaco-tl-indent {
 	transform: translateX(3px);
@@ -500,4 +526,13 @@ body {
 /* Section titles clear the inset rows below them. */
 .monaco-workbench.mac:not(.web) .part.sidebar .pane-header {
 	padding-left: 12px;
+}
+
+/* The vendored side bar font scaling sizes every action label off the text size, which leaves
+ * the icon labels — the pane header actions and the toolbar overflow in the composite title —
+ * drawing an 11px glyph in a 16px box. Text labels keep the scaling; only the glyphs go back
+ * to the size the rest of the workbench draws codicons at. The view switcher pills carry their
+ * own, far more specific size and are unaffected. */
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-action-bar .action-label.codicon {
+	font-size: 16px;
 }

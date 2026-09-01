@@ -50,20 +50,27 @@
  * become a jump bar of their own. The fill goes on the wrapper because the control only ever
  * spans its own content, and the hairline on top is what ends the active tab against the row
  * that hosts the window controls — tab and jump bar share the editor background by design, so
- * without it they read as one surface. `EditorTitleControl` lays out for the same height. */
-.monaco-workbench.mac:not(.web).inline-titlebar .part.editor > .content .editor-group-container > .title .breadcrumbs-below-tabs {
+ * without it they read as one surface. `EditorTitleControl` lays out for the same height.
+ *
+ * All of it hangs off the control actually being shown. An editor without breadcrumbs keeps
+ * its control in the DOM and hides it with `display: none`, which a `display: flex` of ours
+ * out-specifies — the row would then paint for an editor the layout reserves no height for,
+ * and the group would scroll itself up by exactly that row. The wrapper carries the fill and
+ * the hairline, so it takes the same condition through `:has()`, which covers the editors
+ * that never got a control at all as well. */
+.monaco-workbench.mac:not(.web).inline-titlebar .part.editor > .content .editor-group-container > .title .breadcrumbs-below-tabs:has(> .breadcrumbs-control:not(.hidden)) {
 	background-color: var(--vscode-breadcrumb-background);
 	border-top: 1px solid rgba(204, 204, 204, 0.2);
 }
 
-.monaco-workbench.mac:not(.web).inline-titlebar .part.editor > .content .editor-group-container > .title .breadcrumbs-below-tabs .breadcrumbs-control {
+.monaco-workbench.mac:not(.web).inline-titlebar .part.editor > .content .editor-group-container > .title .breadcrumbs-below-tabs .breadcrumbs-control:not(.hidden) {
 	height: 25px; /* INLINE_TITLE_BAR_BREADCRUMBS_HEIGHT */
 	display: flex;
 	align-items: center;
 	padding: 0 10px;
 }
 
-.monaco-workbench.mac:not(.web).inline-titlebar .part.editor > .content .editor-group-container > .title .breadcrumbs-below-tabs .breadcrumbs-control .monaco-breadcrumb-item {
+.monaco-workbench.mac:not(.web).inline-titlebar .part.editor > .content .editor-group-container > .title .breadcrumbs-below-tabs .breadcrumbs-control:not(.hidden) .monaco-breadcrumb-item {
 	font-size: 11px;
 }
 

@@ -60,10 +60,13 @@
 	--activity-bar-icon-size: 20px;
 }
 
+/* `safe` keeps the centering from overflowing on the start side: a plain centered flex box
+ * splits its overflow evenly, which would slide the leftmost pill back under the window
+ * controls the indent above exists to clear. */
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container {
 	height: 100%;
 	align-items: center;
-	justify-content: center;
+	justify-content: safe center;
 }
 
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container > .composite-bar {
