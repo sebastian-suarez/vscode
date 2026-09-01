@@ -597,7 +597,11 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 			'workbench.secondarySideBar.defaultVisibility': {
 				'type': 'string',
 				'enum': ['hidden', 'visibleInWorkspace', 'visible', 'maximizedInWorkspace', 'maximized'],
-				'default': 'visibleInWorkspace',
+				// Nothing in this build asks for the secondary side bar on first boot: the only
+				// thing stock opens it for is chat, which ships disabled here, so a virgin window
+				// got a 170px strip with an empty Chat title and no content. It stays closed until
+				// it is asked for.
+				'default': isMacintosh && isNative ? 'hidden' : 'visibleInWorkspace',
 				'description': localize('secondarySideBarDefaultVisibility', "Controls the default visibility of the secondary side bar in workspaces or empty windows that are opened for the first time. Can be overridden by the agent sessions startup editor setting."),
 				'enumDescriptions': [
 					localize('workbench.secondarySideBar.defaultVisibility.hidden', "The secondary side bar is hidden by default."),
