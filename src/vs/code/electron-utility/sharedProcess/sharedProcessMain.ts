@@ -131,18 +131,8 @@ import { IExtensionGalleryManifestService } from '../../../platform/extensionMan
 import { ExtensionGalleryManifestIPCService } from '../../../platform/extensionManagement/common/extensionGalleryManifestServiceIpc.js';
 import { ISharedWebContentExtractorService } from '../../../platform/webContentExtractor/common/webContentExtractor.js';
 import { SharedWebContentExtractorService } from '../../../platform/webContentExtractor/node/sharedWebContentExtractorService.js';
-import { McpManagementService } from '../../../platform/mcp/node/mcpManagementService.js';
-import { IAllowedMcpServersService, IMcpGalleryService, IMcpManagementService } from '../../../platform/mcp/common/mcpManagement.js';
-import { IMcpResourceScannerService, McpResourceScannerService } from '../../../platform/mcp/common/mcpResourceScannerService.js';
-import { McpGalleryService } from '../../../platform/mcp/common/mcpGalleryService.js';
-import { McpManagementChannel } from '../../../platform/mcp/common/mcpManagementIpc.js';
-import { AllowedMcpServersService } from '../../../platform/mcp/common/allowedMcpServersService.js';
-import { IMcpGalleryManifestService } from '../../../platform/mcp/common/mcpGalleryManifest.js';
-import { McpGalleryManifestIPCService } from '../../../platform/mcp/common/mcpGalleryManifestServiceIpc.js';
 import { IMeteredConnectionService } from '../../../platform/meteredConnection/common/meteredConnection.js';
 import { MeteredConnectionChannelClient, METERED_CONNECTION_CHANNEL } from '../../../platform/meteredConnection/common/meteredConnectionIpc.js';
-import { PlaywrightChannel } from '../../../platform/browserView/node/playwrightChannel.js';
-import { AgentNetworkFilterService } from '../../../platform/networkFilter/common/networkFilterService.js';
 import { ILocalGitService } from '../../../platform/git/common/localGitService.js';
 import { LocalGitService } from '../../../platform/git/node/localGitService.js';
 
@@ -363,13 +353,6 @@ class SharedProcessMain extends Disposable implements IClientConnectionFilter {
 		services.set(IAllowedExtensionsService, new SyncDescriptor(AllowedExtensionsService, undefined, true));
 		services.set(INativeServerExtensionManagementService, new SyncDescriptor(ExtensionManagementService, undefined, true));
 
-		// MCP Management
-		services.set(IAllowedMcpServersService, new SyncDescriptor(AllowedMcpServersService, undefined, true));
-		services.set(IMcpGalleryManifestService, new McpGalleryManifestIPCService(this.server));
-		services.set(IMcpGalleryService, new SyncDescriptor(McpGalleryService, undefined, true));
-		services.set(IMcpResourceScannerService, new SyncDescriptor(McpResourceScannerService, undefined, true));
-		services.set(IMcpManagementService, new SyncDescriptor(McpManagementService, undefined, true));
-
 		// Extension Gallery
 		services.set(IExtensionGalleryManifestService, new ExtensionGalleryManifestIPCService(this.server, logService, productService));
 		services.set(IExtensionGalleryService, new SyncDescriptor(ExtensionGalleryService, undefined, true));
@@ -439,10 +422,6 @@ class SharedProcessMain extends Disposable implements IClientConnectionFilter {
 		const channel = new ExtensionManagementChannel(accessor.get(IExtensionManagementService), () => null);
 		this.server.registerChannel('extensions', channel);
 
-		// Mcp Management
-		const mcpManagementChannel = new McpManagementChannel(accessor.get(IMcpManagementService), () => null);
-		this.server.registerChannel('mcpManagement', mcpManagementChannel);
-
 		// Language Packs
 		const languagePacksChannel = ProxyChannel.fromService(accessor.get(ILanguagePackService), this._store);
 		this.server.registerChannel('languagePacks', languagePacksChannel);
@@ -496,11 +475,6 @@ class SharedProcessMain extends Disposable implements IClientConnectionFilter {
 		// Web Content Extractor
 		const webContentExtractorChannel = ProxyChannel.fromService(accessor.get(ISharedWebContentExtractorService), this._store);
 		this.server.registerChannel('sharedWebContentExtractor', webContentExtractorChannel);
-
-		// Playwright
-		const agentNetworkFilterService = this._register(new AgentNetworkFilterService(accessor.get(IConfigurationService)));
-		const playwrightChannel = this._register(new PlaywrightChannel(this.server, accessor.get(IMainProcessService), accessor.get(ILogService), agentNetworkFilterService, accessor.get(ITelemetryService)));
-		this.server.registerChannel('playwright', playwrightChannel);
 
 		// Local Git
 		const localGitChannel = ProxyChannel.fromService(accessor.get(ILocalGitService), this._store);

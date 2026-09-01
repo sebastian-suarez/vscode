@@ -114,7 +114,6 @@ export interface NativeParsedArgs {
 	'export-policy-data'?: string;
 	'export-default-keybindings'?: string;
 	'install-source'?: string;
-	'add-mcp'?: string[];
 	'disable-updates'?: boolean;
 	'share-secrets-with-agents-app'?: boolean;
 	'transient'?: boolean;

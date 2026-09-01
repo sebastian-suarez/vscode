@@ -125,10 +125,6 @@
         "url": "vscode://schemas/tasks"
       },
       {
-        "fileMatch": "/.vscode/mcp.json",
-        "url": "vscode://schemas/mcp"
-      },
-      {
         "fileMatch": "%APP_SETTINGS_HOME%/tasks.json",
         "url": "vscode://schemas/tasks"
       },
