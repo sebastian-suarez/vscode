@@ -18,7 +18,6 @@ import { TerminalContextKeys, TerminalContextKeyStrings } from '../common/termin
 import { terminalStrings } from '../common/terminalStrings.js';
 import { ACTIVE_GROUP, AUX_WINDOW_GROUP, SIDE_GROUP } from '../../../services/editor/common/editorService.js';
 import { DisposableStore } from '../../../../base/common/lifecycle.js';
-import { HasSpeechProvider } from '../../speech/common/speechService.js';
 import { hasKey } from '../../../../base/common/types.js';
 
 export const enum TerminalContextMenuGroup {
@@ -521,32 +520,6 @@ export function setupTerminalMenus(): void {
 					isHiddenByDefault: true
 				},
 			},
-			{
-				id: MenuId.ViewTitle,
-				item: {
-					command: {
-						id: TerminalCommandId.StartVoice,
-						title: localize('workbench.action.terminal.startVoice', "Start Dictation"),
-					},
-					group: 'navigation',
-					order: 9,
-					when: ContextKeyExpr.and(ContextKeyExpr.equals('view', TERMINAL_VIEW_ID), TerminalContextKeys.terminalDictationInProgress.toNegated()),
-					isHiddenByDefault: true
-				},
-			},
-			{
-				id: MenuId.ViewTitle,
-				item: {
-					command: {
-						id: TerminalCommandId.StopVoice,
-						title: localize('workbench.action.terminal.stopVoice', "Stop Dictation"),
-					},
-					group: 'navigation',
-					order: 9,
-					when: ContextKeyExpr.and(ContextKeyExpr.equals('view', TERMINAL_VIEW_ID), TerminalContextKeys.terminalDictationInProgress),
-					isHiddenByDefault: true
-				},
-			},
 		]
 	);
 
@@ -753,28 +726,6 @@ export function setupTerminalMenus(): void {
 			when: ResourceContextKey.Scheme.isEqualTo(Schemas.vscodeTerminal),
 			isHiddenByDefault: true
 		});
-		MenuRegistry.appendMenuItem(menuId, {
-			command: {
-				id: TerminalCommandId.StartVoice,
-				title: localize('workbench.action.terminal.startVoiceEditor', "Start Dictation"),
-				icon: Codicon.mic
-			},
-			group: 'navigation',
-			order: 9,
-			when: ContextKeyExpr.and(ResourceContextKey.Scheme.isEqualTo(Schemas.vscodeTerminal), TerminalContextKeys.terminalDictationInProgress.negate()),
-			isHiddenByDefault: true
-		});
-		MenuRegistry.appendMenuItem(menuId, {
-			command: {
-				id: TerminalCommandId.StopVoice,
-				title: localize('workbench.action.terminal.stopVoiceEditor', "Stop Dictation"),
-				icon: Codicon.run
-			},
-			group: 'navigation',
-			order: 10,
-			when: ContextKeyExpr.and(ResourceContextKey.Scheme.isEqualTo(Schemas.vscodeTerminal), HasSpeechProvider, TerminalContextKeys.terminalDictationInProgress),
-			isHiddenByDefault: true
-		});
 	}
 }
 
@@ -785,8 +736,6 @@ export function getTerminalActionBarArgs(location: ITerminalLocationOptions, pro
 	dropdownIcon?: string;
 } {
 	profiles = profiles.filter(e => !e.isAutoDetected);
-	const [aiProfiles, otherProfiles] = splitProfiles(profiles);
-	const [aiContributedProfiles, otherContributedProfiles] = splitContributedProfiles(contributedProfiles);
 	const dropdownActions: IAction[] = [];
 	const submenuActions: IAction[] = [];
 	const splitLocation = (location === TerminalLocation.Editor || (typeof location === 'object' && hasKey(location, { viewColumn: true }) && location.viewColumn === ACTIVE_GROUP)) ? { viewColumn: SIDE_GROUP } : { splitActiveTerminal: true };
@@ -806,21 +755,11 @@ export function getTerminalActionBarArgs(location: ITerminalLocationOptions, pro
 		location: splitLocation
 	}))));
 	dropdownActions.push(new Separator());
-	for (const p of aiProfiles) {
-		addProfileActions(p, defaultProfileName, location, splitLocation, terminalService, dropdownActions, submenuActions, disposableStore);
-	}
-	for (const contributed of aiContributedProfiles) {
-		addContributedProfileActions(contributed, defaultProfileName, location, splitLocation, terminalService, dropdownActions, submenuActions, disposableStore);
-	}
-	if ((aiProfiles.length > 0 || aiContributedProfiles.length > 0) && (otherProfiles.length > 0 || otherContributedProfiles.length > 0)) {
-		dropdownActions.push(new Separator());
-	}
-
-	for (const p of otherProfiles) {
+	for (const p of profiles) {
 		addProfileActions(p, defaultProfileName, location, splitLocation, terminalService, dropdownActions, submenuActions, disposableStore);
 	}
 
-	for (const contributed of otherContributedProfiles) {
+	for (const contributed of contributedProfiles) {
 		addContributedProfileActions(contributed, defaultProfileName, location, splitLocation, terminalService, dropdownActions, submenuActions, disposableStore);
 	}
 
@@ -833,41 +772,6 @@ export function getTerminalActionBarArgs(location: ITerminalLocationOptions, pro
 
 	const dropdownAction = disposableStore.add(new Action('refresh profiles', localize('launchProfile', 'Launch Profile...'), 'codicon-chevron-down', true));
 	return { dropdownAction, dropdownMenuActions: dropdownActions, className: `terminal-tab-actions-${terminalService.resolveLocation(location)}` };
-}
-
-function splitProfiles(profiles: readonly ITerminalProfile[]): [ITerminalProfile[], ITerminalProfile[]] {
-	const aiProfiles: ITerminalProfile[] = [];
-	const otherProfiles: ITerminalProfile[] = [];
-	for (const profile of profiles) {
-		if (isAiProfileName(profile.profileName)) {
-			aiProfiles.push(profile);
-		} else {
-			otherProfiles.push(profile);
-		}
-	}
-	return [aiProfiles, otherProfiles];
-}
-
-function splitContributedProfiles(contributedProfiles: readonly IExtensionTerminalProfile[]): [IExtensionTerminalProfile[], IExtensionTerminalProfile[]] {
-	const aiContributedProfiles: IExtensionTerminalProfile[] = [];
-	const otherContributedProfiles: IExtensionTerminalProfile[] = [];
-	for (const profile of contributedProfiles) {
-		if (isAiContributedProfile(profile)) {
-			aiContributedProfiles.push(profile);
-		} else {
-			otherContributedProfiles.push(profile);
-		}
-	}
-	return [aiContributedProfiles, otherContributedProfiles];
-}
-
-function isAiContributedProfile(profile: IExtensionTerminalProfile): boolean {
-	return isAiProfileName(profile.title);
-}
-
-function isAiProfileName(name: string): boolean {
-	const lowerCaseName = name.toLowerCase();
-	return lowerCaseName.includes('copilot') || lowerCaseName.includes('claude');
 }
 
 function addProfileActions(

@@ -42,12 +42,7 @@ export const terminalStickyScrollConfiguration: IStringDictionary<IConfiguration
 		default: [
 			'clear',
 			'cls',
-			'clear-host',
-			'agent',
-			'agy',
-			'claude',
-			'codex',
-			'gemini'
+			'clear-host'
 		]
 	},
 };

@@ -510,23 +510,6 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 				'description': localize('suggestCommands', "Controls whether the command palette should have a list of commonly used commands."),
 				'default': false
 			},
-			'workbench.commandPalette.experimental.askChatLocation': {
-				'type': 'string',
-				tags: ['experimental'],
-				'description': localize('askChatLocation', "Controls where the command palette should ask chat questions."),
-				'default': 'chatView',
-				enum: ['chatView', 'quickChat'],
-				enumDescriptions: [
-					localize('askChatLocation.chatView', "Ask chat questions in the Chat view."),
-					localize('askChatLocation.quickChat', "Ask chat questions in Quick Chat.")
-				]
-			},
-			'workbench.commandPalette.showAskInChat': {
-				'type': 'boolean',
-				tags: ['experimental'],
-				'description': localize('showAskInChat', "Controls whether the command palette shows 'Ask in Chat' option at the bottom."),
-				'default': true
-			},
 			'workbench.commandPalette.experimental.enableNaturalLanguageSearch': {
 				'type': 'boolean',
 				tags: ['experimental'],
@@ -597,12 +580,11 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 			'workbench.secondarySideBar.defaultVisibility': {
 				'type': 'string',
 				'enum': ['hidden', 'visibleInWorkspace', 'visible', 'maximizedInWorkspace', 'maximized'],
-				// Nothing in this build asks for the secondary side bar on first boot: the only
-				// thing stock opens it for is chat, which ships disabled here, so a virgin window
-				// got a 170px strip with an empty Chat title and no content. It stays closed until
-				// it is asked for.
+				// Nothing in this build asks for the secondary side bar on first boot, so a virgin
+				// window got a 170px strip with an empty title and no content. It stays closed
+				// until it is asked for.
 				'default': isMacintosh && isNative ? 'hidden' : 'visibleInWorkspace',
-				'description': localize('secondarySideBarDefaultVisibility', "Controls the default visibility of the secondary side bar in workspaces or empty windows that are opened for the first time. Can be overridden by the agent sessions startup editor setting."),
+				'description': localize('secondarySideBarDefaultVisibility', "Controls the default visibility of the secondary side bar in workspaces or empty windows that are opened for the first time."),
 				'enumDescriptions': [
 					localize('workbench.secondarySideBar.defaultVisibility.hidden', "The secondary side bar is hidden by default."),
 					localize('workbench.secondarySideBar.defaultVisibility.visibleInWorkspace', "The secondary side bar is visible by default if a workspace is opened."),
@@ -813,11 +795,6 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 				'description': localize('settings.editor.desc', "Determines which Settings editor to use by default."),
 				'default': 'ui',
 				'scope': ConfigurationScope.WINDOW
-			},
-			'workbench.settings.showAISearchToggle': {
-				'type': 'boolean',
-				'default': true,
-				'description': localize('settings.showAISearchToggle', "Controls whether the AI search results toggle is shown in the search bar in the Settings editor after doing a search and once AI search results are available."),
 			},
 			'workbench.hover.delay': {
 				'type': 'number',

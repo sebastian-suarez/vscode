@@ -1260,9 +1260,6 @@ export class Repository implements Disposable {
 			async () => {
 				await this.repository.add(resources.map(r => r.fsPath), opts);
 				this.closeDiffEditors([], [...resources.map(r => r.fsPath)]);
-
-				// Accept working set changes across all chat sessions
-				commands.executeCommand('_chat.editSessions.accept', resources);
 			},
 			() => {
 				const resourcePaths = resources.map(r => r.fsPath);
@@ -1320,12 +1317,6 @@ export class Repository implements Disposable {
 				this.closeDiffEditors([...resources.length !== 0 ?
 					resources.map(r => r.fsPath) :
 					this.indexGroup.resourceStates.map(r => r.resourceUri.fsPath)], []);
-
-				// Clear AI contribution tracking for reverted resources
-				const uris = resources.length !== 0
-					? resources
-					: this.indexGroup.resourceStates.map(r => r.resourceUri);
-				commands.executeCommand('_aiEdits.clearAiContributions', uris);
 			},
 			() => {
 				const config = workspace.getConfiguration('git', Uri.file(this.repository.root));
@@ -1407,9 +1398,6 @@ export class Repository implements Disposable {
 				}
 
 				this.closeDiffEditors([], [...toClean, ...toRestore]);
-
-				// Clear AI contribution tracking for discarded resources
-				commands.executeCommand('_aiEdits.clearAiContributions', resources);
 			});
 	}
 
@@ -1467,15 +1455,6 @@ export class Repository implements Disposable {
 			this.inputBox.value = await this.getInputTemplate();
 		}
 		this.closeDiffEditors(indexResources, workingGroupResources);
-
-		// Accept working set changes across all chat sessions
-		const resources = indexResources.length !== 0
-			? indexResources.map(r => Uri.file(r))
-			: workingGroupResources.map(r => Uri.file(r));
-		commands.executeCommand('_chat.editSessions.accept', resources);
-
-		// Clear AI contribution tracking for committed resources
-		commands.executeCommand('_aiEdits.clearAiContributions', resources);
 	}
 
 	private commitOperationGetOptimisticResourceGroups(opts: CommitOptions): GitResourceGroups {
@@ -1549,9 +1528,6 @@ export class Repository implements Disposable {
 				}
 
 				this.closeDiffEditors([], [...toClean, ...toCheckout]);
-
-				// Clear AI contribution tracking for discarded resources
-				commands.executeCommand('_aiEdits.clearAiContributions', resources);
 			},
 			() => {
 				const resourcePaths = resources.map(r => r.fsPath);
@@ -2107,9 +2083,6 @@ export class Repository implements Disposable {
 				}
 
 				await this.repository.checkout(treeish, [], opts);
-
-				// Clear all AI contribution tracking on branch switch
-				commands.executeCommand('_aiEdits.clearAllAiContributions');
 			});
 	}
 
@@ -2117,9 +2090,6 @@ export class Repository implements Disposable {
 		const refLabel = opts.detached ? getCommitShortHash(Uri.file(this.root), treeish) : treeish;
 		await this.run(Operation.CheckoutTracking(refLabel), async () => {
 			await this.repository.checkout(treeish, [], { ...opts, track: true });
-
-			// Clear all AI contribution tracking on branch switch
-			commands.executeCommand('_aiEdits.clearAllAiContributions');
 		});
 	}
 
@@ -2151,11 +2121,6 @@ export class Repository implements Disposable {
 	async reset(treeish: string, hard?: boolean): Promise<void> {
 		await this.run(Operation.Reset, async () => {
 			await this.repository.reset(treeish, hard);
-
-			if (hard) {
-				// Clear all AI contribution tracking on hard reset
-				commands.executeCommand('_aiEdits.clearAllAiContributions');
-			}
 		});
 	}
 

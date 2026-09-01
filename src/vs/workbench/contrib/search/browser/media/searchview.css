@@ -178,18 +178,6 @@
 	overflow-wrap: break-word;
 }
 
-.search-view .message.ai-keywords {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	line-clamp: 2;
-	-webkit-line-clamp: 2;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: normal;
-	margin: 0 22px 8px;
-	padding: 0px;
-}
-
 .search-view .message p:first-child {
 	margin-top: 0px;
 	margin-bottom: 0px;
@@ -205,17 +193,6 @@
 .search-view .message a:hover,
 .search-view .message a:active {
 	color: var(--vscode-textLink-activeForeground);
-}
-
-.search-view .message .keyword-refresh {
-	vertical-align: sub;
-	margin-right: 4px;
-	cursor: pointer;
-}
-
-.search-view .message .keyword-refresh:hover,
-.search-view .message .keyword-refresh:active {
-	color:  var(--vscode-textLink-activeForeground);
 }
 
 
@@ -510,17 +487,10 @@
 .monaco-workbench .part.sidebar .search-view .message, .monaco-workbench .part.auxiliarybar .search-view .message {
 	padding: 0 calc(var(--vscode-workbench-sidebar-font-size) * 1.692308) calc(var(--vscode-workbench-sidebar-font-size) * 0.615385)
 }
-.monaco-workbench .part.sidebar .search-view .message.ai-keywords, .monaco-workbench .part.auxiliarybar .search-view .message.ai-keywords {
-	margin: 0 calc(var(--vscode-workbench-sidebar-font-size) * 1.692308) calc(var(--vscode-workbench-sidebar-font-size) * 0.615385);
-	padding: calc(var(--vscode-workbench-sidebar-font-size) * 0)
-}
 .monaco-workbench .part.sidebar .search-view .message p:first-child, .monaco-workbench .part.auxiliarybar .search-view .message p:first-child {
 	margin-top: calc(var(--vscode-workbench-sidebar-font-size) * 0);
 	margin-bottom: calc(var(--vscode-workbench-sidebar-font-size) * 0);
 	padding-bottom: calc(var(--vscode-workbench-sidebar-font-size) * 0.307692)
-}
-.monaco-workbench .part.sidebar .search-view .message .keyword-refresh, .monaco-workbench .part.auxiliarybar .search-view .message .keyword-refresh {
-	margin-right: calc(var(--vscode-workbench-sidebar-font-size) * 0.307692)
 }
 .monaco-workbench .part.sidebar .search-view .foldermatch, .monaco-workbench .part.sidebar .search-view .filematch, .monaco-workbench .part.auxiliarybar .search-view .foldermatch, .monaco-workbench .part.auxiliarybar .search-view .filematch {
 	line-height: calc(var(--vscode-workbench-sidebar-font-size) * 1.692308);

@@ -69,8 +69,6 @@ import { IExtensionService } from '../../../services/extensions/common/extension
 import { IHostService } from '../../../services/host/browser/host.js';
 import { IWorkbenchThemeService } from '../../../services/themes/common/workbenchThemeService.js';
 import { GettingStartedIndexList } from './gettingStartedList.js';
-import { canShowAgentsBanner, createAgentsBanner } from '../../chat/browser/agentSessions/agentSessionsBanner.js';
-import { IChatEntitlementService } from '../../../services/chat/common/chatEntitlementService.js';
 import { AccessibilityVerbositySettingId } from '../../accessibility/browser/accessibilityConfiguration.js';
 import { AccessibleViewAction } from '../../accessibility/browser/accessibleViewActions.js';
 import { KeybindingLabel } from '../../../../base/browser/ui/keybindingLabel/keybindingLabel.js';
@@ -117,7 +115,7 @@ type GettingStartedActionEvent = {
 };
 
 type RecentEntry = (IRecentFolder | IRecentWorkspace) & { id: string };
-type AnnouncementEntry = { id: string, title: string, url: string };
+type AnnouncementEntry = { id: string; title: string; url: string };
 
 const REDUCED_MOTION_KEY = 'workbench.welcomePage.preferReducedMotion';
 
@@ -202,7 +200,6 @@ export class GettingStartedPage extends EditorPane {
 		@IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
 		@IAccessibilityService private readonly accessibilityService: IAccessibilityService,
 		@IMarkdownRendererService private readonly markdownRendererService: IMarkdownRendererService,
-		@IChatEntitlementService private readonly chatEntitlementService: IChatEntitlementService,
 	) {
 
 		super(GettingStartedPage.ID, group, telemetryService, themeService, storageService);
@@ -943,18 +940,6 @@ export class GettingStartedPage extends EditorPane {
 		const announcementList = await this.buildAnnouncementList();
 
 		const footerChildren: HTMLElement[] = [];
-		if (canShowAgentsBanner(this.chatEntitlementService)) {
-			const agentsBanner = createAgentsBanner(
-				{
-					cssClass: 'getting-started-category.agents-banner',
-					source: 'welcomePage',
-				},
-				this.commandService,
-				this.telemetryService,
-			);
-			this.categoriesSlideDisposables.add(agentsBanner.disposables);
-			footerChildren.push(agentsBanner.element);
-		}
 		footerChildren.push($('p.showOnStartup', {},
 			showOnStartupCheckbox.domNode,
 			showOnStartupLabel,
@@ -1189,7 +1174,7 @@ export class GettingStartedPage extends EditorPane {
 				await fetch(`https://raw.githubusercontent.com/!!GH_REPO_PATH!!/${branch}/announcements-extra.json`)
 					.then(async res => {
 						if (res.ok) {
-							var extraAnnouncements = await res.json() as AnnouncementEntry[];
+							const extraAnnouncements = await res.json() as AnnouncementEntry[];
 
 							this.announcementData = [...extraAnnouncements, ...BUILTIN_ANNOUNCEMENTS];
 						} else {

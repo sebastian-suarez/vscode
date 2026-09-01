@@ -111,9 +111,6 @@ export class IssueReporterOverlay {
 	private descriptionError!: HTMLElement;
 	private titleInput!: InputBox;
 	private titleError!: HTMLElement;
-	private generateTitleBtn!: Button;
-	private readonly _onDidRequestGenerateTitle = new Emitter<string>();
-	readonly onDidRequestGenerateTitle: Event<string> = this._onDidRequestGenerateTitle.event;
 
 	// Step 0: Screenshots & Recording
 	private screenshotContainer!: HTMLElement;
@@ -644,30 +641,11 @@ export class IssueReporterOverlay {
 		}
 		this.typeError = this.createFieldError(page, localize('categoryRequired', "Select a category to continue."));
 
-		// Title field with AI generate button next to label
 		const titleGroup = append(page, $('div.wizard-field.wizard-title-field'));
 		const titleLabelRow = append(titleGroup, $('div.wizard-title-label-row'));
 		const titleLabel = append(titleLabelRow, $('label.wizard-field-label'));
 		titleLabel.textContent = localize('issueTitle', "Title");
 		this.appendRequiredMarker(titleLabel);
-
-		const aiBtn = this.disposables.add(new Button(titleLabelRow, { ...defaultButtonStyles, secondary: true, supportIcons: true }));
-		aiBtn.label = `$(sparkle) ${localize('generateTitleBtn', "Generate from description")}`;
-		aiBtn.element.classList.add('wizard-ai-title-btn');
-		aiBtn.element.title = localize('generateTitle', "Generate title from description");
-		aiBtn.enabled = !!this.data.issueBody?.trim();
-		this.disposables.add(aiBtn.onDidClick(() => {
-			const desc = this.descriptionTextarea.value.trim();
-			if (desc && !aiBtn.element.classList.contains('loading')) {
-				// Lock width to prevent layout shift during loading
-				aiBtn.element.style.minWidth = `${aiBtn.element.offsetWidth}px`;
-				aiBtn.enabled = false;
-				aiBtn.label = `$(loading~spin) ${localize('generatingTitle', "Generating...")}`;
-				aiBtn.element.classList.add('loading');
-				this._onDidRequestGenerateTitle.fire(desc);
-			}
-		}));
-		this.generateTitleBtn = aiBtn;
 
 		this.titleInput = this.disposables.add(new InputBox(titleGroup, undefined, {
 			placeholder: localize('issueTitlePlaceholder', "Brief summary of the issue"),
@@ -712,7 +690,6 @@ export class IssueReporterOverlay {
 			}
 			autoGrowTextarea();
 			this.searchSimilarIssues();
-			this.updateGenerateTitleButtonState();
 		}));
 		this.descriptionError = this.createFieldError(descriptionGroup, localize('descriptionRequired', "Enter a description to continue."));
 
@@ -1258,13 +1235,6 @@ export class IssueReporterOverlay {
 
 	private hasDescriptionContent(): boolean {
 		return !!this.descriptionTextarea.value.trim();
-	}
-
-	private updateGenerateTitleButtonState(): void {
-		if (!this.generateTitleBtn || this.generateTitleBtn.element.classList.contains('loading')) {
-			return;
-		}
-		this.generateTitleBtn.enabled = this.hasDescriptionContent();
 	}
 
 	private createFieldError(parent: HTMLElement, message: string): HTMLElement {
@@ -2474,22 +2444,6 @@ ${rows.map(row => row.map(value => this.escapeMarkdownTableCell(value ?? '')).jo
 		});
 	}
 
-	/** Set the title input value (e.g., from AI generation) */
-	setGeneratedTitle(title: string): void {
-		this.titleInput.value = title;
-		if (title.trim()) {
-			this.setFieldError(this.titleInput.element, this.titleError, false);
-		}
-		this.resetGenerateButton();
-	}
-
-	resetGenerateButton(): void {
-		this.generateTitleBtn.label = `$(sparkle) ${localize('generateTitleBtn', "Generate from description")}`;
-		this.generateTitleBtn.element.classList.remove('loading');
-		this.generateTitleBtn.element.style.minWidth = '';
-		this.generateTitleBtn.enabled = this.hasDescriptionContent();
-	}
-
 	/** Show a "Close" button next to the submit button after successful submission */
 	showCloseButton(): void {
 		// Add close button next to the existing preview button
@@ -2626,6 +2580,5 @@ ${rows.map(row => row.map(value => this.escapeMarkdownTableCell(value ?? '')).jo
 		this._onDidRequestOpenRecording.dispose();
 		this._onDidRequestOpenScreenshot.dispose();
 		this._onDidChangeAttachments.dispose();
-		this._onDidRequestGenerateTitle.dispose();
 	}
 }

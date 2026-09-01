@@ -145,17 +145,8 @@ export interface IAccessibleViewService {
 	 * @param verbositySettingKey The setting key for the verbosity of the feature
 	 */
 	getOpenAriaHint(verbositySettingKey: string): string | null;
-	getCodeBlockContext(): ICodeBlockActionContext | undefined;
 	configureKeybindings(unassigned: boolean): void;
 	openHelpLink(): void;
-}
-
-
-export interface ICodeBlockActionContext {
-	code: string;
-	languageId?: string;
-	codeBlockIndex: number;
-	element: unknown;
 }
 
 export type AccesibleViewContentProvider = AccessibleContentProvider | ExtensionContentProvider;

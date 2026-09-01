@@ -5,7 +5,7 @@
 
 import { Registry } from '../../../../platform/registry/common/platform.js';
 import { EditTelemetryContribution } from './editTelemetryContribution.js';
-import { EDIT_TELEMETRY_SETTING_ID, AI_STATS_SETTING_ID } from './settingIds.js';
+import { EDIT_TELEMETRY_SETTING_ID } from './settingIds.js';
 import { Extensions as ConfigurationExtensions, IConfigurationRegistry } from '../../../../platform/configuration/common/configurationRegistry.js';
 import { localize } from '../../../../nls.js';
 import { EDIT_TELEMETRY_DETAILS_SETTING_ID, EDIT_TELEMETRY_SHOW_DECORATIONS, EDIT_TELEMETRY_SHOW_STATUS_BAR } from './settings.js';
@@ -26,15 +26,6 @@ configurationRegistry.registerConfiguration({
 	properties: {
 		[EDIT_TELEMETRY_SETTING_ID]: {
 			markdownDescription: localize('telemetry.editStats.enabled', "Controls whether to enable telemetry for edit statistics (only sends statistics if general telemetry is enabled)."),
-			type: 'boolean',
-			default: false,
-			tags: ['experimental'],
-			experiment: {
-				mode: 'auto'
-			}
-		},
-		[AI_STATS_SETTING_ID]: {
-			markdownDescription: localize('editor.aiStats.enabled', "Controls whether to enable AI statistics in the editor. The gauge shows the average AI rate across 5-minute sessions, where each session's rate is calculated as AI-inserted characters divided by total inserted characters."),
 			type: 'boolean',
 			default: false,
 			tags: ['experimental'],

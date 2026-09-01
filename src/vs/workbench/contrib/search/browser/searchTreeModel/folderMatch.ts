@@ -101,10 +101,6 @@ export class FolderMatchImpl extends Disposable implements ISearchTreeFolderMatc
 		return this._parent;
 	}
 
-	isAIContributed(): boolean {
-		return false;
-	}
-
 	get hasChildren(): boolean {
 		return this._fileMatches.size > 0 || this._folderMatches.size > 0;
 	}
@@ -359,7 +355,7 @@ export class FolderMatchImpl extends Disposable implements ISearchTreeFolderMatc
 						.results
 						.filter(resultIsMatch)
 						.forEach(m => {
-							textSearchResultToMatches(m, existingFileMatch, false)
+							textSearchResultToMatches(m, existingFileMatch)
 								.forEach(m => existingFileMatch.add(m));
 						});
 				}
@@ -535,7 +531,6 @@ export class FolderMatchWorkspaceRootImpl extends FolderMatchWithResourceImpl im
 	}
 }
 
-// currently, no support for AI results in out-of-workspace files
 export class FolderMatchNoRootImpl extends FolderMatchImpl implements ISearchTreeFolderMatchNoRoot {
 	constructor(_id: string, _index: number, _query: ITextQuery, _parent: ITextSearchHeading,
 		@IReplaceService replaceService: IReplaceService,

@@ -45,8 +45,6 @@ import { IOpenerService } from '../../../../platform/opener/common/opener.js';
 import { IQuickInputService, IQuickPick, IQuickPickItem } from '../../../../platform/quickinput/common/quickInput.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
 import { FloatingEditorClickMenu } from '../../../browser/codeeditor.js';
-import { IChatCodeBlockContextProviderService } from '../../chat/browser/chat.js';
-import { ICodeBlockActionContext } from '../../chat/browser/widget/chatContentParts/codeBlockPart.js';
 import { getSimpleEditorOptions } from '../../codeEditor/browser/simpleEditorOptions.js';
 import { AccessibilityCommandId } from '../common/accessibilityCommands.js';
 import { AccessibilityVerbositySettingId, AccessibilityWorkbenchSettingId, accessibilityHelpIsShown, accessibleViewContainsCodeBlocks, accessibleViewCurrentProviderId, accessibleViewGoToSymbolSupported, accessibleViewHasAssignedKeybindings, accessibleViewHasUnassignedKeybindings, accessibleViewInCodeBlock, accessibleViewIsShown, accessibleViewOnLastLine, accessibleViewSupportsNavigation, accessibleViewVerbosityEnabled } from './accessibilityConfiguration.js';
@@ -112,7 +110,6 @@ export class AccessibleView extends Disposable {
 		@ILayoutService private readonly _layoutService: ILayoutService,
 		@IMenuService private readonly _menuService: IMenuService,
 		@ICommandService private readonly _commandService: ICommandService,
-		@IChatCodeBlockContextProviderService private readonly _codeBlockContextProviderService: IChatCodeBlockContextProviderService,
 		@IStorageService private readonly _storageService: IStorageService,
 		@IQuickInputService private readonly _quickInputService: IQuickInputService,
 		@IAccessibilitySignalService private readonly _accessibilitySignalService: IAccessibilitySignalService,
@@ -248,19 +245,6 @@ export class AccessibleView extends Disposable {
 		}
 	}
 
-	getCodeBlockContext(): ICodeBlockActionContext | undefined {
-		const position = this._editorWidget.getPosition();
-		if (!this._codeBlocks?.length || !position) {
-			return;
-		}
-		const codeBlockIndex = this._codeBlocks?.findIndex(c => c.startLine <= position?.lineNumber && c.endLine >= position?.lineNumber);
-		const codeBlock = codeBlockIndex !== undefined && codeBlockIndex > -1 ? this._codeBlocks[codeBlockIndex] : undefined;
-		if (!codeBlock || codeBlockIndex === undefined) {
-			return;
-		}
-		return { code: codeBlock.code, languageId: codeBlock.languageId, codeBlockIndex, element: undefined, chatSessionResource: codeBlock.chatSessionResource };
-	}
-
 	navigateToCodeBlock(type: 'next' | 'previous'): void {
 		const position = this._editorWidget.getPosition();
 		if (!this._codeBlocks?.length || !position) {
@@ -339,9 +323,6 @@ export class AccessibleView extends Disposable {
 		if (provider.options.id) {
 			// only cache a provider with an ID so that it will eventually be cleared.
 			this._lastProvider = provider;
-		}
-		if (provider.id === AccessibleViewProviderId.PanelChat || provider.id === AccessibleViewProviderId.QuickChat) {
-			this._register(this._codeBlockContextProviderService.registerProvider({ getCodeBlockContext: () => this.getCodeBlockContext() }, 'accessibleView'));
 		}
 		if (provider instanceof ExtensionContentProvider) {
 			this._storageService.store(`${ACCESSIBLE_VIEW_SHOWN_STORAGE_PREFIX}${provider.id}`, true, StorageScope.APPLICATION, StorageTarget.USER);
@@ -986,9 +967,6 @@ export class AccessibleViewService extends Disposable implements IAccessibleView
 	}
 	setPosition(position: Position, reveal?: boolean, select?: boolean): void {
 		this._accessibleView?.setPosition(position, reveal, select);
-	}
-	getCodeBlockContext(): ICodeBlockActionContext | undefined {
-		return this._accessibleView?.getCodeBlockContext();
 	}
 	navigateToCodeBlock(type: 'next' | 'previous'): void {
 		this._accessibleView?.navigateToCodeBlock(type);
