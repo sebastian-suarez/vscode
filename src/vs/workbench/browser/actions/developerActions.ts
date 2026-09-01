@@ -42,7 +42,6 @@ import product from '../../../platform/product/common/product.js';
 import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
 import { IEnvironmentService } from '../../../platform/environment/common/environment.js';
 import { IProductService } from '../../../platform/product/common/productService.js';
-import { IDefaultAccountService } from '../../../platform/defaultAccount/common/defaultAccount.js';
 import { IAuthenticationService } from '../../services/authentication/common/authentication.js';
 import { IAuthenticationAccessService } from '../../services/authentication/browser/authenticationAccessService.js';
 import { IPolicyService } from '../../../platform/policy/common/policy.js';
@@ -679,7 +678,6 @@ class PolicyDiagnosticsAction extends Action2 {
 		const editorService = accessor.get(IEditorService);
 		const configurationService = accessor.get(IConfigurationService);
 		const productService = accessor.get(IProductService);
-		const defaultAccountService = accessor.get(IDefaultAccountService);
 		const authenticationService = accessor.get(IAuthenticationService);
 		const authenticationAccessService = accessor.get(IAuthenticationAccessService);
 		const policyService = accessor.get(IPolicyService);
@@ -694,63 +692,6 @@ class PolicyDiagnosticsAction extends Action2 {
 		content += `| Generated | ${new Date().toISOString()} |\n`;
 		content += `| Product | ${productService.nameLong} ${productService.version} |\n`;
 		content += `| Commit | ${productService.commit || 'n/a'} |\n\n`;
-
-		// Account information
-		content += '## Account Information\n\n';
-		try {
-			const account = await defaultAccountService.getDefaultAccount();
-			const sensitiveKeys = ['sessionId', 'analytics_tracking_id'];
-			if (account) {
-				// Try to get username/display info from the authentication session
-				let username = 'Unknown';
-				let accountLabel = 'Unknown';
-				try {
-					const providerIds = authenticationService.getProviderIds();
-					for (const providerId of providerIds) {
-						const sessions = await authenticationService.getSessions(providerId);
-						const matchingSession = sessions.find(session => session.id === account.sessionId);
-						if (matchingSession) {
-							username = matchingSession.account.id;
-							accountLabel = matchingSession.account.label;
-							break;
-						}
-					}
-				} catch (error) {
-					// Fallback to just session info
-				}
-
-				content += '### Default Account Summary\n\n';
-				content += `**Account ID/Username**: ${username}\n\n`;
-				content += `**Account Label**: ${accountLabel}\n\n`;
-
-				content += '### Detailed Account Properties\n\n';
-				content += '| Property | Value |\n';
-				content += '|----------|-------|\n';
-
-				// Iterate through all properties of the account object
-				for (const [key, value] of Object.entries(account)) {
-					if (value !== undefined && value !== null) {
-						let displayValue: string;
-
-						// Mask sensitive information
-						if (sensitiveKeys.includes(key)) {
-							displayValue = '***';
-						} else if (typeof value === 'object') {
-							displayValue = JSON.stringify(value);
-						} else {
-							displayValue = String(value);
-						}
-
-						content += `| ${key} | ${displayValue} |\n`;
-					}
-				}
-				content += '\n';
-			} else {
-				content += '*No default account configured*\n\n';
-			}
-		} catch (error) {
-			content += `*Error retrieving account information: ${error}*\n\n`;
-		}
 
 		content += '## Policy-Controlled Settings\n\n';
 
@@ -930,36 +871,6 @@ class PolicyDiagnosticsAction extends Action2 {
 	}
 }
 
-class SyncAccountPolicyAction extends Action2 {
-
-	constructor() {
-		super({
-			id: 'workbench.action.syncAccountPolicy',
-			title: localize2('syncAccountPolicy', 'Sync Account Policy'),
-			category: Categories.Developer,
-			f1: true
-		});
-	}
-
-	async run(accessor: ServicesAccessor): Promise<void> {
-		const defaultAccountService = accessor.get(IDefaultAccountService);
-		const dialogService = accessor.get(IDialogService);
-		const logService = accessor.get(ILogService);
-
-		try {
-			logService.info('[DefaultAccount] Manually syncing account policy');
-			await defaultAccountService.refresh({ forceRefresh: true });
-			await dialogService.info(localize('syncAccountPolicy.success', "Account policy has been synced."));
-		} catch (error) {
-			logService.error('[DefaultAccount] Failed to sync account policy', error);
-			await dialogService.error(
-				localize('syncAccountPolicy.error', "Failed to sync account policy."),
-				error instanceof Error ? error.message : String(error)
-			);
-		}
-	}
-}
-
 // --- Actions Registration
 registerAction2(InspectContextKeysAction);
 registerAction2(ToggleScreencastModeAction);
@@ -967,7 +878,6 @@ registerAction2(LogStorageAction);
 registerAction2(LogWorkingCopiesAction);
 registerAction2(RemoveLargeStorageEntriesAction);
 registerAction2(PolicyDiagnosticsAction);
-registerAction2(SyncAccountPolicyAction);
 if (!product.commit) {
 	registerAction2(StartTrackDisposables);
 	registerAction2(SnapshotTrackedDisposables);

@@ -113,10 +113,6 @@ steps:
 
   - template: ../../common/install-builtin-extensions.yml@self
 
-  - template: ../../common/agent-sdk-produce.yml@self
-    parameters:
-      vscodePlatform: win32
-
   - template: ../../common/mixin-vscode-capi.yml@self
 
   - powershell: npm run gulp core-ci

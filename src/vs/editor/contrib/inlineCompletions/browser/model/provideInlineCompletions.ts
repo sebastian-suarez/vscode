@@ -301,14 +301,6 @@ export type PartialAcceptance = {
 	ratio: number;
 };
 
-export type RenameInfo = {
-	createdRename: boolean;
-	duration: number;
-	timedOut?: boolean;
-	droppedOtherEdits?: number;
-	droppedRenameEdits?: number;
-};
-
 export type InlineSuggestViewData = {
 	editorType: InlineCompletionEditorType;
 	renderData?: InlineCompletionViewData;
@@ -401,7 +393,6 @@ export class InlineSuggestData {
 	private _isPreceeded = false;
 	private _partiallyAcceptedCount = 0;
 	private _partiallyAcceptedSinceOriginal: PartialAcceptance = { characters: 0, ratio: 0, count: 0 };
-	private _renameInfo: RenameInfo | undefined = undefined;
 	private _editKind: InlineSuggestionEditKind | undefined = undefined;
 
 	get action(): IInlineSuggestDataAction | undefined {
@@ -514,11 +505,6 @@ export class InlineSuggestData {
 				viewKind: this._viewData.viewKind,
 				notShownReason: this._notShownReason,
 				performanceMarkers: this.performance.toString(),
-				renameCreated: this._renameInfo?.createdRename,
-				renameDuration: this._renameInfo?.duration,
-				renameTimedOut: this._renameInfo?.timedOut,
-				renameDroppedOtherEdits: this._renameInfo?.droppedOtherEdits,
-				renameDroppedRenameEdits: this._renameInfo?.droppedRenameEdits,
 				typingInterval: this._requestInfo.typingInterval,
 				typingIntervalCharacterCount: this._requestInfo.typingIntervalCharacterCount,
 				skuPlan: this._requestInfo.sku?.plan,
@@ -580,13 +566,6 @@ export class InlineSuggestData {
 		}
 		this._showUncollapsedDuration += timeNow - this._showUncollapsedStartTime;
 		this._showUncollapsedStartTime = undefined;
-	}
-
-	public setRenameProcessingInfo(info: RenameInfo): void {
-		if (this._renameInfo) {
-			throw new BugIndicatingError('Rename info has already been set.');
-		}
-		this._renameInfo = info;
 	}
 
 	public withAction(action: IInlineSuggestDataAction): InlineSuggestData {

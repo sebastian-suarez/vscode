@@ -70,7 +70,6 @@ import { TestConfigurationService } from '../../../../platform/configuration/tes
 import { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';
 import { IContextMenuService, IContextViewService } from '../../../../platform/contextview/browser/contextView.js';
 import { IDataChannelService, NullDataChannelService } from '../../../../platform/dataChannel/common/dataChannel.js';
-import { IDefaultAccountService } from '../../../../platform/defaultAccount/common/defaultAccount.js';
 import { IDialogService } from '../../../../platform/dialogs/common/dialogs.js';
 import { TestDialogService } from '../../../../platform/dialogs/test/common/testDialogService.js';
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
@@ -536,19 +535,6 @@ export function createEditorServices(disposables: DisposableStore, options?: Cre
 		setupManagedHover: () => ({ dispose: () => { }, show: () => { }, hide: () => { }, update: () => { } }),
 		showManagedHover: () => { },
 	});
-	defineInstance(IDefaultAccountService, {
-		_serviceBrand: undefined,
-		onDidChangeDefaultAccount: new Emitter<null>().event,
-		currentDefaultAccount: null,
-		getDefaultAccount: async () => null,
-		getDefaultAccountAuthenticationProvider: () => ({ id: 'test', name: 'Test', scopes: [], enterprise: false }),
-		resolveGitHubUrl: (path: string) => `https://github.com/${path}`,
-		setDefaultAccountProvider: () => { },
-		refresh: async () => null,
-		signIn: async () => null,
-		signOut: async () => { },
-	});
-
 	// User interaction service with focus simulation enabled (all elements appear focused in fixtures)
 	defineInstance(IUserInteractionService, new MockUserInteractionService(true, false));
 

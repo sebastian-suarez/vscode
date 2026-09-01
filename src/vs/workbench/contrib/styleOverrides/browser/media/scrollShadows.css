@@ -67,7 +67,7 @@
  * Editor area. The main editor viewport scrolls inside `.editor-scrollable`;
  * pin the fades to that scrollable element so they share the scrollbar's
  * stacking context and sit below it. Scope to the editor / panel parts so the
- * fade never leaks onto inline editors such as the chat input.
+ * fade never leaks onto embedded editors elsewhere in the workbench.
  * ========================================================================== */
 .style-override-scrollShadows .part.editor .monaco-editor .editor-scrollable::before,
 .style-override-scrollShadows .part.editor .monaco-editor .editor-scrollable::after {

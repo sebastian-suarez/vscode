@@ -29,14 +29,14 @@ Both forward extra arguments after `--` to the runner (`test/smoke/test/index.js
 # Run everything (Electron, from source)
 npm run smoketest
 
-# Run only a subset of suites by name, with tracing (replace <suite name> with your suite, e.g. "Agents Window")
+# Run only a subset of suites by name, with tracing (replace <suite name> with your suite, e.g. "Terminal")
 npm run smoketest -- -g "<suite name>" --tracing
 
 # Run against a packaged build (CI style)
 npm run smoketest-no-compile -- --tracing --build "/path/to/VSCode-darwin-arm64/Code - OSS.app"
 ```
 
-The `-g` pattern matches against test/suite titles. For example, `-g "Agents Window"` matches all three Agents Window suites (`Agents Window`, `Agents Window (local AgentHost)`, and `Agents Window (local AgentHost, SDK sandbox)`); use whatever substring identifies the suite(s) you care about.
+The `-g` pattern matches against test/suite titles. For example, `-g "Terminal"` matches every suite whose title contains "Terminal"; use whatever substring identifies the suite(s) you care about.
 
 The runner exits non-zero if any test fails, so a `0` exit code means every selected test passed.
 
@@ -48,7 +48,7 @@ This is a debugging aid, **not a permanent CI fixture**:
 
 - Add it on a throwaway branch, push, and let CI run it. Iterate until you reproduce (and then fix) the flake.
 - **Remove the loop before merging** — leaving it in would add ~an hour per platform to every run.
-- It is **not specific to any one suite**. Point the `-g` filter at whichever suite you are investigating (the examples below use `"Agents Window"`, but substitute your own).
+- It is **not specific to any one suite**. Point the `-g` filter at whichever suite you are investigating (the examples below use `"Terminal"`, but substitute your own).
 
 ### Where to add it
 
@@ -72,7 +72,7 @@ Bash (Linux/macOS):
 
 ```yaml
 # TEMPORARY: loop the suite to reproduce a flaky failure. Remove before merge.
-# Replace <suite name> with the suite you're investigating (e.g. "Agents Window").
+# Replace <suite name> with the suite you're investigating (e.g. "Terminal").
 - name: 🧪 Smoke test flakiness probe (TEMPORARY)
   if: ${{ inputs.electron_tests }}
   timeout-minutes: 60
@@ -135,7 +135,7 @@ For the VS Code build that is `--org https://dev.azure.com/monacotools --project
 Under `smoke-tests-<suite>/` (`smoke-tests-electron/`, `smoke-tests-browser/`, or `smoke-tests-remote/`, matching the suite that ran):
 
 - `smoke-test-runner.log` — the mocha driver output plus, for suites that use the mock LLM server, its verbose request/response bodies (look for `request body:`).
-- `<N>_suite_<Suite_Name>/window2/exthost/<extension>/…log` — per-suite extension-host logs (e.g. `GitHub.copilot-chat/GitHub Copilot Chat.log`). Many diagnostics are gated behind a setting the suite enables in its `before` hook, so check the suite's setup if an expected log line is missing.
+- `<N>_suite_<Suite_Name>/window2/exthost/<extension>/…log` — per-suite extension-host logs, one folder per extension. Many diagnostics are gated behind a setting the suite enables in its `before` hook, so check the suite's setup if an expected log line is missing.
 - `<N>_suite_<Suite_Name>/playwright-screenshot-*.png` — last-frame screenshot captured when a test fails (only when the suite ran with `--tracing`).
 
 `<Suite_Name>` is the mocha suite title with non-word characters replaced by `_`. See also the `code-oss-logs` skill.

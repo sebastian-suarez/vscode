@@ -136,7 +136,7 @@ reg.defineInstance(IMyService, myService);
 
 For mock view models or data objects:
 ```typescript
-const element = new class extends mock<IChatRequestViewModel>() { }();
+const element = new class extends mock<IMyViewModel>() { }();
 ```
 
 ## Async Rendering
@@ -228,12 +228,11 @@ Many components have lifecycle states (loading → active → completed). If the
 ```typescript
 // The fixture can pass pre-filled data to render the summary/completed state
 // without simulating the full user interaction flow.
-const carousel: IChatQuestionCarousel = {
-    questions,
+const model: IMyStepModel = {
+    steps,
     allowSkip: true,
-    kind: 'questionCarousel',
-    isUsed: true,           // Already completed
-    data: { 'q1': 'answer' }, // Pre-filled answers
+    isUsed: true,             // Already completed
+    data: { 'step1': 'answer' }, // Pre-filled answers
 };
 ```
 

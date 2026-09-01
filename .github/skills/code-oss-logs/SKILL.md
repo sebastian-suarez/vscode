@@ -1,18 +1,17 @@
 ---
 name: code-oss-logs
-description: 'Find and read logs from Code OSS dev builds. Use when: finding logs, reading log files, debugging Code OSS, checking renderer logs, extension host logs, agent host logs, main process logs, investigating errors in dev builds.'
+description: 'Find and read logs from Code OSS dev builds. Use when: finding logs, reading log files, debugging Code OSS, checking renderer logs, extension host logs, main process logs, investigating errors in dev builds.'
 ---
 
 # Code OSS Logs
 
-Find and display logs from the most recent Code OSS or Agents app dev run.
+Find and display logs from the most recent Code OSS dev run.
 
 ## Log Root Directories
 
 | App | Default User Data Dir | Logs Path |
 |-----|-----------------------|-----------|
 | Code OSS | `$HOME/.vscode-oss-dev` | `$HOME/.vscode-oss-dev/logs/` |
-| Agents app | `$HOME/.vscode-oss-dev` | `$HOME/.vscode-oss-dev/logs/` |
 
 If Code OSS was launched with `--user-data-dir=<dir>`, use `<dir>/logs/` instead of the defaults above. Launch and debugging helpers often create temporary user data dirs under `.build/`; always prefer the exact user data dir from the launch command when it is known.
 
@@ -20,15 +19,14 @@ Each run creates a timestamped folder like `20260330T163430`. The most recent fo
 
 ## Procedure
 
-1. **Identify which app** the user is asking about: Code OSS or Agents app. If unclear, check both.
-2. **Find the most recent log folder**:
+1. **Find the most recent log folder**:
     ```bash
     ls -lt "$HOME/.vscode-oss-dev/logs" | head -5
     # or for a custom user data dir:
     ls -lt "<user-data-dir>/logs" | head -5
     ```
-3. **Navigate into the most recent folder** and list contents.
-4. **Read the relevant log file(s)** based on what the user is investigating. Use `tail` for recent entries or `rg` to filter.
+2. **Navigate into the most recent folder** and list contents.
+3. **Read the relevant log file(s)** based on what the user is investigating. Use `tail` for recent entries or `rg` to filter.
 
 ## Directory Layout
 
@@ -37,8 +35,6 @@ Each timestamped log folder has this structure:
 ```text
 <timestamp>/
 ├── main.log                    # Electron main process (app lifecycle, window management)
-├── agenthost.log               # Agent host process (Copilot agent, model listing, agent sessions)
-├── mcpGateway.log              # MCP gateway/server coordination
 ├── sharedprocess.log           # Shared process (extensions gallery, global services)
 ├── telemetry.log               # Telemetry events
 ├── terminal.log                # Terminal/pty activity
@@ -53,8 +49,6 @@ Each timestamped log folder has this structure:
     ├── network.log             # Per-window network activity
     ├── views.log               # View/panel activity
     ├── notebook.rendering.log  # Notebook rendering
-    ├── customizationsDebug.log # Agent customizations debug info (Agents app)
-    ├── mcpServer.*.log         # Per-MCP-server logs (one file per configured server)
     │
     ├── exthost/                # Extension host logs
     │   ├── exthost.log         # Extension host main log (activation, errors)
@@ -64,9 +58,7 @@ Each timestamped log folder has this structure:
     │   └── output_logging_<timestamp>/  # Extension output channels
     │
     └── output_<timestamp>/     # Output channel logs (workbench side)
-        ├── tasks.log           # Tasks output
-        ├── agentSessionsOutput.log  # Agent sessions output (Agents app)
-        └── agenthost.<clientId>.log  # Agent host IPC traffic when tracing is enabled
+        └── tasks.log           # Tasks output
 ```
 
 ### Multiple `output_` Folders
@@ -79,13 +71,9 @@ A new `output_<timestamp>/` folder and a corresponding `output_logging_<timestam
 |------------------|-------------------|
 | App startup / crashes | `main.log`, `window1/renderer.log` |
 | Extension issues | `window1/exthost/exthost.log`, `window1/exthost/<publisher.ext>/` |
-| Copilot / agent issues | `agenthost.log`, `window1/exthost/GitHub.copilot-chat/` |
-| Agent host IPC (Agents app) | `window1/output_<timestamp>/agenthost.*.log` |
-| MCP server problems | `mcpGateway.log`, `window1/mcpServer.*.log` |
 | Terminal problems | `terminal.log`, `ptyhost.log` |
 | Network / auth issues | `network-shared.log`, `window1/network.log` |
 | Settings sync | `userDataSync.log` |
-| Agent customizations | `window1/customizationsDebug.log` (Agents app) |
 
 ## Useful Commands
 
@@ -112,7 +100,7 @@ When using temporary `console.log` probes and you need those probes to persist i
         ;
     ```
 3. Build or let the watch task pick up the change.
-4. Launch Code OSS or the Agents app and reproduce the issue.
+4. Launch Code OSS and reproduce the issue.
 5. Read the relevant logs.
 6. Before finishing, restore the flag to its default-off state and remove every temporary `console.log` probe.
 
@@ -123,7 +111,7 @@ The `Boolean("true")` form is intentionally lint-hostile so an accidentally enab
 - For temporary dev probes in source builds, either `console.log` or `ILogService` is fine. Use whichever is easiest in the code you are touching.
 - `console.log` probes must never be checked in. If logging code is intended to stay in the product, use `ILogService` instead.
 - If dev console forwarding is enabled in the source build, `console.debug`, `console.error`, `console.info`, `console.log`, and `console.warn` are written through the process log service into the normal log files.
-- Console probes land in the log for the process that emitted them: main process in `main.log`, renderer/workbench in `window1/renderer.log`, shared process in `sharedprocess.log`, pty host in `ptyhost.log`, and agent host in `agenthost.log`. Extension host console output is observed from the renderer side and appears in `window1/renderer.log` when forwarding all extension-host console output is enabled.
+- Console probes land in the log for the process that emitted them: main process in `main.log`, renderer/workbench in `window1/renderer.log`, shared process in `sharedprocess.log`, and pty host in `ptyhost.log`. Extension host console output is observed from the renderer side and appears in `window1/renderer.log` when forwarding all extension-host console output is enabled.
 - If console forwarding is not enabled, use `ILogService` for probes that must persist in the log files; native `console.log` may only appear in DevTools or stdout.
 - Not all log files have content. Many are created empty and only populated if that subsystem produces output.
 - `window1/` is the first window; multi-window sessions will have `window2/`, etc.

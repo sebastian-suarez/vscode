@@ -114,10 +114,6 @@ steps:
 
   - template: ../../common/install-builtin-extensions.yml@self
 
-  - template: ../../common/agent-sdk-produce.yml@self
-    parameters:
-      vscodePlatform: darwin
-
   - template: ../../common/mixin-vscode-capi.yml@self
 
   - script: npm run gulp core-ci

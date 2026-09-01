@@ -196,7 +196,6 @@ export interface ITerminalConfiguration {
 		title: string;
 		description: string;
 		separator: string;
-		allowAgentCliTitle: boolean;
 	};
 	bellDuration: number;
 	defaultLocation: TerminalLocationConfigValue;

@@ -24,7 +24,7 @@ import { TextModelText } from '../../../../common/model/textModelText.js';
 import { InlineCompletionViewData, InlineCompletionViewKind } from '../view/inlineEdits/inlineEditsViewInterface.js';
 import { computeEditKind, InlineSuggestionEditKind } from './editKind.js';
 import { inlineCompletionIsVisible } from './inlineCompletionIsVisible.js';
-import { IInlineSuggestDataAction, IInlineSuggestDataActionEdit, InlineSuggestData, InlineSuggestionList, PartialAcceptance, RenameInfo, SnippetInfo } from './provideInlineCompletions.js';
+import { IInlineSuggestDataAction, IInlineSuggestDataActionEdit, InlineSuggestData, InlineSuggestionList, PartialAcceptance, SnippetInfo } from './provideInlineCompletions.js';
 import { InlineSuggestAlternativeAction } from './InlineSuggestAlternativeAction.js';
 import { TextModelValueReference } from './textModelValueReference.js';
 
@@ -179,10 +179,6 @@ abstract class InlineSuggestionItemBase {
 	*/
 	public getSourceCompletion(): InlineCompletion {
 		return this._sourceInlineCompletion;
-	}
-
-	public setRenameProcessingInfo(info: RenameInfo): void {
-		this._data.setRenameProcessingInfo(info);
 	}
 
 	public withAction(action: IInlineSuggestDataAction): InlineSuggestData {

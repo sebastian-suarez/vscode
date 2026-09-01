@@ -222,33 +222,9 @@
 			}
 		},
 		{
-			"label": "Run Dev Agents",
-			"type": "shell",
-			"command": "./scripts/code.sh",
-			"windows": {
-				"command": ".\\scripts\\code.bat"
-			},
-			"args": [
-				"--agents",
-				"--user-data-dir=${userHome}/.vscode-oss-dev",
-				"--extensions-dir=${userHome}/.vscode-oss-dev/extensions"
-			],
-			"problemMatcher": []
-		},
-		{
 			"label": "Transpile Client",
 			"type": "npm",
 			"script": "transpile-client",
-			"problemMatcher": []
-		},
-		{
-			"label": "Run and Compile Agents - OSS",
-			"dependsOn": [
-				"Transpile Client",
-				"Run Dev Agents"
-			],
-			"dependsOrder": "sequence",
-			"inAgents": true,
 			"problemMatcher": []
 		},
 		{
@@ -382,15 +358,6 @@
 					"endsPattern": "(Local|Network):.*"
 				}
 			}
-		},
-		{
-			"label": "Launch MCP Server",
-			"type": "shell",
-			"command": "cd test/mcp && npm run compile && npm run start-http",
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc"
-			]
 		},
 		{
 			"label": "Run Dev",

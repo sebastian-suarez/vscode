@@ -58,7 +58,6 @@ import { IFolderBackupInfo, IWorkspaceBackupInfo } from '../../../platform/backu
 import { ConfigurationTarget, IConfigurationService, IConfigurationValue } from '../../../platform/configuration/common/configuration.js';
 import { TestConfigurationService } from '../../../platform/configuration/test/common/testConfigurationService.js';
 import { ContextKeyValue, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
-import { IDefaultAccountService } from '../../../platform/defaultAccount/common/defaultAccount.js';
 import { ContextMenuService } from '../../../platform/contextview/browser/contextMenuService.js';
 import { IContextMenuMenuDelegate, IContextMenuService, IContextViewService } from '../../../platform/contextview/browser/contextView.js';
 import { ContextViewService } from '../../../platform/contextview/browser/contextViewService.js';
@@ -187,7 +186,6 @@ import { IWorkingCopyEditorService, WorkingCopyEditorService } from '../../servi
 import { IWorkingCopyFileService, WorkingCopyFileService } from '../../services/workingCopy/common/workingCopyFileService.js';
 import { IWorkingCopyService, WorkingCopyService } from '../../services/workingCopy/common/workingCopyService.js';
 import { TestContextService, TestExtensionService, TestFileService, TestHistoryService, TestLifecycleService, TestLoggerService, TestMarkerService, TestProductService, TestStorageService, TestTextResourcePropertiesService, TestWorkspaceTrustManagementService, TestWorkspaceTrustRequestService } from '../common/workbenchTestServices.js';
-import { DefaultAccountService } from '../../services/accounts/browser/defaultAccount.js';
 
 // Backcompat export
 export { TestFileService, TestLifecycleService };
@@ -375,7 +373,6 @@ export function workbenchInstantiationService(
 	instantiationService.stub(ICustomEditorLabelService, disposables.add(new CustomEditorLabelService(configService, workspaceContextService)));
 	instantiationService.stub(IHoverService, NullHoverService);
 	instantiationService.stub(IMarkdownRendererService, instantiationService.createInstance(MarkdownRendererService));
-	instantiationService.stub(IDefaultAccountService, DefaultAccountService);
 
 	return instantiationService;
 }

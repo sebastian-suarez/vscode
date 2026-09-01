@@ -15,7 +15,6 @@ import './standaloneLayoutService.js';
 import * as dom from '../../../base/browser/dom.js';
 import { StandardKeyboardEvent } from '../../../base/browser/keyboardEvent.js';
 import { mainWindow } from '../../../base/browser/window.js';
-import { IDefaultAccount, IDefaultAccountAuthenticationProvider } from '../../../base/common/defaultAccount.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter, Event, IValueWithChangeEvent, ValueWithChangeEvent } from '../../../base/common/event.js';
 import { KeyCodeChord, Keybinding, ResolvedKeybinding, decodeKeybinding } from '../../../base/common/keybindings.js';
@@ -43,7 +42,6 @@ import { ContextMenuService } from '../../../platform/contextview/browser/contex
 import { IContextMenuService, IContextViewDelegate, IContextViewService, IOpenContextView } from '../../../platform/contextview/browser/contextView.js';
 import { ContextViewService } from '../../../platform/contextview/browser/contextViewService.js';
 import { IDataChannelService, NullDataChannelService } from '../../../platform/dataChannel/common/dataChannel.js';
-import { IDefaultAccountService } from '../../../platform/defaultAccount/common/defaultAccount.js';
 import { IConfirmation, IConfirmationResult, IDialogService, IInputResult, IPrompt, IPromptBaseButton, IPromptResult, IPromptResultWithCancel, IPromptWithCustomCancel, IPromptWithDefaultCancel } from '../../../platform/dialogs/common/dialogs.js';
 import { ExtensionKind, IEnvironmentService, IExtensionHostDebugParams } from '../../../platform/environment/common/environment.js';
 import { SyncDescriptor } from '../../../platform/instantiation/common/descriptors.js';
@@ -1118,41 +1116,6 @@ class StandaloneAccessbilitySignalService implements IAccessibilitySignalService
 	}
 }
 
-class StandaloneDefaultAccountService implements IDefaultAccountService {
-	declare readonly _serviceBrand: undefined;
-
-	readonly onDidChangeDefaultAccount: Event<IDefaultAccount | null> = Event.None;
-	readonly currentDefaultAccount: IDefaultAccount | null = null;
-
-	async getDefaultAccount(): Promise<IDefaultAccount | null> {
-		return null;
-	}
-
-	setDefaultAccountProvider(): void {
-		// no-op
-	}
-
-	async refresh(): Promise<IDefaultAccount | null> {
-		return null;
-	}
-
-	getDefaultAccountAuthenticationProvider(): IDefaultAccountAuthenticationProvider {
-		return { id: 'default', name: 'Default', enterprise: false };
-	}
-
-	resolveGitHubUrl(path: string): string {
-		return `https://github.com/${path}`;
-	}
-
-	async signIn(): Promise<IDefaultAccount | null> {
-		return null;
-	}
-
-	async signOut(): Promise<void> {
-		// no-op
-	}
-}
-
 export interface IEditorOverrideServices {
 	[index: string]: unknown;
 }
@@ -1195,7 +1158,6 @@ registerSingleton(IAccessibilitySignalService, StandaloneAccessbilitySignalServi
 registerSingleton(ITreeSitterLibraryService, StandaloneTreeSitterLibraryService, InstantiationType.Eager);
 registerSingleton(ILoggerService, NullLoggerService, InstantiationType.Eager);
 registerSingleton(IDataChannelService, NullDataChannelService, InstantiationType.Eager);
-registerSingleton(IDefaultAccountService, StandaloneDefaultAccountService, InstantiationType.Eager);
 registerSingleton(IUserInteractionService, UserInteractionService, InstantiationType.Eager);
 
 /**

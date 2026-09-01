@@ -172,11 +172,6 @@ steps:
 
   - template: ../../common/install-builtin-extensions.yml@self
 
-  - ${{ if ne(parameters.VSCODE_ARCH, 'armhf') }}:
-    - template: ../../common/agent-sdk-produce.yml@self
-      parameters:
-        vscodePlatform: linux
-
   - template: ../../common/mixin-vscode-capi.yml@self
 
   - script: npm run gulp core-ci

@@ -184,12 +184,6 @@ export class WindowsShellHelper extends Disposable implements IWindowsShellHelpe
 				return GeneralShellType.NuShell;
 			case 'xonsh.exe':
 				return GeneralShellType.Xonsh;
-			case 'claude.exe':
-				return GeneralShellType.Claude;
-			case 'codex.exe':
-				return GeneralShellType.Codex;
-			case 'gemini.exe':
-				return GeneralShellType.Gemini;
 			case 'wsl.exe':
 			case 'ubuntu.exe':
 			case 'ubuntu1804.exe':

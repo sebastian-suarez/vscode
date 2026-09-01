@@ -1,6 +1,6 @@
 ---
 name: auto-perf-optimize
-description: "Run agent-driven VS Code performance or memory investigations. Use when asked to launch Code OSS, automate a VS Code scenario, run the Chat memory smoke runner, capture renderer heap snapshots, take workflow screenshots, compare run summaries, or drive a repeatable scenario before heap-snapshot analysis."
+description: "Run agent-driven VS Code performance or memory investigations. Use when asked to launch Code OSS, automate a VS Code scenario, capture renderer heap snapshots, take workflow screenshots, compare run summaries, or drive a repeatable scenario before heap-snapshot analysis."
 metadata:
   allowed-tools: Bash(npx @playwright/cli:*)
 ---
@@ -13,9 +13,8 @@ Drive a repeatable VS Code scenario, collect memory/performance artifacts, verif
 
 - User describes a VS Code workflow and asks whether it leaks or grows memory
 - User asks the agent to launch VS Code, drive a scenario, and capture heap snapshots
-- User asks to run the Chat memory smoke runner bundled with this skill
 - User wants screenshots, `summary.json`, renderer heap samples, and targeted `.heapsnapshot` files for one scenario
-- User wants a new automation runner for a non-Chat VS Code scenario
+- User wants a new automation runner for a VS Code scenario
 
 Do not use this skill when snapshots already exist and the user only wants heap object/retainer analysis. Use heap-snapshot-analysis directly.
 
@@ -32,77 +31,49 @@ Do not use this skill when snapshots already exist and the user only wants heap 
 
 ## Checked-in Runners
 
-The `scripts/` folder contains stable, generic runners. Use them directly or as templates for scratchpad scripts:
+The `scripts/` folder contains stable, generic helpers. Use them directly or as
+templates for scratchpad scripts:
 
-- **[chat-memory-smoke.mts](./scripts/chat-memory-smoke.mts)** — Multi-turn chat smoke runner. Sends prompts, waits for responses, samples heap, takes optional snapshots. The most versatile runner.
-- **[chat-session-switch-smoke.mts](./scripts/chat-session-switch-smoke.mts)** — Creates multiple chat sessions with different content types, then repeatedly switches between them via the sessions sidebar.
-- **[userDataProfile.mts](./scripts/userDataProfile.mts)** — Utility for managing user-data profiles in smoke test runs.
+- **[userDataProfile.mts](./scripts/userDataProfile.mts)** — Utility for managing
+  user-data profiles in smoke test runs.
 
-### Chat Workflow: Chat Memory Smoke Runner
+Scenario runners themselves live in the [scratchpad](./scratchpad/) folder; see
+"Develop and Watch a Runner" below.
 
-Use the bundled [Chat memory smoke runner](./scripts/chat-memory-smoke.mts) when the scenario is Chat-specific or can be expressed as repeated Chat prompts. It launches Code OSS, opens Chat, sends prompts, waits for responses, writes screenshots and `summary.json`, samples renderer heap, and can take selected heap snapshots.
+**Safety: runs execute on the real machine.** The Code OSS instance launched by these
+runners is a full VS Code on the user's actual computer — not a sandbox. Be responsible:
 
-Fast health check:
-
-```bash
-node .github/skills/auto-perf-optimize/scripts/chat-memory-smoke.mts --iterations 3 --no-heap-snapshots
-```
-
-Targeted post-warmup snapshots:
-
-```bash
-node .github/skills/auto-perf-optimize/scripts/chat-memory-smoke.mts --iterations 8 --heap-snapshot-label 03-iteration-01 --heap-snapshot-label 03-iteration-08
-```
-
-User-described Chat scenario:
-
-```bash
-node .github/skills/auto-perf-optimize/scripts/chat-memory-smoke.mts --iterations 8 --message 'For memory investigation iteration {iteration}, summarize the active workspace in one paragraph.' --heap-snapshot-label 03-iteration-01 --heap-snapshot-label 03-iteration-08
-```
+- **Use a throwaway workspace**, not the real repo. Pass `--workspace <scratch-folder>`
+  pointing to a temporary or gitignored directory (e.g., the runner's scratchpad
+  subfolder, or a folder under `.build/`).
+- Pass `--keep-open` when the user needs to watch the window, then close the window
+  before the next automated run unless intentionally reusing it.
+- Pass `--reuse` only when attaching to a Code window that was launched with
+  `--enable-smoke-test-driver` and the chosen remote-debugging port.
 
 Important runner behavior:
 
-- The default profile is persistent at `.build/auto-perf-optimize/user-data` so auth can be reused by all runners in this skill.
+- The default profile is persistent at `.build/auto-perf-optimize/user-data` so state can
+  be reused by all runners in this skill.
 - Pass `--temporary-user-data` only if a clean profile is part of the scenario.
-- Pass `--seed-user-data-dir <path>` to copy a logged-in profile into a fresh target profile before launch. The target profile may contain auth secrets; keep it inside ignored local `.build/...` folders and never attach it to issues or PRs.
+- Pass `--seed-user-data-dir <path>` to copy an existing profile into a fresh target
+  profile before launch.
 
-**Safety: chat runs execute on the real machine.** The Code OSS instance launched by these runners is a full VS Code with Copilot auth on the user's actual computer — not a sandbox. Chat prompts you craft will be sent to a real LLM, and any tool calls the agent makes (terminal commands, file edits, etc.) will execute for real. Be responsible:
+## Profiles
 
-- **Use a throwaway workspace**, not the real repo. Pass `--workspace <scratch-folder>` pointing to a temporary or gitignored directory (e.g., the runner's scratchpad subfolder, or a folder under `.build/`). The default workspace in checked-in runners is the repo root for convenience, but scratchpad runners for Chat scenarios should always override it to avoid accidental file modifications in the source tree.
-- Use **safe, read-only commands** for prompts that trigger terminal tools (e.g., `touch /tmp/foo`, `git log --oneline`, `ls`). Never instruct the agent to delete files, run destructive commands, or modify the user's workspace.
-- If you need tool calls for testing, use harmless operations and clean up any temp files afterward.
-- Don't be afraid to run terminal commands — just be thoughtful about what you ask.
-- Pass `--keep-open` when the user needs to log in or watch the window, then close the window before the next automated run unless intentionally reusing it.
-- Pass `--reuse` only when attaching to a Code window that was launched with `--enable-smoke-test-driver` and the chosen remote-debugging port.
-
-## Profiles and Auth
-
-Prefer the shared persistent performance profile for routine runs:
-
-```bash
-node .github/skills/auto-perf-optimize/scripts/chat-memory-smoke.mts --keep-open --iterations 1 --no-heap-snapshots
-```
-
-If Chat asks for auth, let the user sign in once, close the Code window, then rerun the fast smoke without `--keep-open`. The same profile is reused by the bundled Chat runner and by other runners that follow this skill's profile convention.
-
-To bootstrap the shared performance profile from an older logged-in automation profile, copy it once into the default target:
-
-```bash
-node .github/skills/auto-perf-optimize/scripts/chat-memory-smoke.mts --seed-user-data-dir .build/chat-memory-smoke/user-data --keep-open --iterations 1 --no-heap-snapshots
-```
-
-To run a fresh disposable copy of a logged-in seed:
-
-```bash
-node .github/skills/auto-perf-optimize/scripts/chat-memory-smoke.mts --temporary-user-data --seed-user-data-dir .build/auto-perf-optimize/user-data --iterations 3 --no-heap-snapshots
-```
+Prefer the shared persistent performance profile for routine runs so extension state and
+caches are warm and comparable between runs.
 
 Seed-copy rules:
 
 - The seed Code window must be closed. Never copy a profile while a Code process is using it.
-- The target user-data-dir must be absent or empty. If the script refuses to copy, pick a fresh `--user-data-dir`, use `--temporary-user-data`, or delete the local target deliberately.
-- The copy skips root-level caches, logs, crash dumps, singleton lock/socket files, and session storage. It intentionally keeps user/global storage that may contain auth or extension state.
-- Use explicit `--user-data-dir <fresh-path> --seed-user-data-dir <seed-path>` when you want to keep the copied profile after the run. User-provided `--user-data-dir` is never deleted by the runner.
+- The target user-data-dir must be absent or empty. If the script refuses to copy, pick a
+  fresh `--user-data-dir`, use `--temporary-user-data`, or delete the local target deliberately.
+- The copy skips root-level caches, logs, crash dumps, singleton lock/socket files, and
+  session storage. It intentionally keeps user/global storage that may contain extension state.
+- Use explicit `--user-data-dir <fresh-path> --seed-user-data-dir <seed-path>` when you want
+  to keep the copied profile after the run. User-provided `--user-data-dir` is never deleted
+  by the runner.
 
 ## Develop and Watch a Runner
 
@@ -110,7 +81,7 @@ The first version of an automation runner is rarely correct. Treat the runner as
 
 **New runners go in the [scratchpad](./scratchpad/) folder** (gitignored). Checked-in scripts in `scripts/` are stable, generic runners — don't modify them for a one-off investigation. Instead, copy patterns from them into a scratchpad script.
 
-Organize scratchpad work into **dated subfolders** named `YYYY-MM-DD-short-description/` (e.g., `2026-04-09-chat-scroll-leak/`). Each subfolder should contain:
+Organize scratchpad work into **dated subfolders** named `YYYY-MM-DD-short-description/` (e.g., `2026-04-09-editor-tab-leak/`). Each subfolder should contain:
 
 - The investigation scripts (`.mts`, `.mjs`, etc.)
 - A **`findings.md`** file documenting the full investigation: all ideas considered, which ones led to changes and which were rejected (and why), before/after measurements, and a summary of the outcome. This lets the user review the agent's reasoning, decide which changes to keep, and follow up on deferred ideas.
@@ -119,10 +90,10 @@ Organize scratchpad work into **dated subfolders** named `YYYY-MM-DD-short-descr
 
 **Import path depth:** Scripts in dated subfolders are 6 levels below the repo root (`.github/skills/auto-perf-optimize/scratchpad/YYYY-MM-DD-name/script.mts`), not 4 like the checked-in `scripts/*.mts` runners. Adjust relative imports accordingly — use 5 `..` segments to reach the repo root from a dated subfolder (e.g., `'../../../../../src/vs/base/common/stopwatch.ts'`), and `'../../scripts/userDataProfile.mts'` to reach sibling checked-in scripts.
 
-Suggested watch loop for the bundled Chat runner:
+Suggested watch loop for a scratchpad runner:
 
 ```bash
-node .github/skills/auto-perf-optimize/scripts/chat-memory-smoke.mts --keep-open --iterations 1 --no-heap-snapshots --port 9224 --output .build/chat-memory-smoke/watch-chat
+node .github/skills/auto-perf-optimize/scratchpad/<dated-folder>/scenario.mts --keep-open --iterations 1 --no-heap-snapshots --port 9224 --output .build/auto-perf-optimize/watch
 ```
 
 While that Code window is open, inspect it with `@playwright/cli` from the repo root:
@@ -131,7 +102,7 @@ While that Code window is open, inspect it with `@playwright/cli` from the repo 
 npx @playwright/cli attach --cdp=http://127.0.0.1:9224
 npx @playwright/cli tab-list
 npx @playwright/cli snapshot
-npx @playwright/cli screenshot --filename=.build/chat-memory-smoke/watch-chat/observation.png
+npx @playwright/cli screenshot --filename=.build/auto-perf-optimize/watch/observation.png
 ```
 
 `@playwright/cli` checkpoints:
@@ -155,15 +126,14 @@ When editing a scenario runner:
 Read the run's `summary.json` before opening heap snapshots. Check:
 
 - `error` is absent
-- `chatTurns` has the expected count
-- each turn has a response-start reason and final response text, unless the run intentionally used `--skip-send`
-- `analysis.postFirstTurnUsedBytes` and `analysis.postFirstTurnUsedBytesPerTurn` are present for multi-turn memory probes
+- the iteration count matches what the scenario was asked to do
+- `analysis.postFirstIterationUsedBytes` and its per-iteration counterpart are present for multi-iteration memory probes
 - requested snapshot labels exist under `heap/`
 - screenshots show the requested workflow and settled UI
 
-Prefer a warmed-up baseline such as `03-iteration-01.heapsnapshot` over startup snapshots. Startup, Chat opening, login, extension activation, and first-use model loads are expected allocations.
+Prefer a warmed-up baseline such as `03-iteration-01.heapsnapshot` over startup snapshots. Startup, extension activation, and first-use loads are expected allocations.
 
-## Compare a Chat Runner Result
+## Compare a Runner Result
 
 After capture, use heap-snapshot-analysis. A minimal scratchpad comparison script looks like this:
 
@@ -173,7 +143,7 @@ import { compareSnapshots, printComparison } from '../helpers/compareSnapshots.t
 
 const runDir = process.env.RUN;
 if (!runDir) {
-	throw new Error('Set RUN to a chat-memory-smoke output directory');
+	throw new Error('Set RUN to a runner output directory');
 }
 
 const before = path.join(runDir, 'heap', '03-iteration-01.heapsnapshot');
@@ -185,12 +155,12 @@ Run it from the heap-snapshot-analysis skill folder:
 
 ```bash
 cd .github/skills/heap-snapshot-analysis
-RUN=../../../.build/chat-memory-smoke/<run-folder> node --max-old-space-size=16384 scratchpad/compare-chat-run.mjs
+RUN=../../../.build/auto-perf-optimize/<run-folder> node --max-old-space-size=16384 scratchpad/compare-run.mjs
 ```
 
-## Non-Chat VS Code Scenarios
+## New VS Code Scenarios
 
-When the user describes a non-Chat scenario, ask only for the missing essentials: what action starts the scenario, what counts as one repeatable iteration, what indicates the UI is settled, and whether the profile should be persistent or temporary.
+When the user describes a scenario, ask only for the missing essentials: what action starts the scenario, what counts as one repeatable iteration, what indicates the UI is settled, and whether the profile should be persistent or temporary.
 
 **Write new scenario runners in the [scratchpad](./scratchpad/) folder.** This folder is gitignored — use it freely for one-off investigation scripts. If a runner proves generally useful, promote it to `scripts/` with documentation and validation.
 
@@ -210,21 +180,21 @@ EOF
 # Validate without snapshots first
 node .github/skills/auto-perf-optimize/scratchpad/2026-04-09-editor-tab-leak/scenario.mts \
   --iterations 3 --no-heap-snapshots --skip-prelaunch \
-  --user-data-dir .build/chat-memory-smoke/user-data
+  --user-data-dir .build/auto-perf-optimize/user-data
 
 # Then capture targeted snapshots
 node .github/skills/auto-perf-optimize/scratchpad/2026-04-09-editor-tab-leak/scenario.mts \
   --iterations 10 --heap-snapshot-label baseline --heap-snapshot-label final \
-  --skip-prelaunch --user-data-dir .build/chat-memory-smoke/user-data
+  --skip-prelaunch --user-data-dir .build/auto-perf-optimize/user-data
 
 # Write findings.md when the investigation concludes
 ```
 
-Reuse these patterns from the checked-in scripts ([chat-memory-smoke.mts](./scripts/chat-memory-smoke.mts), [chat-session-switch-smoke.mts](./scripts/chat-session-switch-smoke.mts)):
+Reuse these patterns in every runner:
 
 - launch `scripts/code.sh` or `scripts/code.bat`
 - pass `--enable-smoke-test-driver`, `--disable-workspace-trust`, a known `--remote-debugging-port`, explicit `--user-data-dir`, explicit `--extensions-dir`, `--skip-welcome`, and `--skip-release-notes`
-- use a **throwaway workspace** (`--workspace <scratch-folder>`) instead of the repo root to prevent Chat tool calls from modifying real source files
+- use a **throwaway workspace** (`--workspace <scratch-folder>`) instead of the repo root so the scenario cannot modify real source files
 - connect Playwright with `chromium.connectOverCDP`
 - wait for `globalThis.driver?.whenWorkbenchRestored?.()`
 - enable CDP `Performance` and `HeapProfiler`
@@ -234,7 +204,7 @@ Reuse these patterns from the checked-in scripts ([chat-memory-smoke.mts](./scri
 - support `--no-heap-snapshots` and targeted snapshot labels so validation stays fast
 - make cleanup explicit: close the CDP browser, terminate owned Code processes, and preserve user-provided profiles
 
-Keep scenario-specific UI selectors and wait logic in the scenario runner. Avoid making the Chat runner a generic abstraction unless multiple proven scenarios share the exact same lifecycle.
+Keep scenario-specific UI selectors and wait logic in the scenario runner. Avoid promoting a runner to a generic abstraction unless multiple proven scenarios share the exact same lifecycle.
 
 ## Handoff to Heap Snapshot Analysis
 

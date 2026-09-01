@@ -587,10 +587,6 @@
 			"project": "vscode-workbench"
 		},
 		{
-			"name": "vs/workbench/services/accounts",
-			"project": "vscode-workbench"
-		},
-		{
 			"name": "vs/workbench/services/request",
 			"project": "vscode-workbench"
 		}

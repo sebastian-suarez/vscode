@@ -69,7 +69,6 @@ import { StandardKeyboardEvent } from '../../../../base/browser/keyboardEvent.js
 import { KeyCode } from '../../../../base/common/keyCodes.js';
 import { IExtensionGalleryManifest, IExtensionGalleryManifestService, ExtensionGalleryManifestStatus } from '../../../../platform/extensionManagement/common/extensionGalleryManifest.js';
 import { URI } from '../../../../base/common/uri.js';
-import { DEFAULT_ACCOUNT_SIGN_IN_COMMAND } from '../../../services/accounts/browser/defaultAccount.js';
 import { FONT } from '../../../../base/common/font.js';
 
 export const ExtensionsSortByContext = new RawContextKey<string>('extensionsSortByValue', '');
@@ -147,18 +146,13 @@ export class ExtensionsViewletViewsContribution extends Disposable implements IW
 				ContextKeyExpr.or(
 					ContextKeyExpr.has('searchMarketplaceExtensions'), ContextKeyExpr.and(DefaultViewsContext)
 				),
-				ContextKeyExpr.or(CONTEXT_EXTENSIONS_GALLERY_STATUS.isEqualTo(ExtensionGalleryManifestStatus.RequiresSignIn), CONTEXT_EXTENSIONS_GALLERY_STATUS.isEqualTo(ExtensionGalleryManifestStatus.AccessDenied))
+				CONTEXT_EXTENSIONS_GALLERY_STATUS.isEqualTo(ExtensionGalleryManifestStatus.AccessDenied)
 			),
 			order: -1,
 		});
 
 		const viewRegistry = Registry.as<IViewsRegistry>(Extensions.ViewsRegistry);
 		viewRegistry.registerViews(viewDescriptors, this.container);
-
-		viewRegistry.registerViewWelcomeContent('workbench.views.extensions.marketplaceAccess', {
-			content: localize('sign in', "[Sign in to access Extensions Marketplace]({0})", `command:${DEFAULT_ACCOUNT_SIGN_IN_COMMAND}`),
-			when: CONTEXT_EXTENSIONS_GALLERY_STATUS.isEqualTo(ExtensionGalleryManifestStatus.RequiresSignIn)
-		});
 
 		viewRegistry.registerViewWelcomeContent('workbench.views.extensions.marketplaceAccess', {
 			content: localize('access denied', "Your account does not have access to the Extensions Marketplace. Please contact your administrator."),
@@ -1132,7 +1126,6 @@ export class MaliciousExtensionChecker implements IWorkbenchContribution {
 export class ExtensionMarketplaceStatusUpdater extends Disposable implements IWorkbenchContribution {
 
 	private readonly badgeHandle = this._register(new MutableDisposable());
-	private readonly accountBadgeDisposable = this._register(new MutableDisposable());
 
 	constructor(
 		@IActivityService private readonly activityService: IActivityService,
@@ -1146,26 +1139,9 @@ export class ExtensionMarketplaceStatusUpdater extends Disposable implements IWo
 	private async updateBadge(): Promise<void> {
 		this.badgeHandle.clear();
 
-		const status = this.extensionGalleryManifestService.extensionGalleryManifestStatus;
-		let badge: IBadge | undefined;
-
-		switch (status) {
-			case ExtensionGalleryManifestStatus.RequiresSignIn:
-				badge = new NumberBadge(1, () => localize('signInRequired', "Sign in required to access marketplace"));
-				break;
-			case ExtensionGalleryManifestStatus.AccessDenied:
-				badge = new WarningBadge(() => localize('accessDenied', "Access denied to marketplace"));
-				break;
-		}
-
-		if (badge) {
+		if (this.extensionGalleryManifestService.extensionGalleryManifestStatus === ExtensionGalleryManifestStatus.AccessDenied) {
+			const badge = new WarningBadge(() => localize('accessDenied', "Access denied to marketplace"));
 			this.badgeHandle.value = this.activityService.showViewContainerActivity(VIEWLET_ID, { badge });
-		}
-
-		this.accountBadgeDisposable.clear();
-		if (status === ExtensionGalleryManifestStatus.RequiresSignIn) {
-			const badge = new NumberBadge(1, () => localize('sign in enterprise marketplace', "Sign in to access Marketplace"));
-			this.accountBadgeDisposable.value = this.activityService.showAccountsActivity({ badge });
 		}
 	}
 }

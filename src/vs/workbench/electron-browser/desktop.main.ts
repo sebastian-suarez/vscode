@@ -63,8 +63,6 @@ import { RemoteFileSystemProxyClient } from '../../platform/files/electron-brows
 import { IConfigurationService } from '../../platform/configuration/common/configuration.js';
 import { applyZoom } from '../../platform/window/electron-browser/window.js';
 import { mainWindow } from '../../base/browser/window.js';
-import { IDefaultAccountService } from '../../platform/defaultAccount/common/defaultAccount.js';
-import { DefaultAccountService } from '../services/accounts/browser/defaultAccount.js';
 
 export class DesktopMain extends Disposable {
 
@@ -208,10 +206,6 @@ export class DesktopMain extends Disposable {
 		if (logService.getLevel() === LogLevel.Trace) {
 			logService.trace('workbench#open(): with configuration', safeStringify({ ...this.configuration, nls: undefined /* exclude large property */ }));
 		}
-
-		// Default Account
-		const defaultAccountService = this._register(new DefaultAccountService(productService));
-		serviceCollection.set(IDefaultAccountService, defaultAccountService);
 
 		// Policies
 		const policyChannel = this.configuration.policiesData ? this._register(new PolicyChannelClient(this.configuration.policiesData, mainProcessService.getChannel('policy'))) : undefined;

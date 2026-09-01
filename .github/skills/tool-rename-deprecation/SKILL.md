@@ -115,7 +115,6 @@ While legacy names ensure backward compatibility, update first-party references 
 | `src/vs/workbench/contrib/chat/common/tools/languageModelToolsService.ts` | `IToolData` and `IToolSet` interfaces with legacy name fields |
 | `src/vs/workbench/contrib/chat/browser/tools/languageModelToolsService.ts` | Resolution logic: `getToolAliases`, `getToolSetAliases`, `getDeprecatedFullReferenceNames`, `isToolEligibleForAutoApproval` |
 | `src/vs/workbench/contrib/chat/common/tools/languageModelToolsContribution.ts` | Extension point schema, validation, and the critical `id: rawTool.name` mapping (line ~274) |
-| `src/vs/workbench/contrib/terminalContrib/chatAgentTools/browser/tools/runInTerminalTool.ts` | Example of a tool with its own local auto-approval check against legacy names |
 
 ## Real Examples
 

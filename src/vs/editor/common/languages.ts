@@ -1130,11 +1130,6 @@ export type LifetimeSummary = {
 	availableProviders: string;
 	skuPlan: string | undefined;
 	skuType: string | undefined;
-	renameCreated: boolean | undefined;
-	renameDuration: number | undefined;
-	renameTimedOut: boolean | undefined;
-	renameDroppedOtherEdits: number | undefined;
-	renameDroppedRenameEdits: number | undefined;
 	editKind: string | undefined;
 	longDistanceHintVisible?: boolean;
 	longDistanceHintDistance?: number;

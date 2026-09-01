@@ -95,8 +95,6 @@ import { ISecretStorageService } from '../../platform/secrets/common/secrets.js'
 import { TunnelSource } from '../services/remote/common/tunnelModel.js';
 import { mainWindow } from '../../base/browser/window.js';
 import { INotificationService, Severity } from '../../platform/notification/common/notification.js';
-import { IDefaultAccountService } from '../../platform/defaultAccount/common/defaultAccount.js';
-import { DefaultAccountService } from '../services/accounts/browser/defaultAccount.js';
 
 export interface IBrowserMainWorkbench {
 	startup(): IInstantiationService;
@@ -360,10 +358,6 @@ export class BrowserMain extends Disposable {
 		const remoteAgentService = this._register(new RemoteAgentService(remoteSocketFactoryService, userDataProfileService, environmentService, productService, remoteAuthorityResolverService, signService, logService));
 		serviceCollection.set(IRemoteAgentService, remoteAgentService);
 		this._register(RemoteFileSystemProviderClient.register(remoteAgentService, fileService, logService));
-
-		// Default Account
-		const defaultAccountService = this._register(new DefaultAccountService(productService));
-		serviceCollection.set(IDefaultAccountService, defaultAccountService);
 
 		// Policies
 		const policyService = new NullPolicyService();

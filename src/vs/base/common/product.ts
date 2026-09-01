@@ -105,7 +105,6 @@ export interface IProductConfiguration {
 		readonly extensionUrlTemplate: string;
 		readonly resourceUrlTemplate: string;
 		readonly nlsBaseUrl: string;
-		readonly accessSKUs?: string[];
 	};
 
 	readonly mcpGallery?: {
@@ -216,7 +215,6 @@ export interface IProductConfiguration {
 
 	readonly commonlyUsedSettings?: string[];
 
-	readonly defaultChatAgent: IDefaultChatAgent;
 	readonly emergencyAlertUrl?: string;
 
 	readonly remoteDefaultExtensionsIfInstalledLocally?: string[];
@@ -337,21 +335,4 @@ export interface ISurveyData {
 	languageId: string;
 	editCount: number;
 	userProbability: number;
-}
-
-export interface IDefaultChatAgent {
-	readonly extensionId: string;
-	readonly chatExtensionId: string;
-
-	readonly provider: {
-		default: { id: string; name: string };
-		enterprise: { id: string; name: string };
-	};
-
-	readonly providerUriSetting: string;
-	readonly providerScopes: string[][];
-
-	readonly entitlementUrl: string;
-
-	readonly completionsAdvancedSetting: string;
 }

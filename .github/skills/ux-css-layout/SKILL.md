@@ -248,8 +248,8 @@ For `IconLabel` and list/tree renderers, this is handled automatically. For cust
 ## 10. Design-System Size Tokens (spacing, radius, font, codicon, stroke)
 
 VS Code ships a design-system **size** ramp, registered in
-`src/vs/platform/theme/common/sizes/baseSizes.ts` (agents font ramp in
-`src/vs/sessions/common/sizes.ts`) and emitted as `--vscode-*` CSS variables.
+`src/vs/platform/theme/common/sizes/baseSizes.ts` and emitted as `--vscode-*` CSS
+variables.
 When writing or editing CSS, prefer the token var over a raw px value wherever a
 token exists. The full tables + rationale live in the auto-injected
 `.github/instructions/design-tokens.instructions.md` (canonical source — keep
@@ -300,28 +300,12 @@ scale value, **ties round up** (`5px → 6px`, `3px → 4px`, `1px → 2px`,
 Generic UI chrome (fixed px): `13 → --vscode-bodyFontSize` (base),
 `12 → --vscode-bodyFontSize-small`, `11 → --vscode-bodyFontSize-xSmall`.
 
-Agents window (`src/vs/sessions/**`) ramp — pair a **size** token with a
-**weight** token:
-
-| px | Size var | Weight |
-|----|----------|--------|
-| 26 | `--vscode-agents-fontSize-heading1` | semiBold |
-| 18 | `--vscode-agents-fontSize-heading2` | semiBold |
-| 13 | `--vscode-agents-fontSize-heading3` | semiBold |
-| 13 | `--vscode-agents-fontSize-body1` | regular |
-| 11 | `--vscode-agents-fontSize-body2` | regular |
-| 12 | `--vscode-agents-fontSize-label1` | regular |
-| 11 | `--vscode-agents-fontSize-label2` | regular |
-| 10 | `--vscode-agents-fontSize-label3` | regular |
-
-The agents weight ramp is **two weights only**:
-`--vscode-agents-fontWeight-regular` (400) and
-`--vscode-agents-fontWeight-semiBold` (600).
+Weights are **two only** — regular (400) and semiBold (600).
 
 - **No medium (500).** `font-weight: 500` is off the ramp — snap to `semiBold`.
   Likewise `700`/`bold` → round to the nearer of 400/600.
-- **"Strong" is not a separate size.** "Body 1 Strong" = the matching
-  `--vscode-agents-fontSize-*` size token + `semiBold`. Never add a strong *size*.
+- **"Strong" is not a separate size.** "Body 1 Strong" = the matching size token
+  + `semiBold`. Never add a strong *size*.
 - `normal` ≡ 400 → `regular`. Leave `inherit`, `lighter`, `bolder`,
   `var()`/`calc()` untouched.
 

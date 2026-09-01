@@ -84,7 +84,7 @@ Format the result as a markdown table:
 
 - **Use Python for the heavy lifting.** Shell loops with inline comments break in zsh. Write a temp `.py` script, run it, then delete it.
 - **Author matching is exact.** Always run step 1 first. `--author` does substring matching but you must verify the right person is matched (e.g., don't match "Joshua Smith" when looking for "Josh S."). Use the GitHub MCP `get_me` tool or `git log` output to resolve the correct full name.
-- **Renames can be multi-hop.** A file may have moved `contrib/chat/` → `agentSessions/` → `sessions/`. The rename map must be walked transitively.
+- **Renames can be multi-hop.** A file may have moved `contrib/a/` → `b/` → `c/`. The rename map must be walked transitively.
 - **Only report files in the merge diff** (step 4). Files the author touched that were later deleted entirely should not appear — they won't land in the upstream.
 - **The rename map must include all authors' commits**, not just the target author's. Other people often do the rename commits (e.g., bulk refactors/moves).
 
@@ -162,7 +162,7 @@ print(f'\nTotal: {len(results)} files')
 
 ### Alternative Script
 
-After following the process above, run this script to cross-check files touched by an author against the branch diff.   You can do this both with an without src/vs/sessions.
+After following the process above, run this script to cross-check files touched by an author against the branch diff. Adjust or drop the `grep -v` filter to exclude directories you are not interested in.
 
 ```
 AUTHOR=""
@@ -170,17 +170,17 @@ AUTHOR=""
 # 1. Find commits by author on this branch (not on main)
 git log main...HEAD --author="$AUTHOR" --format="%H"
 
-# 2. Get unique files touched across all those commits, excluding src/vs/sessions/
+# 2. Get unique files touched across all those commits, excluding a directory
 git log main...HEAD --author="$AUTHOR" --format="%H" \
   | xargs -I{} git diff-tree --no-commit-id -r --name-only {} \
   | sort -u \
-  | grep -v '^src/vs/sessions/'
+  | grep -v '^src/vs/excluded/'
 
 # 3. Cross-reference with branch diff to keep only files still changed vs main
 git log main...HEAD --author="$AUTHOR" --format="%H" \
   | xargs -I{} git diff-tree --no-commit-id -r --name-only {} \
   | sort -u \
-  | grep -v '^src/vs/sessions/' \
+  | grep -v '^src/vs/excluded/' \
   | while read f; do git diff main...HEAD --name-only -- "$f" 2>/dev/null; done \
   | sort -u
 ```

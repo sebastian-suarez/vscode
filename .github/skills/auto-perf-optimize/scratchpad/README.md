@@ -8,7 +8,7 @@ Put each investigation in a **dated subfolder** named `YYYY-MM-DD-short-descript
 
 ```
 scratchpad/
-  2026-04-09-chat-scroll-leak/
+  2026-04-09-editor-tab-leak/
     scenario.mts
     findings.md
   2026-04-12-editor-tab-switching/
@@ -40,15 +40,7 @@ node .github/skills/auto-perf-optimize/scratchpad/my-scenario.mts
 
 ## Checked-in scripts (in `scripts/`)
 
-These are reusable, generic runners. Use them directly or as templates:
-
-- **`chat-memory-smoke.mts`** — Multi-turn chat smoke runner. Sends prompts,
-  waits for responses, samples heap, takes optional snapshots. Supports
-  `--message`, `--iterations`, `--skip-send`, `--keep-open`, `--reuse`, etc.
-
-- **`chat-session-switch-smoke.mts`** — Creates multiple chat sessions with
-  different content, then repeatedly switches between them via the sessions
-  sidebar. Measures per-switch memory growth.
+These are reusable, generic helpers. Use them directly or as templates:
 
 - **`userDataProfile.mts`** — Utility for managing user-data profiles in
   smoke test runs.
@@ -56,7 +48,7 @@ These are reusable, generic runners. Use them directly or as templates:
 ## Tips
 
 - Always use `--user-data-dir .build/auto-perf-optimize/user-data` (the
-  persistent profile with Copilot auth). Never create a fresh user-data-dir.
+  persistent profile). Never create a fresh user-data-dir.
 - Use `--skip-prelaunch` to avoid re-downloading Electron on every run.
 - If you need to clean up an orphaned test instance, stop only the specific
   Code - OSS process (e.g. by killing the PID that was logged at launch, or

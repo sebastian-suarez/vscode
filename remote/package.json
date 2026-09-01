@@ -7,7 +7,6 @@
     "@microsoft/1ds-post-js": "^3.2.13",
     "@microsoft/mxc-sdk": "0.6.0",
     "@parcel/watcher": "^2.5.6",
-    "@vscode/copilot-api": "^0.4.2",
     "@vscode/deviceid": "^0.1.1",
     "@vscode/iconv-lite-umd": "0.7.1",
     "@vscode/native-watchdog": "^1.4.6",
@@ -49,8 +48,7 @@
     "vscode-textmate": "^9.3.2",
     "ws": "^8.19.0",
     "yauzl": "^3.3.1",
-    "yazl": "^2.4.3",
-    "zod": "^3.25.76"
+    "yazl": "^2.4.3"
   },
   "overrides": {
     "node-gyp-build": "4.8.1",
