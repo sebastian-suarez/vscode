@@ -9,17 +9,12 @@
     "authSession",
     "browser",
     "environmentPower",
-    "chatParticipantPrivate",
-    "chatPromptFiles",
-    "chatProvider",
     "contribStatusBarItems",
     "contribViewsRemote",
     "customEditorMove",
-    "defaultChatParticipant",
     "diffCommand",
     "documentFiltersExclusive",
     "editorInsets",
-    "embeddings",
     "envIsConnectionMetered",
     "extensionRuntime",
     "extensionsAny",
@@ -28,9 +23,7 @@
     "findFiles2",
     "findTextInFiles",
     "fsChunks",
-    "interactive",
     "languageStatusText",
-    "mcpServerDefinitions",
     "nativeWindowHandle",
     "notebookDeprecated",
     "notebookLiveShare",
@@ -56,9 +49,7 @@
     "tunnels",
     "workspaceTrust",
     "inlineCompletionsAdditions",
-    "devDeviceId",
-    "languageModelProxy",
-    "agentSessionsWorkspace"
+    "devDeviceId"
   ],
   "private": true,
   "activationEvents": [],
@@ -68,52 +59,6 @@
   },
   "icon": "media/icon.png",
   "contributes": {
-    "languageModelChatProviders": [
-      {
-        "vendor": "test-lm-vendor",
-        "displayName": "Test LM Vendor"
-      },
-      {
-        "vendor": "copilot",
-        "displayName": "Test Copilot LM Vendor"
-      }
-    ],
-    "chatParticipants": [
-      {
-        "id": "api-test.participant",
-        "name": "participant",
-        "description": "test",
-        "isDefault": true,
-        "commands": [
-          {
-            "name": "hello",
-            "description": "Hello"
-          }
-        ],
-        "modes": [
-          "agent",
-          "ask",
-          "edit"
-        ]
-      },
-      {
-        "id": "api-test.participant2",
-        "name": "participant2",
-        "description": "test",
-        "commands": []
-      }
-    ],
-    "languageModelTools": [
-      {
-        "name": "requires_confirmation_tool",
-        "toolReferenceName": "requires_confirmation_tool",
-        "displayName": "Requires Confirmation Tool",
-        "modelDescription": "A noop tool to trigger confirmation.",
-        "canBeReferencedInPrompt": true,
-        "icon": "$(files)",
-        "inputSchema": {}
-      }
-    ],
     "configuration": {
       "type": "object",
       "title": "Test Config",
@@ -228,12 +173,6 @@
             "program": "${workspaceFolder}/file.md"
           }
         ]
-      }
-    ],
-    "interactiveSession": [
-      {
-        "id": "provider",
-        "label": "Provider"
       }
     ],
     "notebooks": [

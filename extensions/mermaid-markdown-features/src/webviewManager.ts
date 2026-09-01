@@ -9,7 +9,7 @@ export interface MermaidWebviewInfo {
 	readonly webview: vscode.Webview;
 	readonly mermaidSource: string;
 	readonly title: string | undefined;
-	readonly type: 'chat' | 'editor';
+	readonly type: 'editor';
 }
 
 export interface MermaidCommandContext {
@@ -19,7 +19,7 @@ export interface MermaidCommandContext {
 }
 
 /**
- * Manages all mermaid webviews (both chat output renderers and editor previews).
+ * Manages all mermaid webviews (editor previews).
  * Tracks the active webview and provides methods for interacting with webviews.
  */
 export class MermaidWebviewManager {
@@ -34,7 +34,7 @@ export class MermaidWebviewManager {
 		return this._activeWebviewId ? this._webviews.get(this._activeWebviewId) : undefined;
 	}
 
-	public registerWebview(id: string, webview: vscode.Webview, mermaidSource: string, title: string | undefined, type: 'chat' | 'editor'): vscode.Disposable {
+	public registerWebview(id: string, webview: vscode.Webview, mermaidSource: string, title: string | undefined, type: 'editor'): vscode.Disposable {
 		if (this._webviews.has(id)) {
 			throw new Error(`Webview with id ${id} is already registered.`);
 		}

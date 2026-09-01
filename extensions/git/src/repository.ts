@@ -946,17 +946,12 @@ export class Repository implements Disposable {
 
 		this.disposables.push(new FileEventLogger(onRepositoryWorkingTreeFileChange, onRepositoryDotGitFileChange, logger));
 
-		// Parent source control. Repositories opened in the Sessions app
-		// don't use the parent/child relationship and it is expected for
-		// a worktree repository to be opened while the main repository
-		// is closed.
-		const parentRoot = workspace.isAgentSessionsWorkspace
-			? undefined
-			: repository.kind === 'submodule'
-				? repository.dotGit.superProjectPath
-				: repository.kind === 'worktree' && repository.dotGit.commonPath
-					? path.dirname(repository.dotGit.commonPath)
-					: undefined;
+		// Parent source control.
+		const parentRoot = repository.kind === 'submodule'
+			? repository.dotGit.superProjectPath
+			: repository.kind === 'worktree' && repository.dotGit.commonPath
+				? path.dirname(repository.dotGit.commonPath)
+				: undefined;
 		const parent = parentRoot
 			? this.repositoryResolver.getRepository(parentRoot)?.sourceControl
 			: undefined;
@@ -1455,9 +1450,6 @@ export class Repository implements Disposable {
 						opts.requireUserConfig = config.get<boolean>('requireGitUserConfig');
 					}
 
-					// Add AI co-author trailer if applicable
-					message = await this.appendAICoAuthorTrailer(message, indexResources, workingGroupResources);
-
 					await this.repository.commit(message, opts);
 					await this.commitOperationCleanup(message, indexResources, workingGroupResources);
 				},
@@ -1484,58 +1476,6 @@ export class Repository implements Disposable {
 
 		// Clear AI contribution tracking for committed resources
 		commands.executeCommand('_aiEdits.clearAiContributions', resources);
-	}
-
-	private static readonly AI_CO_AUTHOR_TRAILER = 'Co-authored-by: Copilot <copilot@github.com>';
-
-	private async appendAICoAuthorTrailer(
-		message: string | undefined,
-		indexResources: string[],
-		workingGroupResources: string[]
-	): Promise<string | undefined> {
-		if (!message) {
-			return message;
-		}
-
-		const chatConfig = workspace.getConfiguration('chat');
-		if (chatConfig.get<boolean>('disableAIFeatures', false)) {
-			return message;
-		}
-
-		const config = workspace.getConfiguration('git', Uri.file(this.root));
-		// Make sure that AI CoAuthor is off
-		const addAICoAuthor = config.get<'off' | 'chatAndAgent' | 'all'>('addAICoAuthor', 'off');
-
-		if (addAICoAuthor === 'off') {
-			return message;
-		}
-
-		// Don't add if trailer is already present
-		if (message.includes(Repository.AI_CO_AUTHOR_TRAILER)) {
-			return message;
-		}
-
-		const resources = indexResources.length !== 0
-			? indexResources.map(r => Uri.file(r))
-			: workingGroupResources.map(r => Uri.file(r));
-
-		if (resources.length === 0) {
-			return message;
-		}
-
-		try {
-			const level = addAICoAuthor === 'all' ? 'all' : 'chatAndAgent';
-			const hasAiContributions = await commands.executeCommand<boolean>('_aiEdits.hasAiContributions', resources, level);
-			if (hasAiContributions) {
-				// Ensure proper trailer formatting: blank line before trailers
-				const trimmed = message.trimEnd();
-				return `${trimmed}\n\n${Repository.AI_CO_AUTHOR_TRAILER}`;
-			}
-		} catch {
-			// Command may not be available (e.g., in web environment)
-		}
-
-		return message;
 	}
 
 	private commitOperationGetOptimisticResourceGroups(opts: CommitOptions): GitResourceGroups {

@@ -43,10 +43,9 @@ const mermaidMarkdownBuildOptions: Partial<esbuild.BuildOptions> = {
 };
 
 await Promise.all([
-	// Chat
+	// Editor preview
 	run({
 		entryPoints: {
-			'index': path.join(chatSrcDir, 'index.ts'),
 			'index-editor': path.join(chatSrcDir, 'index-editor.ts'),
 			'codicon': path.join(rootDir, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css'),
 		},
