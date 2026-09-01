@@ -251,7 +251,6 @@ export const IServerEnvironmentService = refineServiceDecorator<IEnvironmentServ
 
 export interface IServerEnvironmentService extends INativeEnvironmentService {
 	readonly machineSettingsResource: URI;
-	readonly mcpResource: URI;
 	readonly args: ServerParsedArgs;
 	readonly reconnectionGraceTime: number;
 }
@@ -262,7 +261,6 @@ export class ServerEnvironmentService extends NativeEnvironmentService implement
 	@memoize
 	get machineSettingsResource(): URI { return joinPath(URI.file(join(this.userDataPath, 'Machine')), 'settings.json'); }
 	@memoize
-	get mcpResource(): URI { return joinPath(URI.file(join(this.userDataPath, 'User')), 'mcp.json'); }
 	override get args(): ServerParsedArgs { return super.args as ServerParsedArgs; }
 	@memoize
 	get reconnectionGraceTime(): number { return parseGraceTime(this.args['reconnection-grace-time'], ProtocolConstants.ReconnectionGraceTime); }

@@ -24,7 +24,6 @@
     "build-fast": "npm-run-all2 -lp transpile-client build-fast-extensions",
     "build-fast-extensions": "npm run gulp copy-codicons compile-extensions compile-extension-media",
     "typecheck-client": "tsgo --project ./src/tsconfig.json --noEmit --skipLibCheck",
-    "codex:gen-protocol": "node build/codex/generate-protocol.mjs",
     "watch": "npm-run-all2 -lp watch-client-transpile watch-client watch-extensions",
     "watch-transpile": "npm-run-all2 -lp watch-client-transpile watch-extensions",
     "watchd": "deemon npm run watch",

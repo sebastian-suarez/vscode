@@ -15,7 +15,7 @@ import './standaloneLayoutService.js';
 import * as dom from '../../../base/browser/dom.js';
 import { StandardKeyboardEvent } from '../../../base/browser/keyboardEvent.js';
 import { mainWindow } from '../../../base/browser/window.js';
-import { IDefaultAccount, IDefaultAccountAuthenticationProvider, IPolicyData } from '../../../base/common/defaultAccount.js';
+import { IDefaultAccount, IDefaultAccountAuthenticationProvider } from '../../../base/common/defaultAccount.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter, Event, IValueWithChangeEvent, ValueWithChangeEvent } from '../../../base/common/event.js';
 import { KeyCodeChord, Keybinding, ResolvedKeybinding, decodeKeybinding } from '../../../base/common/keybindings.js';
@@ -1124,12 +1124,7 @@ class StandaloneDefaultAccountService implements IDefaultAccountService {
 	declare readonly _serviceBrand: undefined;
 
 	readonly onDidChangeDefaultAccount: Event<IDefaultAccount | null> = Event.None;
-	readonly onDidChangePolicyData: Event<IPolicyData | null> = Event.None;
-	readonly policyData: IPolicyData | null = null;
 	readonly currentDefaultAccount: IDefaultAccount | null = null;
-	readonly managedSettingsFetchStatus: null = null;
-	readonly managedSettingsFetchedAt: null = null;
-	readonly managedSettingsRawResponse: unknown = null;
 
 	async getDefaultAccount(): Promise<IDefaultAccount | null> {
 		return null;

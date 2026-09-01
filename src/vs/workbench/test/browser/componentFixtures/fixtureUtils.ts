@@ -16,10 +16,9 @@ import '../../../browser/media/style.css';
 // rather than next to the widgets themselves; in the product they arrive via
 // `workbench/browser/style.ts`, which fixtures do not load.
 import '../../../browser/media/uiCustomFontWidgets.css';
-// Import auxiliaryBarPart.css here (before any contrib/chat CSS) so the cascade
-// matches the product: chat.css loads later and overrides the auxiliarybar
-// rules where applicable. Fixtures that wrap content in `.part.auxiliarybar`
-// rely on these rules to recolor inline editors with `--vscode-sideBar-background`.
+// Import auxiliaryBarPart.css so the cascade matches the product. Fixtures that
+// wrap content in `.part.auxiliarybar` rely on these rules to recolor inline
+// editors with `--vscode-sideBar-background`.
 import '../../../browser/parts/auxiliarybar/media/auxiliaryBarPart.css';
 
 // Theme
@@ -540,12 +539,7 @@ export function createEditorServices(disposables: DisposableStore, options?: Cre
 	defineInstance(IDefaultAccountService, {
 		_serviceBrand: undefined,
 		onDidChangeDefaultAccount: new Emitter<null>().event,
-		onDidChangePolicyData: new Emitter<null>().event,
-		policyData: null,
 		currentDefaultAccount: null,
-		managedSettingsFetchStatus: null,
-		managedSettingsFetchedAt: null,
-		managedSettingsRawResponse: null,
 		getDefaultAccount: async () => null,
 		getDefaultAccountAuthenticationProvider: () => ({ id: 'test', name: 'Test', scopes: [], enterprise: false }),
 		resolveGitHubUrl: (path: string) => `https://github.com/${path}`,

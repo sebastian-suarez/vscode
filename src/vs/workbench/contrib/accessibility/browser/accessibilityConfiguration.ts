@@ -9,7 +9,6 @@ import { Registry } from '../../../../platform/registry/common/platform.js';
 import { RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';
 import { workbenchConfigurationNodeBase, Extensions as WorkbenchExtensions, IConfigurationMigrationRegistry, ConfigurationKeyValuePairs, ConfigurationMigration } from '../../../common/configuration.js';
 import { AccessibilitySignal } from '../../../../platform/accessibilitySignal/browser/accessibilitySignalService.js';
-import { AccessibilityVoiceSettingId } from '../../speech/common/speechService.js';
 import { isDefined } from '../../../../base/common/types.js';
 
 export const accessibilityHelpIsShown = new RawContextKey<boolean>('accessibilityHelpIsShown', false, true);
@@ -886,10 +885,6 @@ export function registerAccessibilityConfiguration() {
 		}
 	});
 }
-
-export { AccessibilityVoiceSettingId };
-
-export const SpeechTimeoutDefault = 0;
 
 Registry.as<IConfigurationMigrationRegistry>(WorkbenchExtensions.ConfigurationMigration)
 	.registerConfigurationMigrations([{

@@ -28,8 +28,7 @@ import minimist from 'minimist';
 import { compileBuildWithoutManglingTask } from './gulpfile.compile.ts';
 import { compileNonNativeExtensionsBuildTask, compileNativeExtensionsBuildTask, compileAllExtensionsBuildTask, compileExtensionMediaBuildTask, cleanExtensionsBuildTask } from './gulpfile.extensions.ts';
 import { copyCodiconsTask } from './lib/compilation.ts';
-import { getRipgrepExcludeFilter } from './lib/copilot.ts';
-import { readAgentSdkResults } from './agent-sdk/common.ts';
+import { getRipgrepExcludeFilter } from './lib/ripgrep.ts';
 import { useEsbuildTranspile } from './buildConfig.ts';
 import { promisify } from 'util';
 import globCallback from 'glob';
@@ -65,12 +64,10 @@ const vscodeResourceIncludes = [
 
 	// Workbench
 	'out-build/vs/code/electron-browser/workbench/workbench.html',
-	'out-build/vs/sessions/electron-browser/sessions.html',
 
 	// Electron Preload
 	'out-build/vs/base/parts/sandbox/electron-browser/preload.js',
 	'out-build/vs/base/parts/sandbox/electron-browser/preload-aux.js',
-	'out-build/vs/platform/browserView/electron-browser/preload-browserView.js',
 
 	// Node Scripts
 	'out-build/vs/base/node/{terminateProcess.sh,cpuUsage.sh,ps.sh}',
@@ -95,13 +92,6 @@ const vscodeResourceIncludes = [
 
 	// Welcome
 	'out-build/vs/workbench/contrib/welcomeGettingStarted/common/media/**/*.{svg,png}',
-
-	// Sessions
-	'out-build/vs/sessions/contrib/chat/browser/media/*.svg',
-	'out-build/vs/sessions/contrib/welcome/browser/media/*.svg',
-	'out-build/vs/sessions/contrib/welcome/browser/media/themePreviews/*.svg',
-	'out-build/vs/sessions/prompts/*.prompt.md',
-	'out-build/vs/sessions/skills/**/SKILL.md',
 
 	// Extensions
 	'out-build/vs/workbench/contrib/extensions/browser/media/{theme-icon.png,language-icon.svg}',
@@ -155,7 +145,7 @@ const bundleVSCodeTask = task.define('bundle-vscode', task.series(
 					...bootstrapEntryPoints
 				],
 				resources: vscodeResources,
-				skipTSBoilerplateRemoval: entryPoint => entryPoint === 'vs/code/electron-browser/workbench/workbench' || entryPoint === 'vs/sessions/electron-browser/sessions'
+				skipTSBoilerplateRemoval: entryPoint => entryPoint === 'vs/code/electron-browser/workbench/workbench'
 			}
 		}
 	)
@@ -247,11 +237,7 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 			'vs/workbench/workbench.desktop.main.css',
 			'vs/workbench/api/node/extensionHostProcess.js',
 			'vs/code/electron-browser/workbench/workbench.html',
-			'vs/code/electron-browser/workbench/workbench.js',
-			'vs/sessions/sessions.desktop.main.js',
-			'vs/sessions/sessions.desktop.main.css',
-			'vs/sessions/electron-browser/sessions.html',
-			'vs/sessions/electron-browser/sessions.js'
+			'vs/code/electron-browser/workbench/workbench.js'
 		]);
 
 		const src = gulp.src(out + '/**', { base: '.' })
@@ -305,13 +291,6 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 				json.checksums = checksums;
 				json.version = version;
 				json.serverDownloadUrlTemplate = 'https://github.com/!!ASSETS_REPOSITORY!!/releases/download/!!RELEASE_VERSION!!/!!APP_NAME_LC!!-reh-${os}-${arch}-!!RELEASE_VERSION!!.tar.gz';
-				// Stamp agentSdks from the per-platform results file produced
-				// by `build/agent-sdk/produce.ts` (an earlier pipeline step).
-				// Local dev: file absent → empty → not stamped.
-				const agentSdks = readAgentSdkResults();
-				if (Object.keys(agentSdks).length > 0) {
-					json.agentSdks = agentSdks;
-				}
 				return json;
 			}))
 			.pipe(es.through(function (file) {
@@ -348,7 +327,6 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 			.pipe(createAsar(path.join(process.cwd(), 'node_modules'), [
 				'**/*.node',
 				'**/@vscode/ripgrep-universal/bin/**',
-				'**/@github/copilot-*/**',
 				'**/node-pty/build/Release/*',
 				'**/node-pty/build/Release/conpty/*',
 				'**/node-pty/lib/worker/conoutSocketWorker.js',

@@ -26,7 +26,7 @@
 	border-right: none !important;
 	border-radius: var(--vscode-cornerRadius-small);
 	font-size: 12px !important;
-	font-weight: var(--vscode-agents-fontWeight-semiBold);
+	font-weight: 600;
 	box-shadow: none !important;
 	padding: 0 0 0 4px !important;
 	margin-right: 4px !important;
@@ -74,7 +74,7 @@
  */
 .style-override-tabs .part.panel > .title > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item .action-label {
 	font-size: 12px;
-	font-weight: var(--vscode-agents-fontWeight-semiBold);
+	font-weight: 600;
 	line-height: 22px; /* keep consistent with other 22px title/control heights */
 }
 
@@ -118,7 +118,7 @@
 .style-override-tabs .part.auxiliarybar > .title > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item .action-label,
 .style-override-tabs .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item .action-label {
 	font-size: 12px;
-	font-weight: var(--vscode-agents-fontWeight-semiBold);
+	font-weight: 600;
 	line-height: 22px; /* keep consistent with other 22px title/control heights */
 }
 
@@ -146,7 +146,7 @@
 
 .style-override-tabs .part.editor > .content .editor-group-container > .title .tabs-container > .tab .tab-label a {
 	font-size: 12px;
-	font-weight: var(--vscode-agents-fontWeight-semiBold);
+	font-weight: 600;
 }
 
 /*
@@ -159,7 +159,7 @@
 .style-override-tabs .settings-editor .settings-tabs-widget > .monaco-action-bar .action-item .action-label {
 	border-radius: var(--vscode-cornerRadius-small) !important;
 	border-bottom: none !important;
-	font-weight: var(--vscode-agents-fontWeight-semiBold);
+	font-weight: 600;
 	padding: 2px 8px !important;
 }
 

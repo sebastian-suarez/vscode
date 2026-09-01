@@ -18,7 +18,7 @@ import { IStateService } from '../../state/node/state.js';
 import { URI } from '../../../base/common/uri.js';
 import { NativeParsedArgs } from '../../environment/common/argv.js';
 import { env } from '../../../base/common/process.js';
-import { join, resolve } from '../../../base/common/path.js';
+import { join } from '../../../base/common/path.js';
 
 export const IUserDataProfilesMainService = refineServiceDecorator<IUserDataProfilesService, IUserDataProfilesMainService>(IUserDataProfilesService);
 export interface IUserDataProfilesMainService extends IUserDataProfilesService {
@@ -72,11 +72,6 @@ export class UserDataProfilesMainService extends UserDataProfilesService impleme
 }
 
 function getAgentPluginsPath(args: NativeParsedArgs, userHome: URI): string {
-	const cliAgentPluginsDir = args['agent-plugins-dir'];
-	if (cliAgentPluginsDir) {
-		return resolve(cliAgentPluginsDir);
-	}
-
 	const vscodeAgentPlugins = env['VSCODE_AGENT_PLUGINS'];
 	if (vscodeAgentPlugins) {
 		return vscodeAgentPlugins;

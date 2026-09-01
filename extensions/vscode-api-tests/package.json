@@ -7,7 +7,6 @@
   "enabledApiProposals": [
     "activeComment",
     "authSession",
-    "browser",
     "environmentPower",
     "contribStatusBarItems",
     "contribViewsRemote",

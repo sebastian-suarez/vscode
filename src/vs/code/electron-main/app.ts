@@ -36,10 +36,6 @@ import { DiagnosticsMainService, IDiagnosticsMainService } from '../../platform/
 import { DialogMainService, IDialogMainService } from '../../platform/dialogs/electron-main/dialogMainService.js';
 import { IEncryptionMainService } from '../../platform/encryption/common/encryptionService.js';
 import { EncryptionMainService } from '../../platform/encryption/electron-main/encryptionMainService.js';
-import { ipcBrowserViewChannelName } from '../../platform/browserView/common/browserView.js';
-import { ipcBrowserViewGroupChannelName } from '../../platform/browserView/common/browserViewGroup.js';
-import { BrowserViewMainService, IBrowserViewMainService } from '../../platform/browserView/electron-main/browserViewMainService.js';
-import { BrowserViewGroupMainService, IBrowserViewGroupMainService } from '../../platform/browserView/electron-main/browserViewGroupMainService.js';
 import { NativeParsedArgs } from '../../platform/environment/common/argv.js';
 import { IEnvironmentMainService } from '../../platform/environment/electron-main/environmentMainService.js';
 import { isLaunchedFromCli } from '../../platform/environment/node/argvHelper.js';
@@ -110,7 +106,6 @@ import { ExtensionsScannerService } from '../../platform/extensionManagement/nod
 import { UserDataProfilesHandler } from '../../platform/userDataProfile/electron-main/userDataProfilesHandler.js';
 import { ProfileStorageChangesListenerChannel } from '../../platform/userDataProfile/electron-main/userDataProfileStorageIpc.js';
 import { Promises, RunOnceScheduler, runWhenGlobalIdle } from '../../base/common/async.js';
-import { CancellationToken } from '../../base/common/cancellation.js';
 import { resolveMachineId, resolveSqmId, resolveDevDeviceId, validateDevDeviceId } from '../../platform/telemetry/electron-main/telemetryUtils.js';
 import { ExtensionsProfileScannerService } from '../../platform/extensionManagement/node/extensionsProfileScannerService.js';
 import { LoggerChannel } from '../../platform/log/electron-main/logIpc.js';
@@ -121,9 +116,6 @@ import { ipcUtilityProcessWorkerChannelName } from '../../platform/utilityProces
 import { ILocalPtyService, LocalReconnectConstants, TerminalIpcChannels, TerminalSettingId } from '../../platform/terminal/common/terminal.js';
 import { ElectronPtyHostStarter } from '../../platform/terminal/electron-main/electronPtyHostStarter.js';
 import { PtyHostService } from '../../platform/terminal/node/ptyHostService.js';
-import { ElectronAgentHostStarter } from '../../platform/agentHost/electron-main/electronAgentHostStarter.js';
-import { AgentHostProcessManager } from '../../platform/agentHost/node/agentHostService.js';
-import { isAgentHostEnabled } from '../../platform/agentHost/common/agentService.js';
 import { NODE_REMOTE_RESOURCE_CHANNEL_NAME, NODE_REMOTE_RESOURCE_IPC_METHOD_NAME, NodeRemoteResourceResponse, NodeRemoteResourceRouter } from '../../platform/remote/common/electronRemoteResources.js';
 import { RemoteFileSystemProxyMainHandler } from '../../platform/files/electron-main/remoteFileSystemProxyMainHandler.js';
 import { REMOTE_FILE_SYSTEM_PROXY_HANDLER_CHANNEL_NAME } from '../../platform/files/common/remoteFileSystemProxy.js';
@@ -480,10 +472,6 @@ export class CodeApplication extends Disposable {
 
 			// Handle any in-page navigation
 			contents.on('will-navigate', event => {
-				if (BrowserViewMainService.isBrowserViewWebContents(contents)) {
-					return; // Allow navigation in integrated browser views
-				}
-
 				this.logService.error('webContents#will-navigate: Prevented webcontent navigation');
 
 				event.preventDefault(); // Prevent any in-page navigation
@@ -983,15 +971,6 @@ export class CodeApplication extends Disposable {
 			this.environmentMainService.continueOn = continueOn ?? undefined;
 		}
 
-		// Extract session parameter to open a specific chat session in the target window
-		const session = params.get('session');
-		if (session !== null) {
-			this.logService.trace(`app#handleProtocolUrl() found 'session' as parameter:`, uri.toString(true));
-
-			params.delete('session');
-			uri = uri.with({ query: params.toString() });
-		}
-
 		// Check if the protocol URL is a window openable to open...
 		const windowOpenableFromProtocolUrl = this.getWindowOpenableFromProtocolUrl(uri);
 		if (windowOpenableFromProtocolUrl) {
@@ -1012,11 +991,6 @@ export class CodeApplication extends Disposable {
 				})).at(0);
 
 				window?.focus(); // this should help ensuring that the right window gets focus when multiple are opened
-
-				// Open chat session in the target window if requested
-				if (window && session) {
-					window.sendWhenReady('vscode:openChatSession', CancellationToken.None, session);
-				}
 
 				return true;
 			}
@@ -1109,10 +1083,6 @@ export class CodeApplication extends Disposable {
 		// Encryption
 		services.set(IEncryptionMainService, new SyncDescriptor(EncryptionMainService));
 
-		// Browser View
-		services.set(IBrowserViewMainService, new SyncDescriptor(BrowserViewMainService, undefined, false /* proxied to other processes */));
-		services.set(IBrowserViewGroupMainService, new SyncDescriptor(BrowserViewGroupMainService, undefined, false /* proxied to other processes */));
-
 		// Keyboard Layout
 		services.set(IKeyboardLayoutMainService, new SyncDescriptor(KeyboardLayoutMainService));
 
@@ -1149,12 +1119,6 @@ export class CodeApplication extends Disposable {
 			this.loggerService
 		);
 		services.set(ILocalPtyService, ptyHostService);
-
-		// Agent Host
-		if (isAgentHostEnabled(this.configurationService)) {
-			const agentHostStarter = new ElectronAgentHostStarter(this.configurationService, this.environmentMainService, this.lifecycleMainService, this.logService);
-			this._register(new AgentHostProcessManager(agentHostStarter, this.logService, this.loggerService));
-		}
 
 		// External terminal
 		if (isWindows) {
@@ -1267,16 +1231,6 @@ export class CodeApplication extends Disposable {
 		const encryptionChannel = ProxyChannel.fromService(accessor.get(IEncryptionMainService), disposables);
 		mainProcessElectronServer.registerChannel('encryption', encryptionChannel);
 
-		// Browser View
-		const browserViewChannel = ProxyChannel.fromService(accessor.get(IBrowserViewMainService), disposables);
-		mainProcessElectronServer.registerChannel(ipcBrowserViewChannelName, browserViewChannel);
-		sharedProcessClient.then(client => client.registerChannel(ipcBrowserViewChannelName, browserViewChannel));
-
-		// Browser View Group
-		const browserViewGroupChannel = ProxyChannel.fromService(accessor.get(IBrowserViewGroupMainService), disposables);
-		mainProcessElectronServer.registerChannel(ipcBrowserViewGroupChannelName, browserViewGroupChannel);
-		sharedProcessClient.then(client => client.registerChannel(ipcBrowserViewGroupChannelName, browserViewGroupChannel));
-
 		// Remote File System Proxy
 		const remoteFileSystemProxyHandler = disposables.add(new RemoteFileSystemProxyMainHandler(accessor.get(IWindowsMainService), mainProcessElectronServer));
 		mainProcessElectronServer.registerChannel(REMOTE_FILE_SYSTEM_PROXY_HANDLER_CHANNEL_NAME, remoteFileSystemProxyHandler);
@@ -1352,15 +1306,6 @@ export class CodeApplication extends Disposable {
 
 		const context = isLaunchedFromCli(process.env) ? OpenContext.CLI : OpenContext.DESKTOP;
 		const args = this.environmentMainService.args;
-
-		// Handle agents window first based on context
-		if (args['agents']) {
-			return windowsMainService.openAgentsWindow({
-				context,
-				cli: args,
-				initialStartup: true
-			});
-		}
 
 		// Then check for windows from protocol links to open
 		if (initialProtocolUrls) {

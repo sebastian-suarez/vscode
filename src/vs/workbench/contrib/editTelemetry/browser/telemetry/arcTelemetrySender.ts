@@ -7,13 +7,11 @@ import { onUnexpectedError } from '../../../../../base/common/errors.js';
 import { Disposable } from '../../../../../base/common/lifecycle.js';
 import { IObservable, runOnChange } from '../../../../../base/common/observable.js';
 import { AnnotatedStringEdit } from '../../../../../editor/common/core/edits/stringEdit.js';
-import { EditDeltaInfo, EditSuggestionId, ITextModelEditSourceMetadata } from '../../../../../editor/common/textModelEditSource.js';
+import { ITextModelEditSourceMetadata } from '../../../../../editor/common/textModelEditSource.js';
 import { IInstantiationService } from '../../../../../platform/instantiation/common/instantiation.js';
 import { EditSourceData, IDocumentWithAnnotatedEdits, createDocWithJustReason } from '../helpers/documentWithAnnotatedEdits.js';
-import { IAiEditTelemetryService } from './aiEditTelemetry/aiEditTelemetryService.js';
 import type { ScmRepoAdapter } from './scmAdapter.js';
 import { forwardToChannelIf, isCopilotLikeExtension } from '../../../../../platform/dataChannel/browser/forwardingTelemetryService.js';
-import { ProviderId } from '../../../../../editor/common/languages.js';
 import { ArcTelemetryReporter } from './arcTelemetryReporter.js';
 import { IRandomService } from '../randomService.js';
 
@@ -97,56 +95,6 @@ export class EditTelemetryReportInlineEditArcSender extends Disposable {
 			}, () => {
 				this._store.delete(reporter);
 			}));
-		}));
-	}
-}
-
-export class CreateSuggestionIdForChatOrInlineChatCaller extends Disposable {
-	constructor(
-		docWithAnnotatedEdits: IDocumentWithAnnotatedEdits<EditSourceData>,
-		@IAiEditTelemetryService private readonly _aiEditTelemetryService: IAiEditTelemetryService,
-	) {
-		super();
-
-		this._register(runOnChange(docWithAnnotatedEdits.value, (_val, _prev, changes) => {
-			const edit = AnnotatedStringEdit.compose(changes.map(c => c.edit));
-
-			const supportedSource = new Set(['Chat.applyEdits', 'inlineChat.applyEdits'] as ITextModelEditSourceMetadata['source'][]);
-
-			if (!edit.replacements.some(r => supportedSource.has(r.data.editSource.metadata.source))) {
-				return;
-			}
-			if (!edit.replacements.every(r => supportedSource.has(r.data.editSource.metadata.source))) {
-				onUnexpectedError(new Error(`ArcTelemetrySender: Not all edits are ${edit.replacements[0].data.editSource.metadata.source}!`));
-				return;
-			}
-			let applyCodeBlockSuggestionId: EditSuggestionId | undefined = undefined;
-			const data = edit.replacements[0].data.editSource;
-			let feature: 'inlineChat' | 'sideBarChat';
-			if (data.metadata.source === 'Chat.applyEdits') {
-				feature = 'sideBarChat';
-				if (data.metadata.$$mode === 'applyCodeBlock') {
-					applyCodeBlockSuggestionId = data.metadata.$$codeBlockSuggestionId;
-				}
-			} else {
-				feature = 'inlineChat';
-			}
-
-			const providerId = new ProviderId(data.props.$extensionId, data.props.$extensionVersion, data.props.$providerId);
-
-			// TODO@hediet tie this suggestion id to hunks, so acceptance can be correlated.
-			this._aiEditTelemetryService.createSuggestionId({
-				applyCodeBlockSuggestionId,
-				languageId: data.props.$$languageId,
-				presentation: 'highlightedEdit',
-				feature,
-				source: providerId,
-				modelId: data.props.$modelId,
-				// eslint-disable-next-line local/code-no-any-casts
-				modeId: data.props.$$mode as any,
-				editDeltaInfo: EditDeltaInfo.fromEdit(edit, _prev),
-				sourceRequestId: undefined,
-			});
 		}));
 	}
 }

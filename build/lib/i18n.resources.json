@@ -167,19 +167,7 @@
 			"project": "vscode-workbench"
 		},
 		{
-			"name": "vs/workbench/contrib/inlineChat",
-			"project": "vscode-workbench"
-		},
-		{
 			"name": "vs/workbench/contrib/imageCarousel",
-			"project": "vscode-workbench"
-		},
-		{
-			"name": "vs/workbench/contrib/agentsVoice",
-			"project": "vscode-workbench"
-		},
-		{
-			"name": "vs/workbench/contrib/chat",
 			"project": "vscode-workbench"
 		},
 		{
@@ -224,10 +212,6 @@
 		},
 		{
 			"name": "vs/workbench/contrib/tags",
-			"project": "vscode-workbench"
-		},
-		{
-			"name": "vs/workbench/contrib/speech",
 			"project": "vscode-workbench"
 		},
 		{
@@ -579,10 +563,6 @@
 			"project": "vscode-workbench"
 		},
 		{
-			"name": "vs/workbench/contrib/browserView",
-			"project": "vscode-workbench"
-		},
-		{
 			"name": "vs/workbench/contrib/dropOrPasteInto",
 			"project": "vscode-workbench"
 		},
@@ -595,19 +575,11 @@
 			"project": "vscode-workbench"
 		},
 		{
-			"name": "vs/workbench/contrib/mcp",
-			"project": "vscode-workbench"
-		},
-		{
 			"name": "vs/workbench/contrib/meteredConnection",
 			"project": "vscode-workbench"
 		},
 		{
 			"name": "vs/workbench/contrib/processExplorer",
-			"project": "vscode-workbench"
-		},
-		{
-			"name": "vs/workbench/contrib/remoteCodingAgents",
 			"project": "vscode-workbench"
 		},
 		{
@@ -619,118 +591,8 @@
 			"project": "vscode-workbench"
 		},
 		{
-			"name": "vs/workbench/services/chat",
-			"project": "vscode-workbench"
-		},
-		{
 			"name": "vs/workbench/services/request",
 			"project": "vscode-workbench"
-		}
-	],
-	"sessions": [
-		{
-			"name": "vs/sessions",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/accountMenu",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/agentFeedback",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/providers",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/providers/agentHost",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/aiCustomizationTreeView",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/applyCommitsToParentRepo",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/changes",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/chat",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/providers/copilotChatSessions",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/configuration",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/codeReview",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/fileTreeView",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/files",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/search",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/policyBlocked",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/git",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/logs",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/providers/remoteAgentHost",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/sessions",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/terminal",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/welcome",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/aquarium",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/chatDebug",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/tunnelHost",
-			"project": "vscode-sessions"
-		},
-		{
-			"name": "vs/sessions/contrib/editor",
-			"project": "vscode-sessions"
 		}
 	]
 }

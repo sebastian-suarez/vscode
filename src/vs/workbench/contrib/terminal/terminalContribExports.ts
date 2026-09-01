@@ -7,7 +7,6 @@ import type { IConfigurationNode } from '../../../platform/configuration/common/
 import { TerminalAccessibilityCommandId, defaultTerminalAccessibilityCommandsToSkipShell } from '../terminalContrib/accessibility/common/terminal.accessibility.js';
 import { terminalAccessibilityConfiguration } from '../terminalContrib/accessibility/common/terminalAccessibilityConfiguration.js';
 import { terminalAutoRepliesConfiguration } from '../terminalContrib/autoReplies/common/terminalAutoRepliesConfiguration.js';
-import { AgentSandboxSettingId } from '../../../platform/sandbox/common/settings.js';
 import { terminalCommandGuideConfiguration } from '../terminalContrib/commandGuide/common/terminalCommandGuideConfiguration.js';
 import { TerminalDeveloperCommandId } from '../terminalContrib/developer/common/terminal.developer.js';
 import { defaultTerminalFindCommandToSkipShell } from '../terminalContrib/find/common/terminal.find.js';
@@ -25,16 +24,6 @@ import { terminalZoomConfiguration } from '../terminalContrib/zoom/common/termin
 export const enum TerminalContribCommandId {
 	A11yFocusAccessibleBuffer = TerminalAccessibilityCommandId.FocusAccessibleBuffer,
 	DeveloperRestartPtyHost = TerminalDeveloperCommandId.RestartPtyHost,
-
-	// `terminalContrib/chat` is gone, but `contrib/chat` still reads these ids. The literal values
-	// live here until `contrib/chat` itself goes away, at which point the members go with it.
-	OpenTerminalSettingsLink = 'workbench.action.terminal.chat.openTerminalSettingsLink',
-	DisableSessionAutoApproval = 'workbench.action.terminal.chat.disableSessionAutoApproval',
-	FocusMostRecentChatTerminalOutput = 'workbench.action.terminal.chat.focusMostRecentChatTerminalOutput',
-	FocusMostRecentChatTerminal = 'workbench.action.terminal.chat.focusMostRecentChatTerminal',
-	ToggleChatTerminalOutput = 'workbench.action.terminal.chat.toggleChatTerminalOutput',
-	FocusChatInstanceAction = 'workbench.action.terminal.chat.focusChatInstance',
-	ContinueInBackground = 'workbench.action.terminal.chat.continueInBackground',
 }
 
 // HACK: Export some settings from `terminalContrib/` that are depended upon elsewhere. These are
@@ -43,19 +32,6 @@ export const enum TerminalContribCommandId {
 export const enum TerminalContribSettingId {
 	StickyScrollEnabled = TerminalStickyScrollSettingId.Enabled,
 	SuggestEnabled = TerminalSuggestSettingId.Enabled,
-
-	// `terminalContrib/chatAgentTools` is gone, but `contrib/chat` still reads these ids. The
-	// literal values live here until `contrib/chat` itself goes away, at which point the members go
-	// with it.
-	AutoApprove = 'chat.tools.terminal.autoApprove',
-	EnableAutoApprove = 'chat.tools.terminal.enableAutoApprove',
-
-	AgentSandboxEnabled = AgentSandboxSettingId.AgentSandboxEnabled,
-	AgentSandboxWindowsEnabled = AgentSandboxSettingId.AgentSandboxWindowsEnabled,
-	AgentSandboxAllowUnsandboxedCommands = AgentSandboxSettingId.AgentSandboxAllowUnsandboxedCommands,
-	AgentSandboxRetryWithAllowNetworkRequests = AgentSandboxSettingId.AgentSandboxRetryWithAllowNetworkRequests,
-	AgentSandboxAllowAutoApprove = AgentSandboxSettingId.AgentSandboxAllowAutoApprove,
-	DeprecatedAgentSandboxEnabled = AgentSandboxSettingId.DeprecatedAgentSandboxEnabled,
 }
 
 // Export configuration schemes from terminalContrib - this is an exception to the eslint rule since

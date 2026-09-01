@@ -37,7 +37,6 @@ import { ExtHostContext, ExtHostLanguageFeaturesShape, HoverWithId, ICallHierarc
 import { InlineCompletionEndOfLifeReasonKind } from '../common/extHostTypes.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { DataChannelForwardingTelemetryService, forwardToChannelIf, isCopilotLikeExtension } from '../../../platform/dataChannel/browser/forwardingTelemetryService.js';
-import { IAiEditTelemetryService } from '../../contrib/editTelemetry/browser/telemetry/aiEditTelemetry/aiEditTelemetryService.js';
 import { EditDeltaInfo } from '../../../editor/common/textModelEditSource.js';
 import { IInlineCompletionsUnificationService } from '../../services/inlineCompletions/common/inlineCompletionsUnification.js';
 import { InlineCompletionEndOfLifeEvent, sendInlineCompletionsEndOfLifeTelemetry } from '../../../editor/contrib/inlineCompletions/browser/telemetry.js';
@@ -1332,7 +1331,6 @@ class ExtensionBackedInlineCompletionsProvider extends Disposable implements lan
 		private readonly _selector: IDocumentFilterDto[],
 		private readonly _proxy: ExtHostLanguageFeaturesShape,
 		@ILanguageFeaturesService private readonly _languageFeaturesService: ILanguageFeaturesService,
-		@IAiEditTelemetryService private readonly _aiEditTelemetryService: IAiEditTelemetryService,
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
 	) {
 		super();
@@ -1378,20 +1376,6 @@ class ExtensionBackedInlineCompletionsProvider extends Disposable implements lan
 	}
 
 	public async handleItemDidShow(completions: IdentifiableInlineCompletions, item: IdentifiableInlineCompletion, updatedInsertText: string, editDeltaInfo: EditDeltaInfo): Promise<void> {
-		if (item.suggestionId === undefined) {
-			item.suggestionId = this._aiEditTelemetryService.createSuggestionId({
-				applyCodeBlockSuggestionId: undefined,
-				feature: 'inlineSuggestion',
-				source: this.providerId,
-				languageId: completions.languageId,
-				editDeltaInfo: editDeltaInfo,
-				modeId: undefined,
-				modelId: undefined,
-				presentation: item.isInlineEdit ? 'nextEditSuggestion' : 'inlineCompletion',
-				sourceRequestId: undefined,
-			});
-		}
-
 		if (this._supportsHandleEvents) {
 			await this._proxy.$handleInlineCompletionDidShow(this.handle, completions.pid, item.idx, updatedInsertText);
 		}
@@ -1416,50 +1400,6 @@ class ExtensionBackedInlineCompletionsProvider extends Disposable implements lan
 
 		if (this._supportsHandleEvents) {
 			await this._proxy.$handleInlineCompletionEndOfLifetime(this.handle, completions.pid, item.idx, mapReason(reason, i => ({ pid: completions.pid, idx: i.idx })));
-		}
-
-		if (reason.kind === languages.InlineCompletionEndOfLifeReasonKind.Accepted) {
-			if (item.suggestionId !== undefined) {
-				this._aiEditTelemetryService.handleCodeAccepted({
-					suggestionId: item.suggestionId,
-					feature: 'inlineSuggestion',
-					source: this.providerId,
-					languageId: completions.languageId,
-					editDeltaInfo: EditDeltaInfo.tryCreate(
-						lifetimeSummary.lineCountModified,
-						lifetimeSummary.lineCountOriginal,
-						lifetimeSummary.characterCountModified,
-						lifetimeSummary.characterCountOriginal,
-					),
-					modeId: undefined,
-					modelId: undefined,
-					presentation: item.isInlineEdit ? 'nextEditSuggestion' : 'inlineCompletion',
-					acceptanceMethod: 'accept',
-					applyCodeBlockSuggestionId: undefined,
-					sourceRequestId: undefined,
-				});
-			}
-		} else if (reason.kind === languages.InlineCompletionEndOfLifeReasonKind.Rejected) {
-			if (item.suggestionId !== undefined) {
-				this._aiEditTelemetryService.handleCodeRejected({
-					suggestionId: item.suggestionId,
-					feature: 'inlineSuggestion',
-					source: this.providerId,
-					languageId: completions.languageId,
-					editDeltaInfo: EditDeltaInfo.tryCreate(
-						lifetimeSummary.lineCountModified,
-						lifetimeSummary.lineCountOriginal,
-						lifetimeSummary.characterCountModified,
-						lifetimeSummary.characterCountOriginal,
-					),
-					modeId: undefined,
-					modelId: undefined,
-					presentation: item.isInlineEdit ? 'nextEditSuggestion' : 'inlineCompletion',
-					rejectionMethod: 'reject',
-					applyCodeBlockSuggestionId: undefined,
-					sourceRequestId: undefined,
-				});
-			}
 		}
 
 		const endOfLifeSummary: InlineCompletionEndOfLifeEvent = {

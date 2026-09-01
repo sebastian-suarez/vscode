@@ -7,12 +7,18 @@ import { CancellationToken } from '../../../../base/common/cancellation.js';
 import { IMarkdownString } from '../../../../base/common/htmlContent.js';
 import { IObservable } from '../../../../base/common/observable.js';
 import { ThemeIcon } from '../../../../base/common/themables.js';
-import { URI } from '../../../../base/common/uri.js';
+import { URI, UriComponents } from '../../../../base/common/uri.js';
 import { ColorIdentifier } from '../../../../platform/theme/common/colorUtils.js';
 import { ISCMRepository } from './scm.js';
 
 export const SCMIncomingHistoryItemId = 'scm-graph-incoming-changes';
 export const SCMOutgoingHistoryItemId = 'scm-graph-outgoing-changes';
+
+export interface SCMHistoryItemTransferData {
+	readonly name: string;
+	readonly resource: UriComponents;
+	readonly historyItem: ISCMHistoryItem;
+}
 
 export interface ISCMHistoryProvider {
 	readonly historyItemRef: IObservable<ISCMHistoryItemRef | undefined>;

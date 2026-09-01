@@ -29,8 +29,7 @@ import * as cp from 'child_process';
 import log from 'fancy-log';
 import buildfile from './buildfile.ts';
 import { fetchUrls, fetchGithub } from './lib/fetch.ts';
-import { getRipgrepExcludeFilter } from './lib/copilot.ts';
-import { readAgentSdkResults } from './agent-sdk/common.ts';
+import { getRipgrepExcludeFilter } from './lib/ripgrep.ts';
 
 
 const rcedit = promisify(rceditCallback);
@@ -368,16 +367,6 @@ function packageTask(type: string, platform: string, arch: string, sourceFolderN
 				json.date = readISODate(sourceFolderName);
 				json.version = version;
 				json.serverDownloadUrlTemplate = 'https://github.com/!!ASSETS_REPOSITORY!!/releases/download/!!RELEASE_VERSION!!/!!APP_NAME_LC!!-reh-${os}-${arch}-!!RELEASE_VERSION!!.tar.gz';
-				// Stamp agentSdks from the per-platform results file produced
-				// by `build/agent-sdk/produce.ts`. REH-only: REH-web is
-				// browser-served and the agent host is node-only, so the
-				// SDK config has no consumer there.
-				if (type === 'reh') {
-					const agentSdks = readAgentSdkResults();
-					if (Object.keys(agentSdks).length > 0) {
-						json.agentSdks = agentSdks;
-					}
-				}
 				return json;
 			}))
 			.pipe(es.through(function (file) {
