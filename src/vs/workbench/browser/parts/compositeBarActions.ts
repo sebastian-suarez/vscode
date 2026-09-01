@@ -127,10 +127,6 @@ export class CompositeBarAction extends Action {
 }
 
 export interface ICompositeBarColors {
-	readonly activeBackgroundColor?: Color;
-	readonly inactiveBackgroundColor?: Color;
-	readonly activeBorderColor?: Color;
-	readonly activeBackground?: Color;
 	readonly activeBorderBottomColor?: Color;
 	readonly activeForegroundColor?: Color;
 	readonly inactiveForegroundColor?: Color;

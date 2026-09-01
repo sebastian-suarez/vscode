@@ -169,12 +169,10 @@ export class ActivitybarPart extends Part {
 			colors: (theme: IColorTheme) => ({
 				activeForegroundColor: theme.getColor(ACTIVITY_BAR_FOREGROUND),
 				inactiveForegroundColor: theme.getColor(ACTIVITY_BAR_INACTIVE_FOREGROUND),
-				activeBorderColor: theme.getColor(ACTIVITY_BAR_ACTIVE_BORDER),
-				activeBackground: theme.getColor(ACTIVITY_BAR_ACTIVE_BACKGROUND),
 				badgeBackground: theme.getColor(ACTIVITY_BAR_BADGE_BACKGROUND),
 				badgeForeground: theme.getColor(ACTIVITY_BAR_BADGE_FOREGROUND),
 				dragAndDropBorder: theme.getColor(ACTIVITY_BAR_DRAG_AND_DROP_BORDER),
-				activeBackgroundColor: undefined, inactiveBackgroundColor: undefined, activeBorderBottomColor: undefined,
+				activeBorderBottomColor: undefined,
 			}),
 			overflowActionSize: actionHeight,
 		}, Parts.ACTIVITYBAR_PART, this.paneCompositePart, true);

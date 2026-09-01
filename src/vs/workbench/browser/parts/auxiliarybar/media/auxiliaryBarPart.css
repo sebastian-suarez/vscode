@@ -8,12 +8,6 @@
 	visibility: hidden !important;
 }
 
-.monaco-workbench .part.auxiliarybar > .content .monaco-editor,
-.monaco-workbench .part.auxiliarybar > .content .monaco-editor .margin,
-.monaco-workbench .part.auxiliarybar > .content .monaco-editor .monaco-editor-background {
-	background-color: var(--vscode-sideBar-background);
-}
-
 .monaco-workbench .part.auxiliarybar .title-actions .actions-container {
 	justify-content: flex-end;
 }

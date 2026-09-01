@@ -286,8 +286,6 @@ export class SidebarPart extends AbstractPaneCompositePart {
 			iconSize: 16,
 			overflowActionSize: 30,
 			colors: theme => ({
-				activeBackgroundColor: theme.getColor(SIDE_BAR_BACKGROUND),
-				inactiveBackgroundColor: theme.getColor(SIDE_BAR_BACKGROUND),
 				activeBorderBottomColor: theme.getColor(ACTIVITY_BAR_TOP_ACTIVE_BORDER),
 				activeForegroundColor: theme.getColor(ACTIVITY_BAR_TOP_FOREGROUND),
 				inactiveForegroundColor: theme.getColor(ACTIVITY_BAR_TOP_INACTIVE_FOREGROUND),
