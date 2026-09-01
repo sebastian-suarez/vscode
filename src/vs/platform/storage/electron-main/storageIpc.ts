@@ -9,7 +9,7 @@ import { revive } from '../../../base/common/marshalling.js';
 import { IServerChannel } from '../../../base/parts/ipc/common/ipc.js';
 import { ILogService } from '../../log/common/log.js';
 import { IBaseSerializableStorageRequest, ISerializableItemsChangeEvent, ISerializableUpdateRequest, Key, Value } from '../common/storageIpc.js';
-import { ApplicationSharedStorageMain, IStorageChangeEvent, IStorageMain } from './storageMain.js';
+import { IStorageChangeEvent, IStorageMain } from './storageMain.js';
 import { IStorageMainService } from './storageMainService.js';
 import { IUserDataProfile } from '../../userDataProfile/common/userDataProfile.js';
 import { reviveIdentifier, IAnyWorkspaceIdentifier } from '../../workspace/common/workspace.js';
@@ -119,13 +119,6 @@ export class StorageDatabaseChannel extends Disposable implements IServerChannel
 			case 'getItems': {
 				const items = new Map(storage.items);
 				return Array.from(items.entries());
-			}
-
-			case 'getFallbackApplicationStorageItems': {
-				if (storage instanceof ApplicationSharedStorageMain) {
-					return Array.from(storage.applicationStorageItems.entries());
-				}
-				return [];
 			}
 
 			case 'updateItems': {

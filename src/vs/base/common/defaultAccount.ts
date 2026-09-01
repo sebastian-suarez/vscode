@@ -3,20 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import type { ManagedSettingsData } from './policy.js';
 
 export interface IEntitlementsData {
 	readonly access_type_sku: string;
 	readonly organization_login_list: string[];
-}
-
-export interface IPolicyData {
-	/**
-	 * Normalized enterprise-managed settings, keyed by dot-separated managed-settings
-	 * paths such as `permissions.disableBypassPermissionsMode`. Structured settings
-	 * are carried as canonical JSON strings.
-	 */
-	readonly managedSettings?: ManagedSettingsData;
 }
 
 export interface IDefaultAccountAuthenticationProvider {

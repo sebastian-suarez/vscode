@@ -200,30 +200,3 @@ export class StorageClient {
 		return this.channel.call('isUsed', serializableRequest);
 	}
 }
-
-export class FallbackApplicationStorageDatabaseClient extends Disposable implements IStorageDatabase {
-
-	onDidChangeItemsExternal = Event.None;
-
-	constructor(private readonly channel: IChannel) {
-		super();
-	}
-
-	async getItems(): Promise<Map<string, string>> {
-		const serializableRequest: IBaseSerializableStorageRequest = { profile: undefined, workspace: undefined, applicationShared: true };
-		const items: Item[] = await this.channel.call('getFallbackApplicationStorageItems', serializableRequest);
-		return new Map(items);
-	}
-
-	updateItems(): Promise<void> {
-		throw new Error('Not supported');
-	}
-
-	optimize(): Promise<void> {
-		throw new Error('Not supported');
-	}
-
-	close(): Promise<void> {
-		throw new Error('Not supported');
-	}
-}

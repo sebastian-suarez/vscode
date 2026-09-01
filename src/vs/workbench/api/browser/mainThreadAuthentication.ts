@@ -24,11 +24,10 @@ import { ILogService } from '../../../platform/log/common/log.js';
 import { ExtensionHostKind } from '../../services/extensions/common/extensionHostKind.js';
 import { IURLService } from '../../../platform/url/common/url.js';
 import { DeferredPromise, raceTimeout } from '../../../base/common/async.js';
-import { fetchAuthorizationServerMetadata, IAuthorizationTokenResponse } from '../../../base/common/oauth.js';
+import { IAuthorizationTokenResponse } from '../../../base/common/oauth.js';
 import { IDynamicAuthenticationProviderStorageService } from '../../services/authentication/common/dynamicAuthenticationProviderStorage.js';
 import { IClipboardService } from '../../../platform/clipboard/common/clipboardService.js';
 import { IQuickInputService } from '../../../platform/quickinput/common/quickInput.js';
-import { ISecretStorageService } from '../../../platform/secrets/common/secrets.js';
 import { IProductService } from '../../../platform/product/common/productService.js';
 
 export interface AuthenticationInteractiveOptions {
@@ -44,14 +43,6 @@ export interface AuthenticationGetSessionOptions {
 	silent?: boolean;
 	account?: AuthenticationSessionAccount;
 	authorizationServer?: UriComponents;
-}
-
-/**
- * Secret storage key for a per-resource OAuth client secret. The `mcp.oauth.` prefix is kept
- * verbatim so already-stored secrets keep resolving.
- */
-function xaaResourceClientSecretStorageKey(resource: string, clientId: string): string {
-	return `mcp.oauth.clientSecret:${resource}:${clientId}`;
 }
 
 class MainThreadAuthenticationProvider extends Disposable implements IAuthenticationProvider {
@@ -140,7 +131,6 @@ export class MainThreadAuthentication extends Disposable implements MainThreadAu
 		@IDynamicAuthenticationProviderStorageService private readonly dynamicAuthProviderStorageService: IDynamicAuthenticationProviderStorageService,
 		@IClipboardService private readonly clipboardService: IClipboardService,
 		@IQuickInputService private readonly quickInputService: IQuickInputService,
-		@ISecretStorageService private readonly secretStorageService: ISecretStorageService,
 	) {
 		super();
 		this._proxy = extHostContext.getProxy(ExtHostContext.ExtHostAuthentication);
@@ -184,32 +174,6 @@ export class MainThreadAuthentication extends Disposable implements MainThreadAu
 					authorizationServer,
 					serverMetadata,
 					resource,
-					clientId,
-					clientSecret,
-					initialTokens
-				);
-			},
-			createXaa: async (issuer) => {
-				// XAA providers are keyed by issuer alone so they can be reused across many enterprise-managed servers.
-				const authProviderId = `xaa:${issuer.toString(true)}`;
-				const { metadata: serverMetadata } = await fetchAuthorizationServerMetadata(issuer.toString(true));
-
-				// XAA requires a pre-provisioned (admin-approved) client_id at the IdP — there is no DCR
-				// fallback — so only a cached registration can be reused here.
-				const cached = await this.dynamicAuthProviderStorageService.getClientRegistration(authProviderId);
-				const clientId = cached?.clientId;
-				const clientSecret = cached?.clientSecret;
-				let initialTokens: (IAuthorizationTokenResponse & { created_at: number })[] | undefined = undefined;
-				if (clientId) {
-					initialTokens = await this.dynamicAuthProviderStorageService.getSessionsForDynamicAuthProvider(authProviderId, clientId);
-				}
-				// Note: XAA does NOT use CIMD or DCR — the requesting app must be pre-registered with the
-				// IdP under an admin-approved cross-app-access trust relationship. The ext-host side
-				// (`$registerXaaAuthProvider`) prompts the user for client_id + client_secret when there
-				// is no cached registration and no configured value.
-				return await this._proxy.$registerXaaAuthProvider(
-					issuer,
-					serverMetadata,
 					clientId,
 					clientSecret,
 					initialTokens
@@ -693,47 +657,4 @@ export class MainThreadAuthentication extends Disposable implements MainThreadAu
 		};
 	}
 
-	async $promptForResourceClientSecret(resourceClientId: string, resource: string): Promise<string | undefined> {
-		// Surface to the user that whatever they enter (including blank == none) will be remembered
-		// in OS secret storage, scoped to the resource URL + the resource client_id, which means
-		// subsequent runs read the secret directly from storage and never re-prompt.
-		//
-		// Return contract:
-		//   - `undefined` — user pressed Escape (cancelled). Caller should NOT cache; re-prompt allowed.
-		//   - `''` (empty string) — user pressed Enter with blank input ("no secret"). Caller SHOULD
-		//     cache this as an explicit answer (public client / token_endpoint_auth_method=none).
-		//   - `'value'` — user supplied a secret.
-		const value = await this.quickInputService.input({
-			title: nls.localize('xaaResourceSecretTitle', "Resource Client Secret Required"),
-			prompt: nls.localize(
-				'xaaResourceSecretPrompt',
-				"The resource at '{0}' uses a per-resource client identifier '{1}'. Enter the matching client secret (leave blank if none). The value is saved in OS secret storage.",
-				resource,
-				resourceClientId,
-			),
-			placeHolder: nls.localize('xaaResourceSecretPlaceholder', "Resource client secret"),
-			password: true,
-			ignoreFocusLost: true,
-		});
-		if (value === undefined) {
-			// User cancelled (Escape). Don't persist anything.
-			return undefined;
-		}
-		const trimmed = value.trim();
-		const key = xaaResourceClientSecretStorageKey(resource, resourceClientId);
-		try {
-			if (trimmed.length === 0) {
-				// Blank-on-confirm means "no client secret" (e.g. token_endpoint_auth_method=none).
-				// Clear any stale value so subsequent prompts can still capture a fresh secret if needed.
-				await this.secretStorageService.delete(key);
-			} else {
-				await this.secretStorageService.set(key, trimmed);
-			}
-		} catch (err) {
-			this.logService.warn(`[XAA] Failed to persist resource client secret for ${resource} / ${resourceClientId}: ${(err as Error).message}`);
-		}
-		// Distinct from cancel: return '' (not undefined) for blank-on-confirm so callers can
-		// proceed without a client secret instead of treating it as a cancel.
-		return trimmed;
-	}
 }

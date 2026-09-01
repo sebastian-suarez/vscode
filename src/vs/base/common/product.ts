@@ -37,15 +37,6 @@ export interface IFeaturedExtension {
 	readonly imagePath: string;
 }
 
-export interface IChatSessionRecommendation {
-	readonly extensionId: string;
-	readonly extensionName: string;
-	readonly displayName: string;
-	readonly name: string;
-	readonly description: string;
-	readonly postInstallCommand?: string;
-}
-
 export type ConfigurationSyncStore = {
 	url: string;
 	insidersUrl: string;
@@ -63,25 +54,6 @@ export type ExtensionVirtualWorkspaceSupport = {
 	readonly default?: boolean;
 	readonly override?: boolean;
 };
-
-/**
- * Per-SDK configuration for downloading an agent SDK on demand. The
- * runtime substitutes `{sdkTarget}` in `urlTemplate` against the host's
- * `(platform, arch, libc)` triple via `resolveSdkTarget()` in the agent
- * SDK downloader.
- *
- * `urlTemplate` uses `format2()`-style named placeholders. Today only
- * `{sdkTarget}` is recognised; the build emits e.g.
- * `https://main.vscode-cdn.net/agent-sdk/claude/0.3.168/{sdkTarget}.tgz`
- * and the runtime substitutes `darwin-arm64`, `linux-x64-musl`, etc.
- *
- * See `src/vs/platform/agentHost/node/claude/roadmap.md` Phase 15 for
- * the rationale (macOS Universal compatibility, trust model).
- */
-export interface IAgentSdkProductConfig {
-	readonly version: string;
-	readonly urlTemplate: string;
-}
 
 export interface IProductConfiguration {
 	readonly version: string;
@@ -101,7 +73,6 @@ export interface IProductConfiguration {
 	readonly win32ContextMenu?: { readonly [arch: string]: { readonly clsid: string } };
 	readonly applicationName: string;
 	readonly embedderIdentifier?: string;
-	readonly agentsTelemetryAppName?: string;
 
 	readonly urlProtocol: string;
 	readonly dataFolderName: string; // location for extensions (e.g. ~/.vscode-insiders)
@@ -136,8 +107,6 @@ export interface IProductConfiguration {
 		readonly nlsBaseUrl: string;
 		readonly accessSKUs?: string[];
 	};
-
-	readonly agentSdks?: { readonly [packageId: string]: IAgentSdkProductConfig };
 
 	readonly mcpGallery?: {
 		readonly serviceUrl: string;
@@ -246,20 +215,15 @@ export interface IProductConfiguration {
 	readonly profileTemplatesUrl?: string;
 
 	readonly commonlyUsedSettings?: string[];
-	readonly aiGeneratedWorkspaceTrust?: IAiGeneratedWorkspaceTrust;
 
 	readonly defaultChatAgent: IDefaultChatAgent;
-	readonly chatParticipantRegistry?: string;
-	readonly chatSessionRecommendations?: IChatSessionRecommendation[];
 	readonly emergencyAlertUrl?: string;
-	readonly voiceWsUrl?: string;
 
 	readonly remoteDefaultExtensionsIfInstalledLocally?: string[];
 
 	readonly extensionConfigurationPolicy?: IStringDictionary<IPolicy>;
 
 	readonly onboardingKeymaps?: readonly IProductOnboardingKeymap[];
-	readonly onboardingThemes?: readonly IProductOnboardingTheme[];
 
 	/**
 	 * When running as an embedded app, the parent VS Code's policy
@@ -278,13 +242,6 @@ export interface IProductOnboardingKeymap {
 	readonly label: string;
 	readonly extensionId?: string;
 	readonly description: string;
-}
-
-export interface IProductOnboardingTheme {
-	readonly id: string;
-	readonly label: string;
-	readonly themeId: string;
-	readonly type: 'dark' | 'light' | 'hcDark' | 'hcLight';
 }
 
 export interface ITunnelApplicationConfig {
@@ -382,57 +339,19 @@ export interface ISurveyData {
 	userProbability: number;
 }
 
-export interface IAiGeneratedWorkspaceTrust {
-	readonly title: string;
-	readonly checkboxText: string;
-	readonly trustOption: string;
-	readonly dontTrustOption: string;
-	readonly startupTrustRequestLearnMore: string;
-}
-
 export interface IDefaultChatAgent {
 	readonly extensionId: string;
 	readonly chatExtensionId: string;
 
-	readonly chatExtensionOutputId: string;
-	readonly chatExtensionOutputExtensionStateCommand: string;
-
-	readonly documentationUrl: string;
-	readonly skusDocumentationUrl: string;
-	readonly publicCodeMatchesUrl: string;
-	readonly managePlanUrl: string;
-	readonly upgradePlanUrl: string;
-	readonly signUpUrl: string;
-	readonly termsStatementUrl: string;
-	readonly privacyStatementUrl: string;
-
 	readonly provider: {
 		default: { id: string; name: string };
 		enterprise: { id: string; name: string };
-		google: { id: string; name: string };
-		apple: { id: string; name: string };
 	};
 
-	readonly providerExtensionId: string;
 	readonly providerUriSetting: string;
 	readonly providerScopes: string[][];
 
 	readonly entitlementUrl: string;
-	readonly entitlementSignupLimitedUrl: string;
-	readonly tokenEntitlementUrl: string;
-	readonly mcpRegistryDataUrl: string;
-	readonly managedSettingsUrl: string;
-
-	readonly chatQuotaExceededContext: string;
-	readonly completionsQuotaExceededContext: string;
-
-	readonly walkthroughCommand: string;
-	readonly completionsMenuCommand: string;
-	readonly chatRefreshTokenCommand: string;
-	readonly generateCommitMessageCommand: string;
-	readonly resolveMergeConflictsCommand: string;
 
 	readonly completionsAdvancedSetting: string;
-	readonly completionsEnablementSetting: string;
-	readonly nextEditSuggestionsSetting: string;
 }

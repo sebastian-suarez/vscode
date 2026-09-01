@@ -14,7 +14,6 @@ import { Extensions as JSONExtensions, IJSONContributionRegistry } from '../../j
 import { Registry } from '../../registry/common/platform.js';
 import { IPolicy, IPolicyReference, PolicyName } from '../../../base/common/policy.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
-import product from '../../product/common/product.js';
 
 export enum EditPresentationTypes {
 	Multiline = 'multilineText',
@@ -1014,7 +1013,7 @@ export function validateProperty(property: string, schema: IRegisteredConfigurat
 	if (OVERRIDE_PROPERTY_REGEX.test(property)) {
 		return nls.localize('config.property.languageDefault', "Cannot register '{0}'. This matches property pattern '\\\\[.*\\\\]$' for describing language specific editor settings. Use 'configurationDefaults' contribution.", property);
 	}
-	if (configurationRegistry.getConfigurationProperties()[property] !== undefined && (!extensionId || !EXTENSION_UNIFICATION_EXTENSION_IDS.has(extensionId.toLowerCase()))) {
+	if (configurationRegistry.getConfigurationProperties()[property] !== undefined) {
 		return nls.localize('config.property.duplicate', "Cannot register '{0}'. This property is already registered.", property);
 	}
 	if (schema.policy && schema.policyReference) {
@@ -1069,6 +1068,3 @@ export function parseScope(scope: string): ConfigurationScope {
 			return ConfigurationScope.WINDOW;
 	}
 }
-
-// Used for extension unification. Should be removed when complete.
-export const EXTENSION_UNIFICATION_EXTENSION_IDS: Set<string> = new Set(product.defaultChatAgent ? [product.defaultChatAgent.extensionId, product.defaultChatAgent.chatExtensionId].map(id => id.toLowerCase()) : []);

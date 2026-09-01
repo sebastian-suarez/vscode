@@ -442,7 +442,6 @@ export class MigratingStorage extends Storage {
 
 	private migratedKeys: Set<string> = new Set();
 	private fallbackStorage: IStorage | undefined = undefined;
-	private isFallbackStorageReadonly: boolean = false;
 
 	override async init(): Promise<void> {
 		await super.init();
@@ -451,9 +450,8 @@ export class MigratingStorage extends Storage {
 		this.migratedKeys = this.loadMigratedKeys();
 	}
 
-	public setFallbackStorage(storage: IStorage, isReadonly: boolean): void {
+	public setFallbackStorage(storage: IStorage): void {
 		this.fallbackStorage = storage;
-		this.isFallbackStorageReadonly = isReadonly;
 	}
 
 	private static readonly INTERNAL_KEY_PREFIX = '__$__';
@@ -471,9 +469,7 @@ export class MigratingStorage extends Storage {
 			const value = this.fallbackStorage?.items.get(key);
 			if (!isUndefined(value)) {
 				this.set(key, value);
-				if (!this.isFallbackStorageReadonly) {
-					this.fallbackStorage?.delete(key);
-				}
+				this.fallbackStorage?.delete(key);
 				this.persistMigratedKeys();
 			}
 		}

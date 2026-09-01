@@ -384,12 +384,8 @@ export class ApplicationSharedStorageMain extends BaseStorageMain {
 		this.logService.info(`[shared storage] Fallback application storage initialized with ${this.applicationStorage.items.size} items`);
 
 		const migratingStorage = this._register(new MigratingStorage(database, { hint: wasCreated ? StorageHint.STORAGE_DOES_NOT_EXIST : undefined }));
-		migratingStorage.setFallbackStorage(this.applicationStorage.storage, false);
+		migratingStorage.setFallbackStorage(this.applicationStorage.storage);
 		return migratingStorage;
-	}
-
-	get applicationStorageItems(): Map<string, string> {
-		return this.applicationStorage.items;
 	}
 
 	private async prepareStorageFolder(): Promise<{ storageFilePath: string; wasCreated: boolean }> {

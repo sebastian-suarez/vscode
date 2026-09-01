@@ -13,22 +13,9 @@ import { registerIcon } from '../../../../platform/theme/common/iconRegistry.js'
 import { NotebookSetting } from '../../notebook/common/notebookCommon.js';
 import { CONTEXT_ACCESSIBILITY_MODE_ENABLED } from '../../../../platform/accessibility/common/accessibility.js';
 import { URI } from '../../../../base/common/uri.js';
-import product from '../../../../platform/product/common/product.js';
 
 interface IGettingStartedContentProvider {
 	(): string;
-}
-
-const defaultChat = {
-	documentationUrl: product.defaultChatAgent?.documentationUrl ?? '',
-	provider: product.defaultChatAgent?.provider ?? { default: { name: '' } },
-	publicCodeMatchesUrl: product.defaultChatAgent?.publicCodeMatchesUrl ?? '',
-	termsStatementUrl: product.defaultChatAgent?.termsStatementUrl ?? '',
-	privacyStatementUrl: product.defaultChatAgent?.privacyStatementUrl ?? ''
-};
-
-export function copilotSettingsMessage(manageSettingsUrl: string): string {
-	return localize({ key: 'settings', comment: ['{Locked="["}', '{Locked="]({0})"}', '{Locked="]({1})"}'] }, "{0} Copilot may show [public code]({1}) suggestions and use your data to improve the product. You can change these [settings]({2}) anytime.", defaultChat.provider.default.name, defaultChat.publicCodeMatchesUrl, manageSettingsUrl);
 }
 
 class GettingStartedContentProviderRegistry {

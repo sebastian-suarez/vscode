@@ -103,7 +103,6 @@ suite('PolicyConfiguration', () => {
 					name: 'PolicyShared',
 					category: PolicyCategory.Extensions,
 					minimumVersion: '1.0.0',
-					restrictedValue: true,
 					localization: { description: { key: 'shared.owner', value: '' }, }
 				}
 			},
@@ -321,11 +320,11 @@ suite('PolicyConfiguration', () => {
 
 		await testObject.initialize();
 
-		// The owner declares restrictedValue; the reference is a pure pointer. The registered
-		// definition must be the owner's.
+		// The owner is the source of truth for the definition; the reference is a pure pointer.
 		const definition = policyService.policyDefinitions['PolicyShared'];
 		assert.strictEqual(definition?.type, 'boolean');
-		assert.strictEqual(definition?.restrictedValue, true);
+		assert.strictEqual(testObject.configurationModel.getValue('policy.ownerSetting'), false);
+		assert.strictEqual(testObject.configurationModel.getValue('policy.referenceSetting'), false);
 	});
 
 	test('change: a late-registering owner supersedes an earlier reference definition', async () => {
@@ -334,9 +333,9 @@ suite('PolicyConfiguration', () => {
 		await fileService.writeFile(policyFile, VSBuffer.fromString(JSON.stringify({ 'PolicyOrphanReference': false })));
 		await testObject.initialize();
 
-		// The synthesized reference definition carries no restrictedValue.
+		// The synthesized reference definition alone already gates the setting.
 		assert.strictEqual(testObject.configurationModel.getValue('policy.orphanReferenceSetting'), false);
-		assert.strictEqual(policyService.policyDefinitions['PolicyOrphanReference']?.restrictedValue, undefined);
+		assert.strictEqual(policyService.policyDefinitions['PolicyOrphanReference']?.type, 'boolean');
 
 		const ownerNode: IConfigurationNode = {
 			'id': '_test_late_owner',
@@ -349,7 +348,6 @@ suite('PolicyConfiguration', () => {
 						name: 'PolicyOrphanReference',
 						category: PolicyCategory.Extensions,
 						minimumVersion: '1.0.0',
-						restrictedValue: true,
 						localization: { description: { key: 'late.owner', value: '' }, }
 					}
 				}
@@ -361,9 +359,9 @@ suite('PolicyConfiguration', () => {
 			Registry.as<IConfigurationRegistry>(Extensions.Configuration).registerConfiguration(ownerNode);
 			await promise;
 
-			// The owner's definition (with restrictedValue) must now supersede the reference's, and
-			// both settings remain gated by the same policy value.
-			assert.strictEqual(policyService.policyDefinitions['PolicyOrphanReference']?.restrictedValue, true);
+			// The owner's definition must now supersede the reference's, and both settings remain
+			// gated by the same policy value.
+			assert.strictEqual(policyService.policyDefinitions['PolicyOrphanReference']?.type, 'boolean');
 			assert.strictEqual(testObject.configurationModel.getValue('policy.lateOwner'), false);
 			assert.strictEqual(testObject.configurationModel.getValue('policy.orphanReferenceSetting'), false);
 		} finally {
@@ -386,7 +384,6 @@ suite('PolicyConfiguration', () => {
 						name: 'PolicyOrphanReference',
 						category: PolicyCategory.Extensions,
 						minimumVersion: '1.0.0',
-						restrictedValue: true,
 						localization: { description: { key: 'removable.owner', value: '' }, }
 					}
 				}
@@ -397,14 +394,14 @@ suite('PolicyConfiguration', () => {
 		let promise = Event.toPromise(testObject.onDidChangeConfiguration);
 		registry.registerConfiguration(ownerNode);
 		await promise;
-		assert.strictEqual(policyService.policyDefinitions['PolicyOrphanReference']?.restrictedValue, true);
+		assert.strictEqual(testObject.configurationModel.getValue('policy.removableOwner'), false);
 
 		// Removing the owner must re-resolve the policy and fall back to the surviving reference,
-		// so the owner-only restrictedValue no longer applies.
+		// which keeps the referencing setting gated.
 		promise = Event.toPromise(testObject.onDidChangeConfiguration);
 		registry.deregisterConfigurations([ownerNode]);
 		await promise;
-		assert.strictEqual(policyService.policyDefinitions['PolicyOrphanReference']?.restrictedValue, undefined);
+		assert.strictEqual(policyService.policyDefinitions['PolicyOrphanReference']?.type, 'boolean');
 		assert.strictEqual(testObject.configurationModel.getValue('policy.orphanReferenceSetting'), false);
 	});
 

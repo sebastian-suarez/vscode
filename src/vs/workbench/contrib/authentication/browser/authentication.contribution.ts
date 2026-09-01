@@ -42,7 +42,7 @@ class AuthenticationDataRenderer extends Disposable implements IExtensionFeature
 		const headers = [
 			localize('authenticationlabel', "Label"),
 			localize('authenticationid', "ID"),
-			localize('authenticationMcpAuthorizationServers', "MCP Authorization Servers")
+			localize('authenticationAuthorizationServers', "Authorization Servers")
 		];
 
 		const rows: IRowData[][] = authentication
@@ -164,49 +164,6 @@ class AuthenticationUsageContribution implements IWorkbenchContribution {
 // 	}
 // }
 
-// class AuthenticationMcpContribution extends Disposable implements IWorkbenchContribution {
-// 	static ID = 'workbench.contrib.authenticationMcp';
-
-// 	constructor(
-// 		@IMcpRegistry private readonly _mcpRegistry: IMcpRegistry,
-// 		@IAuthenticationQueryService private readonly _authenticationQueryService: IAuthenticationQueryService,
-// 		@IAuthenticationService private readonly _authenticationService: IAuthenticationService
-// 	) {
-// 		super();
-// 		this._cleanupRemovedMcpServers();
-
-// 		// Listen for MCP collections changes using autorun with observables
-// 		this._register(autorun(reader => {
-// 			// Read the collections observable to register dependency
-// 			this._mcpRegistry.collections.read(reader);
-// 			// Schedule cleanup for next tick to avoid running during observable updates
-// 			queueMicrotask(() => this._cleanupRemovedMcpServers());
-// 		}));
-// 		this._register(
-// 			Event.any(
-// 				this._authenticationService.onDidChangeDeclaredProviders,
-// 				this._authenticationService.onDidRegisterAuthenticationProvider
-// 			)(() => this._cleanupRemovedMcpServers())
-// 		);
-// 	}
-
-// 	private _cleanupRemovedMcpServers(): void {
-// 		const currentServerIds = new Set(this._mcpRegistry.collections.get().flatMap(c => c.serverDefinitions.get()).map(s => s.id));
-// 		const providerIds = this._authenticationQueryService.getProviderIds();
-// 		for (const providerId of providerIds) {
-// 			this._authenticationQueryService.provider(providerId).forEachAccount(account => {
-// 				account.mcpServers().forEach(server => {
-// 					if (!currentServerIds.has(server.mcpServerId)) {
-// 						server.removeUsage();
-// 						server.setAccessAllowed(false);
-// 					}
-// 				});
-// 			});
-// 		}
-// 	}
-// }
-
 registerWorkbenchContribution2(AuthenticationContribution.ID, AuthenticationContribution, WorkbenchPhase.AfterRestored);
 registerWorkbenchContribution2(AuthenticationUsageContribution.ID, AuthenticationUsageContribution, WorkbenchPhase.Eventually);
 // registerWorkbenchContribution2(AuthenticationExtensionsContribution.ID, AuthenticationExtensionsContribution, WorkbenchPhase.Eventually);
-// registerWorkbenchContribution2(AuthenticationMcpContribution.ID, AuthenticationMcpContribution, WorkbenchPhase.Eventually);

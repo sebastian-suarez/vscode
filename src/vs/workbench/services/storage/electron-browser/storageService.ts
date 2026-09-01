@@ -44,7 +44,7 @@ export class NativeWorkbenchStorageService extends RemoteStorageService {
 			// are automatically written through to the shared storage.
 			const applicationSharedFallbackStorage = this.getStorage(StorageScope.APPLICATION);
 			if (applicationSharedFallbackStorage) {
-				applicationSharedStorage.setFallbackStorage(applicationSharedFallbackStorage, false);
+				applicationSharedStorage.setFallbackStorage(applicationSharedFallbackStorage);
 			}
 		}
 	}

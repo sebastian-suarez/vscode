@@ -520,7 +520,7 @@ class DefaultAccountProvider extends Disposable implements IDefaultAccountProvid
 
 		const entitlementUrl = this.getEntitlementUrl();
 		if (!entitlementUrl) {
-			this.logService.debug('[DefaultAccount] No chat entitlements URL found');
+			this.logService.debug('[DefaultAccount] No entitlements URL found');
 			return { data: undefined, fetchedAt: undefined };
 		}
 

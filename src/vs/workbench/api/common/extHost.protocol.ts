@@ -193,12 +193,6 @@ export interface IRegisterDynamicAuthenticationProviderDetails extends IRegister
 	authorizationServer: UriComponents;
 }
 
-export interface IXaaProviderDiscovery {
-	issuer: UriComponents;
-	serverMetadata: IAuthorizationServerMetadata;
-	clientId?: string;
-}
-
 export interface MainThreadAuthenticationShape extends IDisposable {
 	$registerAuthenticationProvider(details: IRegisterAuthenticationProviderDetails): Promise<void>;
 	$unregisterAuthenticationProvider(id: string): Promise<void>;
@@ -211,7 +205,6 @@ export interface MainThreadAuthenticationShape extends IDisposable {
 	$showContinueNotification(message: string): Promise<boolean>;
 	$showDeviceCodeModal(userCode: string, verificationUri: string): Promise<boolean>;
 	$promptForClientRegistration(authorizationServerUrl: string): Promise<{ clientId: string; clientSecret?: string } | undefined>;
-	$promptForResourceClientSecret(resourceClientId: string, resource: string): Promise<string | undefined>;
 	$registerDynamicAuthenticationProvider(details: IRegisterDynamicAuthenticationProviderDetails): Promise<void>;
 	$setSessionsForDynamicAuthProvider(authProviderId: string, clientId: string, sessions: (IAuthorizationTokenResponse & { created_at: number })[]): Promise<void>;
 	$sendDidChangeDynamicProviderInfo({ providerId, clientId, authorizationServer, label, clientSecret }: { providerId: string; clientId?: string; authorizationServer?: UriComponents; label?: string; clientSecret?: string }): Promise<void>;
@@ -1956,7 +1949,6 @@ export interface ExtHostAuthenticationShape {
 	$onDidChangeAuthenticationSessions(id: string, label: string, extensionIdFilter?: string[]): Promise<void>;
 	$onDidUnregisterAuthenticationProvider(id: string): Promise<void>;
 	$registerDynamicAuthProvider(authorizationServer: UriComponents, serverMetadata: IAuthorizationServerMetadata, resource?: IAuthorizationProtectedResourceMetadata, clientId?: string, clientSecret?: string, initialTokens?: (IAuthorizationTokenResponse & { created_at: number })[]): Promise<string>;
-	$registerXaaAuthProvider(issuer: UriComponents, serverMetadata: IAuthorizationServerMetadata, clientId?: string, clientSecret?: string, initialTokens?: (IAuthorizationTokenResponse & { created_at: number })[]): Promise<string>;
 	$onDidChangeDynamicAuthProviderTokens(authProviderId: string, clientId: string, tokens?: (IAuthorizationTokenResponse & { created_at: number })[]): Promise<void>;
 }
 
@@ -2509,8 +2501,6 @@ export interface ExtHostSCMShape {
 	$provideHistoryItems(sourceControlHandle: number, options: ISCMHistoryOptions, token: CancellationToken): Promise<SCMHistoryItemDto[] | undefined>;
 	$provideHistoryItemChanges(sourceControlHandle: number, historyItemId: string, historyItemParentId: string | undefined, token: CancellationToken): Promise<SCMHistoryItemChangeDto[] | undefined>;
 	$resolveHistoryItem(sourceControlHandle: number, historyItemId: string, token: CancellationToken): Promise<SCMHistoryItemDto | undefined>;
-	$resolveHistoryItemChatContext(sourceControlHandle: number, historyItemId: string, token: CancellationToken): Promise<string | undefined>;
-	$resolveHistoryItemChangeRangeChatContext(sourceControlHandle: number, historyItemId: string, historyItemParentId: string, path: string, token: CancellationToken): Promise<string | undefined>;
 	$resolveHistoryItemRefsCommonAncestor(sourceControlHandle: number, historyItemRefs: string[], token: CancellationToken): Promise<string | undefined>;
 
 	$provideArtifactGroups(sourceControlHandle: number, token: CancellationToken): Promise<SCMArtifactGroupDto[] | undefined>;

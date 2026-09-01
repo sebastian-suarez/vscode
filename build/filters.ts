@@ -51,7 +51,7 @@ export const unicodeFilter = Object.freeze<string[]>([
 	'!extensions/markdown-language-features/notebook-out/*.js',
 	'!extensions/markdown-language-features/markdown-editor-out/*.js',
 	'!extensions/markdown-math/notebook-out/**',
-	'!extensions/mermaid-markdown-features/chat-webview-out/**',
+	'!extensions/mermaid-markdown-features/editor-preview-out/**',
 	'!extensions/ipynb/notebook-out/**',
 	'!extensions/notebook-renderers/renderer-out/**',
 	'!extensions/php-language-features/src/features/phpGlobalFunctions.ts',
@@ -71,7 +71,6 @@ export const unicodeFilter = Object.freeze<string[]>([
 	'!src/vs/workbench/contrib/terminal/common/scripts/psreadline/**',
 
 	// Files with licences
-	'!src/vs/platform/endpoint/common/licenseAgreement.ts',
 ]);
 
 export const indentationFilter = Object.freeze<string[]>([
@@ -99,7 +98,6 @@ export const indentationFilter = Object.freeze<string[]>([
 	'!build/darwin/patch-dmg.py',
 	'!build/npm/gyp/patches/gyp_spectre_mitigation_support.patch',
 	'!product.overrides.json',
-	'!src/vs/platform/endpoint/common/licenseAgreement.ts',
 
 	// except specific folders
 	'!test/automation/out/**',
@@ -153,7 +151,7 @@ export const indentationFilter = Object.freeze<string[]>([
 	'!**/*.tiff',
 
 	// except for built files
-	'!extensions/mermaid-markdown-features/chat-webview-out/*.js',
+	'!extensions/mermaid-markdown-features/editor-preview-out/*.js',
 	'!extensions/mermaid-markdown-features/markdown-preview-out/*.js',
 	'!extensions/mermaid-markdown-features/notebook-out/*.js',
 	'!extensions/markdown-language-features/media/*.js',
@@ -210,7 +208,7 @@ export const copyrightFilter = Object.freeze<string[]>([
 	'!extensions/html-language-features/server/src/modes/typescript/*',
 	'!extensions/*/server/bin/*',
 	'!src/vs/workbench/contrib/terminal/common/scripts/psreadline/**',
-	'!extensions/mermaid-markdown-features/chat-webview-out/**',
+	'!extensions/mermaid-markdown-features/editor-preview-out/**',
 	'!extensions/mermaid-markdown-features/markdown-preview-out/**',
 	'!extensions/mermaid-markdown-features/notebook-out/**',
 

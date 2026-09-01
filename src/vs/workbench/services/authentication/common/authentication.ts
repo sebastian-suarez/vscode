@@ -171,7 +171,6 @@ export interface IAuthenticationProviderHostDelegate {
 	 * Creates an XAA (enterprise-managed, ID-JAG) authentication provider for the given SSO issuer.
 	 * The returned string is the provider id.
 	 */
-	createXaa?(issuer: URI): Promise<string>;
 }
 
 export const IAuthenticationService = createDecorator<IAuthenticationService>('IAuthenticationService');
@@ -309,7 +308,6 @@ export interface IAuthenticationService {
 	 *
 	 * @param issuer The OAuth/OIDC issuer URL (typically read from `mcp.enterpriseManagedAuth.idp`).
 	 */
-	createOrGetXaaProvider(issuer: URI): Promise<string | undefined>;
 }
 
 export function isAuthenticationSession(thing: unknown): thing is AuthenticationSession {
