@@ -291,8 +291,6 @@ export async function withAsyncTestCodeEditorAndInlineCompletionsModel<T>(
 					onDidChangePolicyData: Event.None,
 					policyData: null,
 					currentDefaultAccount: null,
-					copilotTokenInfo: null,
-					onDidChangeCopilotTokenInfo: Event.None,
 					managedSettingsFetchStatus: null,
 					managedSettingsFetchedAt: null,
 					managedSettingsRawResponse: null,

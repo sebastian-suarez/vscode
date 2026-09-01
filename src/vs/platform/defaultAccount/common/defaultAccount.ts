@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ICopilotTokenInfo, IDefaultAccount, IDefaultAccountAuthenticationProvider, IPolicyData } from '../../../base/common/defaultAccount.js';
+import { IDefaultAccount, IDefaultAccountAuthenticationProvider, IPolicyData } from '../../../base/common/defaultAccount.js';
 import { Event } from '../../../base/common/event.js';
 import { createDecorator } from '../../instantiation/common/instantiation.js';
 
@@ -32,8 +32,6 @@ export interface IDefaultAccountProvider {
 	readonly onDidChangeDefaultAccount: Event<IDefaultAccount | null>;
 	readonly policyData: IPolicyData | null;
 	readonly onDidChangePolicyData: Event<IPolicyData | null>;
-	readonly copilotTokenInfo: ICopilotTokenInfo | null;
-	readonly onDidChangeCopilotTokenInfo: Event<ICopilotTokenInfo | null>;
 	readonly managedSettingsFetchStatus: ManagedSettingsFetchStatus;
 	/** Timestamp (ms) of the last managed-settings fetch, or `null` if never fetched. */
 	readonly managedSettingsFetchedAt: number | null;
@@ -63,8 +61,6 @@ export interface IDefaultAccountService {
 	readonly onDidChangePolicyData: Event<IPolicyData | null>;
 	readonly policyData: IPolicyData | null;
 	readonly currentDefaultAccount: IDefaultAccount | null;
-	readonly copilotTokenInfo: ICopilotTokenInfo | null;
-	readonly onDidChangeCopilotTokenInfo: Event<ICopilotTokenInfo | null>;
 	readonly managedSettingsFetchStatus: ManagedSettingsFetchStatus;
 	/** Timestamp (ms) of the last managed-settings fetch, or `null` if never fetched. */
 	readonly managedSettingsFetchedAt: number | null;

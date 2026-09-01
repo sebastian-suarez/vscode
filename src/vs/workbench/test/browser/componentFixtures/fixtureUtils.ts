@@ -543,8 +543,6 @@ export function createEditorServices(disposables: DisposableStore, options?: Cre
 		onDidChangePolicyData: new Emitter<null>().event,
 		policyData: null,
 		currentDefaultAccount: null,
-		copilotTokenInfo: null,
-		onDidChangeCopilotTokenInfo: new Emitter<null>().event,
 		managedSettingsFetchStatus: null,
 		managedSettingsFetchedAt: null,
 		managedSettingsRawResponse: null,

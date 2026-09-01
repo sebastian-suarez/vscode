@@ -64,8 +64,6 @@ import { IPolicyService, NullPolicyService } from '../../platform/policy/common/
 import { NativePolicyService } from '../../platform/policy/node/nativePolicyService.js';
 import { FilePolicyService } from '../../platform/policy/common/filePolicyService.js';
 import { MultiplexPolicyService } from '../../platform/policy/common/multiplexPolicyService.js';
-import { GITHUB_COPILOT_MACOS_BUNDLE_ID, GITHUB_COPILOT_WIN32_POLICY_NAME, GITHUB_COPILOT_WIN32_REGISTRY_PATH, ICopilotManagedSettingsService, NullCopilotManagedSettingsService } from '../../platform/policy/common/copilotManagedSettings.js';
-import { CopilotManagedSettingsService } from '../../platform/policy/node/copilotManagedSettingsService.js';
 import { DisposableStore } from '../../base/common/lifecycle.js';
 import { IUriIdentityService } from '../../platform/uriIdentity/common/uriIdentity.js';
 import { UriIdentityService } from '../../platform/uriIdentity/common/uriIdentityService.js';
@@ -227,18 +225,6 @@ class CodeMain {
 			policyServices.push(disposables.add(new FilePolicyService(URI.file(LINUX_SYSTEM_POLICY_FILE_PATH), fileService, logService)));
 		} else if (environmentMainService.policyFile) {
 			policyServices.push(disposables.add(new FilePolicyService(environmentMainService.policyFile, fileService, logService)));
-		}
-
-		let copilotManagedSettingsService: CopilotManagedSettingsService | undefined;
-		if (isWindows) {
-			copilotManagedSettingsService = disposables.add(new CopilotManagedSettingsService(logService, GITHUB_COPILOT_WIN32_POLICY_NAME, { registryPath: GITHUB_COPILOT_WIN32_REGISTRY_PATH }));
-		} else if (isMacintosh) {
-			copilotManagedSettingsService = disposables.add(new CopilotManagedSettingsService(logService, GITHUB_COPILOT_MACOS_BUNDLE_ID));
-		}
-		if (copilotManagedSettingsService) {
-			services.set(ICopilotManagedSettingsService, copilotManagedSettingsService);
-		} else {
-			services.set(ICopilotManagedSettingsService, new NullCopilotManagedSettingsService());
 		}
 
 		if (policyServices.length > 1) {
