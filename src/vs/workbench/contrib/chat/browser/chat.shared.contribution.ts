@@ -1754,6 +1754,9 @@ configurationRegistry.registerConfiguration({
 			default: true,
 			markdownDescription: nls.localize('chat.tools.autoExpandFailures', "When enabled, tool failures are automatically expanded in the chat UI to show error details."),
 		},
+		// This build ships without AI surfaces, so the default is on rather than off. It is an
+		// interim measure: the chat stack is scheduled for removal, and when it goes this setting
+		// goes with it, default and all. Nothing should come to depend on it in the meantime.
 		[ChatConfiguration.AIDisabled]: {
 			type: 'boolean',
 			description: nls.localize('chat.disableAIFeatures', "Disable and hide built-in AI features provided by GitHub Copilot, including chat and inline suggestions."),
