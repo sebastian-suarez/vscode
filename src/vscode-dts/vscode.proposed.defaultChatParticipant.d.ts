@@ -3,38 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-declare module 'vscode' {
-
-	export interface ChatWelcomeMessageContent {
-		icon: ThemeIcon;
-		title: string;
-		message: MarkdownString;
-	}
-
-	export interface ChatTitleProvider {
-		/**
-		 * TODO@API Should this take a ChatResult like the followup provider, or just take a new ChatContext that includes the current message as history?
-		 */
-		provideChatTitle(context: ChatContext, token: CancellationToken): ProviderResult<string>;
-	}
-
-	export interface ChatSummarizer {
-		provideChatSummary(context: ChatContext, token: CancellationToken): ProviderResult<string>;
-	}
-
-	export interface ChatParticipant {
-		/**
-		 * A string that will be added before the listing of chat participants in `/help`.
-		 */
-		helpTextPrefix?: string | MarkdownString;
-
-		/**
-		 * A string that will be appended after the listing of chat participants in `/help`.
-		 */
-		helpTextPostfix?: string | MarkdownString;
-
-		additionalWelcomeMessage?: string | MarkdownString;
-		titleProvider?: ChatTitleProvider;
-		summarizer?: ChatSummarizer;
-	}
-}
+// empty placeholder declaration for the default chat participant contribution
+// The API surface of this proposal has been removed; only the proposal name survives
+// until the contribution point that gates on it is removed.
