@@ -730,10 +730,14 @@ const MAC_TRANSPARENT_SURFACE_ALPHA = 0;
  * The surfaces that sit on top of a translucent one and must not paint at all, so that the
  * translucency below them — and the vibrancy below that — stays unbroken. Section headers
  * are such a surface: they are captions over the side bar rather than bands across it. So is
- * the sticky scroll shadow, which would draw a smudge over the translucency instead of depth.
+ * the sticky scroll stack: its rows stand in for the rows they pin, so they have to read as
+ * those same rows on the bare side bar, and what tells the stack apart is the hairline along
+ * its bottom edge and the fade it comes and goes with — not a fill of its own. So is the
+ * sticky scroll shadow, which would draw a smudge over the translucency instead of depth.
  */
 export const MAC_TRANSPARENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_SECTION_HEADER_BACKGROUND,
+	SIDE_BAR_STICKY_SCROLL_BACKGROUND,
 	SIDE_BAR_STICKY_SCROLL_SHADOW
 ]);
 
@@ -748,31 +752,6 @@ export function transparentSurfaceOnMac(color: Color): Color {
 	}
 
 	return new Color(new RGBA(color.rgba.r, color.rgba.g, color.rgba.b, MAC_TRANSPARENT_SURFACE_ALPHA));
-}
-
-const MAC_STICKY_SURFACE_ALPHA = 0.15;
-
-/**
- * The sticky scroll surface, which is neither of the two: its rows stand in for the rows they
- * pin, so they cannot paint the side bar a second time, but they still have to read as a layer
- * above the rows scrolling past underneath them. A tint this faint is what separates the two
- * without turning the header into a band.
- */
-export const MAC_TINTED_STICKY_SURFACES = new Set<ColorIdentifier>([
-	SIDE_BAR_STICKY_SCROLL_BACKGROUND
-]);
-
-/**
- * Tints a resolved surface color on macOS desktop, alongside the two above and with the same
- * absolute alpha, so that themes and color customizations keep choosing the hue while the
- * layering stays put. A no-op on every other platform and in the web.
- */
-export function tintedStickySurfaceOnMac(color: Color): Color {
-	if (!isMacintosh || !isNative) {
-		return color;
-	}
-
-	return new Color(new RGBA(color.rgba.r, color.rgba.g, color.rgba.b, MAC_STICKY_SURFACE_ALPHA));
 }
 
 // < --- Menubar --- >

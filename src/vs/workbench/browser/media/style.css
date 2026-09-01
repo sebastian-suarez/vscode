@@ -98,11 +98,6 @@ body {
 	padding-left: calc(var(--traffic-lights-width) + 8px);
 }
 
-.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.banner {
-	padding-left: var(--traffic-lights-width);
-	-webkit-app-region: drag;
-}
-
 /* Surfaces the window can be dragged by. None of this applies in full screen, where there are
  * no window controls to work around and no window to drag.
  *
@@ -120,6 +115,13 @@ body {
 .monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.editor > .content .editor-group-container > .title.tabs .tabs-container,
 .monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.sidebar > .composite.title,
 .monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.sidebar > .header-or-footer.header {
+	-webkit-app-region: drag;
+}
+
+/* The banner is listed apart from those because its drag region is a live one: it opens at the
+ * bottom of the grid, right above the status bar, where no native strip lies over it — the
+ * same reason the status bar drags. Its interactive parts punch the usual holes below. */
+.monaco-workbench.mac:not(.web).inline-titlebar:not(.fullscreen) .part.banner {
 	-webkit-app-region: drag;
 }
 
@@ -486,13 +488,13 @@ body {
 	border-radius: 7px;
 }
 
-/* What sets the sticky header apart from the rows it stands in for is a hairline and the
- * faint tint `MAC_TINTED_STICKY_SURFACES` gives it — never a fill, which would break the
- * translucency. It fades in rather than snapping: the widget swaps `display` when it empties,
- * and a transition cannot follow that, so the empty state keeps its box and drops to zero
- * opacity instead. The rows inside are torn out of the DOM as the widget empties, so the box
- * that outlives them is empty; `pointer-events` is what keeps it from swallowing clicks meant
- * for the rows underneath. */
+/* The sticky header paints nothing of its own — a fill would break the translucency, and its
+ * rows are meant to read as the rows they stand in for. A hairline along the bottom edge is
+ * all that sets it apart. It fades in rather than snapping: the widget swaps `display` when
+ * it empties, and a transition cannot follow that, so the empty state keeps its box and drops
+ * to zero opacity instead. The rows inside are torn out of the DOM as the widget empties, so
+ * the box that outlives them is empty; `pointer-events` is what keeps it from swallowing
+ * clicks meant for the rows underneath. */
 .monaco-workbench.mac:not(.web) .part.sidebar .monaco-tree-sticky-container {
 	border-bottom: 1px solid rgba(204, 204, 204, 0.2);
 	opacity: 1;

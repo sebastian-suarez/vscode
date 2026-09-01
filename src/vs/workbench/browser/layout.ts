@@ -7,7 +7,7 @@ import { Disposable, DisposableMap, DisposableStore, IDisposable, toDisposable }
 import { Event, Emitter } from '../../base/common/event.js';
 import { EventType, addDisposableListener, getClientArea, size, IDimension, isAncestorUsingFlowTo, computeScreenAwareSize, getActiveDocument, getWindows, getActiveWindow, isActiveDocument, getWindow, getWindowId, getActiveElement, Dimension } from '../../base/browser/dom.js';
 import { onDidChangeFullscreen, isFullscreen, isWCOEnabled } from '../../base/browser/browser.js';
-import { isWindows, isLinux, isMacintosh, isWeb, isIOS } from '../../base/common/platform.js';
+import { isWindows, isLinux, isMacintosh, isNative, isWeb, isIOS } from '../../base/common/platform.js';
 import { EditorInputCapabilities, GroupIdentifier, isResourceEditorInput, IUntypedEditorInput, pathsToEditors } from '../common/editor.js';
 import { SidebarPart } from './parts/sidebar/sidebarPart.js';
 import { PanelPart } from './parts/panel/panelPart.js';
@@ -239,7 +239,10 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		let top = 0;
 		let quickPickTop = 0;
 
-		if (this.isVisible(Parts.BANNER_PART)) {
+		// A banner only eats into the top of the container while it sits at the top of the grid.
+		// Where it opens above the status bar instead, everything anchored to the top of the
+		// workbench keeps its coordinates and the banner takes its room from the bottom.
+		if (!this.shouldShowBannerLast() && this.isVisible(Parts.BANNER_PART)) {
 			top = this.getPart(Parts.BANNER_PART).maximumHeight;
 			quickPickTop = top;
 		}
@@ -1373,6 +1376,16 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		return isWeb && !isWCOEnabled();
 	}
 
+	/**
+	 * On macOS desktop the window controls are inset into the first row of the workbench, and
+	 * that row is fixed — the controls cannot move, so nothing may push the row down. A banner
+	 * therefore never opens above it: it opens at the other end of the grid, immediately above
+	 * the status bar, where it displaces nothing that has to line up with the window.
+	 */
+	private shouldShowBannerLast(): boolean {
+		return isMacintosh && isNative;
+	}
+
 	focus(): void {
 		if (this.isPanelMaximized() && this.mainContainer === this.activeContainer) {
 			this.focusPart(Parts.PANEL_PART);
@@ -1867,6 +1880,13 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 	private setBannerHidden(hidden: boolean): void {
 		this.workbenchGrid.setViewVisible(this.bannerPartView, !hidden);
+
+		// The notification toasts and the notification center float over the workbench instead of
+		// living in the grid, and they clear the bottom of the window with a fixed inset. Where the
+		// banner opens down there as well it has to be part of that inset, so its height goes out on
+		// the container — zero wherever the banner still opens at the top, and zero while it is closed.
+		const bannerClearance = !hidden && this.shouldShowBannerLast() ? this.bannerPartView.maximumHeight : 0;
+		this.mainContainer.style.setProperty('--banner-height', `${bannerClearance}px`);
 	}
 
 	private setEditorHidden(hidden: boolean): void {
@@ -2618,20 +2638,24 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		const activityBarWidth = this.activityBarPartView.minimumWidth;
 		const middleSectionHeight = height - titleBarHeight - statusBarHeight;
 
-		const titleAndBanner: ISerializedNode[] = [
-			{
-				type: 'leaf',
-				data: { type: Parts.TITLEBAR_PART },
-				size: titleBarHeight,
-				visible: this.isVisible(Parts.TITLEBAR_PART, mainWindow)
-			},
-			{
-				type: 'leaf',
-				data: { type: Parts.BANNER_PART },
-				size: bannerHeight,
-				visible: false
-			}
-		];
+		const titleBarNode: ISerializedLeafNode = {
+			type: 'leaf',
+			data: { type: Parts.TITLEBAR_PART },
+			size: titleBarHeight,
+			visible: this.isVisible(Parts.TITLEBAR_PART, mainWindow)
+		};
+
+		const bannerNode: ISerializedLeafNode = {
+			type: 'leaf',
+			data: { type: Parts.BANNER_PART },
+			size: bannerHeight,
+			visible: false
+		};
+
+		const bannerLast = this.shouldShowBannerLast();
+		const topSection: ISerializedNode[] = bannerLast
+			? [titleBarNode]
+			: this.shouldShowBannerFirst() ? [bannerNode, titleBarNode] : [titleBarNode, bannerNode];
 
 		const activityBarNode: ISerializedLeafNode = {
 			type: 'leaf',
@@ -2681,12 +2705,13 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 				type: 'branch',
 				size: width,
 				data: [
-					...(this.shouldShowBannerFirst() ? titleAndBanner.reverse() : titleAndBanner),
+					...topSection,
 					{
 						type: 'branch',
 						data: middleSection,
 						size: middleSectionHeight
 					},
+					...(bannerLast ? [bannerNode] : []),
 					{
 						type: 'leaf',
 						data: { type: Parts.STATUSBAR_PART },

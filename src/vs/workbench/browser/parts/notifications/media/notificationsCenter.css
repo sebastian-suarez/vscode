@@ -7,7 +7,7 @@
 	position: absolute;
 	z-index: 2545; /* above modal editor backdrop (2540), below quick input (2550) and dialogs (2575) */
 	right: 7px; /* attempt to position at same location as a toast */
-	bottom: 29px; /* 22px status bar height + 7px (attempt to position at same location as a toast) */
+	bottom: calc(29px + var(--banner-height, 0px)); /* 22px status bar height + 7px (attempt to position at same location as a toast), and the banner too where it opens above the status bar */
 	display: none;
 	overflow: hidden;
 	border: 1px solid var(--vscode-editorWidget-border);
@@ -16,7 +16,7 @@
 }
 
 .monaco-workbench.nostatusbar > .notifications-center {
-	bottom: 11px; /* attempt to position at same location as a toast */
+	bottom: calc(11px + var(--banner-height, 0px)); /* attempt to position at same location as a toast */
 }
 
 .monaco-workbench > .notifications-center.bottom-left {

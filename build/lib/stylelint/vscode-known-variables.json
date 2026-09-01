@@ -1099,7 +1099,8 @@
 		"--vscode-workbench-tabs-font-family",
 		"--vscode-workbench-tabs-font-size",
 		"--titlebar-height",
-		"--traffic-lights-width"
+		"--traffic-lights-width",
+		"--banner-height"
 	],
 	"sizes": [
 		"--vscode-agents-fontSize-body1",

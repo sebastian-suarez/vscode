@@ -24,7 +24,7 @@ import { CharCode } from '../../../../base/common/charCode.js';
 import { StorageScope, IStorageService, StorageTarget } from '../../../../platform/storage/common/storage.js';
 import { ThemeConfiguration } from './themeConfiguration.js';
 import { ColorScheme, ThemeTypeSelector } from '../../../../platform/theme/common/theme.js';
-import { MAC_TINTED_STICKY_SURFACES, MAC_TRANSLUCENT_SURFACES, MAC_TRANSPARENT_SURFACES, tintedStickySurfaceOnMac, translucentSurfaceOnMac, transparentSurfaceOnMac } from '../../../common/theme.js';
+import { MAC_TRANSLUCENT_SURFACES, MAC_TRANSPARENT_SURFACES, translucentSurfaceOnMac, transparentSurfaceOnMac } from '../../../common/theme.js';
 import { ColorId, FontStyle, MetadataConsts } from '../../../../editor/common/encodedTokenAttributes.js';
 import { toStandardTokenType } from '../../../../editor/common/languages/supports/tokenization.js';
 
@@ -163,12 +163,6 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 		// that they do not paint the translucency over a second time.
 		if (color && MAC_TRANSPARENT_SURFACES.has(colorId)) {
 			return transparentSurfaceOnMac(color);
-		}
-
-		// And the one layered surface that keeps a tint, so that it reads above the rows
-		// scrolling underneath it without painting the side bar again.
-		if (color && MAC_TINTED_STICKY_SURFACES.has(colorId)) {
-			return tintedStickySurfaceOnMac(color);
 		}
 
 		return color;

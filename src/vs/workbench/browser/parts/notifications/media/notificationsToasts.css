@@ -7,13 +7,13 @@
 	position: absolute;
 	z-index: 2545; /* above modal editor backdrop (2540), below quick input (2550) and dialogs (2575) */
 	right: 3px;
-	bottom: 25px; /* 22px status bar height + 3px */
+	bottom: calc(25px + var(--banner-height, 0px)); /* 22px status bar height + 3px, and the banner too where it opens above the status bar */
 	display: none;
 	border-radius: var(--vscode-cornerRadius-small);
 }
 
 .monaco-workbench.nostatusbar > .notifications-toasts {
-	bottom: 3px;
+	bottom: calc(3px + var(--banner-height, 0px));
 }
 
 .monaco-workbench > .notifications-toasts.bottom-left {
