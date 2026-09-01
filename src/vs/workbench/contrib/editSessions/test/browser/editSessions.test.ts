@@ -161,12 +161,9 @@ suite('Edit session sync', () => {
 				settingsResource: URI.file('settingsResource'),
 				keybindingsResource: URI.file('keybindingsResource'),
 				tasksResource: URI.file('tasksResource'),
-				languageModelsResource: URI.file('chatLanguageModels.json'),
 				snippetsHome: URI.file('snippetsHome'),
-				promptsHome: URI.file('promptsHome'),
 				extensionsResource: URI.file('extensionsResource'),
 				cacheHome: URI.file('cacheHome'),
-				agentPluginsHome: URI.file('agentPluginsHome'),
 			};
 		});
 

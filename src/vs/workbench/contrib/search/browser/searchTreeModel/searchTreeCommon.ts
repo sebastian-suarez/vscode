@@ -283,13 +283,6 @@ export function isTextSearchHeading(obj: any): obj is ITextSearchHeading {
 		obj.id().startsWith(TEXT_SEARCH_HEADING_PREFIX);
 }
 
-export function isPlainTextSearchHeading(obj: any): obj is IPlainTextSearchHeading {
-	return isTextSearchHeading(obj) &&
-		// eslint-disable-next-line local/code-no-any-casts
-		typeof (<any>obj).replace === 'function' &&
-		// eslint-disable-next-line local/code-no-any-casts
-		typeof (<any>obj).replaceAll === 'function';
-}
 
 export function isSearchTreeFolderMatch(obj: any): obj is ISearchTreeFolderMatch {
 	return typeof obj === 'object' &&

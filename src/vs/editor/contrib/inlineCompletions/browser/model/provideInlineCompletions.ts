@@ -271,7 +271,6 @@ function toInlineSuggestData(
 		source,
 		context,
 		inlineCompletion.isInlineEdit ?? false,
-		inlineCompletion.supportsRename ?? false,
 		requestInfo,
 		providerRequestInfo,
 		inlineCompletion.correlationId,
@@ -381,7 +380,6 @@ export class InlineSuggestData {
 			mockSource,
 			mockContext,
 			true,
-			false,
 			mockRequestInfo,
 			mockProviderRequestInfo,
 			undefined
@@ -418,7 +416,6 @@ export class InlineSuggestData {
 		public readonly source: InlineSuggestionList,
 		public readonly context: InlineCompletionContext,
 		public readonly isInlineEdit: boolean,
-		public readonly supportsRename: boolean,
 		private readonly _requestInfo: InlineSuggestRequestInfo,
 		private readonly _providerRequestInfo: InlineSuggestProviderRequestInfo,
 		private readonly _correlationId: string | undefined,

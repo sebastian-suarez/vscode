@@ -7,8 +7,7 @@
 .markers-panel .marker-icon.error, .markers-panel .marker-icon .codicon.codicon-error,
 .text-search-provider-messages .providerMessage .codicon.codicon-error,
 .extensions-viewlet > .extensions .codicon.codicon-error,
-.extension-editor .codicon.codicon-error,
-.chat-attached-context-attachment .codicon.codicon-error {
+.extension-editor .codicon.codicon-error {
 	color: var(--vscode-problemsErrorIcon-foreground);
 }
 

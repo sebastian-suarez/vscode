@@ -7629,7 +7629,6 @@ declare namespace monaco.languages {
 		readonly showRange?: IRange;
 		readonly warning?: InlineCompletionWarning;
 		readonly hint?: IInlineCompletionHint;
-		readonly supportsRename?: boolean;
 		/**
 		 * Used for telemetry.
 		 */
@@ -7803,7 +7802,6 @@ declare namespace monaco.languages {
 		diagnostics?: editor.IMarkerData[];
 		kind?: string;
 		isPreferred?: boolean;
-		isAI?: boolean;
 		disabled?: string;
 		ranges?: IRange[];
 	}

@@ -5,7 +5,6 @@
 
 import { Emitter, Event, PauseableEmitter } from '../../../../../base/common/event.js';
 import { dispose } from '../../../../../base/common/lifecycle.js';
-import { observableValue } from '../../../../../base/common/observable.js';
 import * as UUID from '../../../../../base/common/uuid.js';
 import { ICodeEditorService } from '../../../../../editor/browser/services/codeEditorService.js';
 import * as editorCommon from '../../../../../editor/common/editorCommon.js';
@@ -20,7 +19,7 @@ import { CellOutputViewModel } from './cellOutputViewModel.js';
 import { ViewContext } from './viewContext.js';
 import { NotebookCellTextModel } from '../../common/model/notebookCellTextModel.js';
 import { CellKind, INotebookFindOptions, NotebookCellOutputsSplice } from '../../common/notebookCommon.js';
-import { ICellExecutionError, ICellExecutionStateChangedEvent } from '../../common/notebookExecutionStateService.js';
+import { ICellExecutionStateChangedEvent } from '../../common/notebookExecutionStateService.js';
 import { INotebookService } from '../../common/notebookService.js';
 import { BaseCellViewModel } from './baseCellViewModel.js';
 
@@ -120,8 +119,6 @@ export class CodeCellViewModel extends BaseCellViewModel implements ICellViewMod
 		return this._outputViewModels;
 	}
 
-	readonly executionErrorDiagnostic = observableValue<ICellExecutionError | undefined>('excecutionError', undefined);
-
 	constructor(
 		viewType: string,
 		model: NotebookCellTextModel,
@@ -153,9 +150,6 @@ export class CodeCellViewModel extends BaseCellViewModel implements ICellViewMod
 			this._onDidRemoveOutputs.fire(removedOutputs);
 			if (outputLayoutChange) {
 				this.layoutChange({ outputHeight: true }, 'CodeCellViewModel#model.onDidChangeOutputs');
-			}
-			if (!this._outputCollection.length) {
-				this.executionErrorDiagnostic.set(undefined, undefined);
 			}
 			dispose(removedOutputs);
 		}));
@@ -189,7 +183,6 @@ export class CodeCellViewModel extends BaseCellViewModel implements ICellViewMod
 
 	updateExecutionState(e: ICellExecutionStateChangedEvent) {
 		if (e.changed) {
-			this.executionErrorDiagnostic.set(undefined, undefined);
 			this._onDidStartExecution.fire(e);
 		} else {
 			this._onDidStopExecution.fire(e);

@@ -79,7 +79,6 @@ import { ICodeEditor, IDiffEditor } from '../../browser/editorBrowser.js';
 import { IBulkEditOptions, IBulkEditResult, IBulkEditService, ResourceEdit, ResourceTextEdit } from '../../browser/services/bulkEditService.js';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
 import { OpenerService } from '../../browser/services/openerService.js';
-import { IRenameSymbolTrackerService, NullRenameSymbolTrackerService } from '../../browser/services/renameSymbolTrackerService.js';
 import { isDiffEditorConfigurationKey, isEditorConfigurationKey } from '../../common/config/editorConfigurationSchema.js';
 import { EditorOption } from '../../common/config/editorOptions.js';
 import { EditOperation, ISingleEditOperation } from '../../common/core/editOperation.js';
@@ -1197,7 +1196,6 @@ registerSingleton(ITreeSitterLibraryService, StandaloneTreeSitterLibraryService,
 registerSingleton(ILoggerService, NullLoggerService, InstantiationType.Eager);
 registerSingleton(IDataChannelService, NullDataChannelService, InstantiationType.Eager);
 registerSingleton(IDefaultAccountService, StandaloneDefaultAccountService, InstantiationType.Eager);
-registerSingleton(IRenameSymbolTrackerService, NullRenameSymbolTrackerService, InstantiationType.Eager);
 registerSingleton(IUserInteractionService, UserInteractionService, InstantiationType.Eager);
 
 /**

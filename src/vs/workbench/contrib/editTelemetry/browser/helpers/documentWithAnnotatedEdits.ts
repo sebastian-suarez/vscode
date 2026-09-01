@@ -7,11 +7,9 @@ import { AsyncReader, AsyncReaderEndOfStream } from '../../../../../base/common/
 import { CachedFunction } from '../../../../../base/common/cache.js';
 import { Disposable, DisposableStore } from '../../../../../base/common/lifecycle.js';
 import { IObservableWithChange, ISettableObservable, observableValue, runOnChange } from '../../../../../base/common/observable.js';
-import { AnnotatedStringEdit, IEditData, StringEdit } from '../../../../../editor/common/core/edits/stringEdit.js';
+import { AnnotatedStringEdit, IEditData } from '../../../../../editor/common/core/edits/stringEdit.js';
 import { StringText } from '../../../../../editor/common/core/text/abstractText.js';
-import { IEditorWorkerService } from '../../../../../editor/common/services/editorWorker.js';
 import { TextModelEditSource } from '../../../../../editor/common/textModelEditSource.js';
-import { IInstantiationService } from '../../../../../platform/instantiation/common/instantiation.js';
 import { IObservableDocument } from './observableWorkspace.js';
 import { iterateObservableChanges, mapObservableDelta } from './utils.js';
 
@@ -120,10 +118,6 @@ export abstract class EditSourceBase {
 				}
 				return this._cache.get(new UnknownEditSource());
 
-			case 'Chat.applyEdits':
-				return this._cache.get(new ChatEditSource('sidebar'));
-			case 'inlineChat.applyEdits':
-				return this._cache.get(new ChatEditSource('inline'));
 			case 'cursor':
 				return this._cache.get(new UserEditSource());
 			default:
@@ -134,7 +128,7 @@ export abstract class EditSourceBase {
 	public abstract getColor(): string;
 }
 
-export type EditSource = InlineSuggestEditSource | ChatEditSource | IdeEditSource | UserEditSource | UnknownEditSource | ExternalEditSource;
+export type EditSource = InlineSuggestEditSource | IdeEditSource | UserEditSource | UnknownEditSource | ExternalEditSource;
 
 export class InlineSuggestEditSource extends EditSourceBase {
 	public readonly category = 'ai';
@@ -149,18 +143,6 @@ export class InlineSuggestEditSource extends EditSourceBase {
 	override toString() { return `${this.category}/${this.feature}/${this.kind}/${this.extensionId}/${this.type}`; }
 
 	public getColor(): string { return '#00ff0033'; }
-}
-
-class ChatEditSource extends EditSourceBase {
-	public readonly category = 'ai';
-	public readonly feature = 'chat';
-	constructor(
-		public readonly kind: 'sidebar' | 'inline',
-	) { super(); }
-
-	override toString() { return `${this.category}/${this.feature}/${this.kind}`; }
-
-	public getColor(): string { return '#00ff0066'; }
 }
 
 class IdeEditSource extends EditSourceBase {
@@ -208,15 +190,11 @@ export class CombineStreamedChanges<TEditData extends (EditKeySourceData | EditS
 	private readonly _runStore = this._register(new DisposableStore());
 	private _runQueue: Promise<void> = Promise.resolve();
 
-	private readonly _diffService: DiffService;
-
 	constructor(
 		private readonly _originalDoc: IDocumentWithAnnotatedEdits<TEditData>,
-		@IInstantiationService private readonly _instantiationService: IInstantiationService,
 	) {
 		super();
 
-		this._diffService = this._instantiationService.createInstance(DiffService);
 		this.value = this._value = observableValue(this, _originalDoc.value.get());
 		this._restart();
 
@@ -233,37 +211,13 @@ export class CombineStreamedChanges<TEditData extends (EditKeySourceData | EditS
 	private async _run(iterator: AsyncIterator<{ value: StringText; prevValue: StringText; change: { edit: AnnotatedStringEdit<TEditData> }[] }, any, any>) {
 		const reader = new AsyncReader(iterator);
 		while (true) {
-			let peeked = await reader.peek();
+			const peeked = await reader.peek();
 			if (peeked === AsyncReaderEndOfStream) {
 				return;
-			} else if (isChatEdit(peeked)) {
-				const first = peeked;
-
-				let last = first;
-				let chatEdit = AnnotatedStringEdit.empty as AnnotatedStringEdit<TEditData>;
-
-				do {
-					reader.readBufferedOrThrow();
-					last = peeked;
-					chatEdit = chatEdit.compose(AnnotatedStringEdit.compose(peeked.change.map(c => c.edit)));
-					const peekedOrUndefined = await reader.peekTimeout(1000);
-					if (!peekedOrUndefined) {
-						break;
-					}
-					peeked = peekedOrUndefined;
-				} while (peeked !== AsyncReaderEndOfStream && isChatEdit(peeked));
-
-				if (!chatEdit.isEmpty()) {
-					const data = chatEdit.replacements[0].data;
-					const diffEdit = await this._diffService.computeDiff(first.prevValue.value, last.value.value);
-					const edit = diffEdit.mapData(_e => data);
-					this._value.set(last.value, undefined, { edit });
-				}
-			} else {
-				reader.readBufferedOrThrow();
-				const e = AnnotatedStringEdit.compose(peeked.change.map(c => c.edit));
-				this._value.set(peeked.value, undefined, { edit: e });
 			}
+			reader.readBufferedOrThrow();
+			const e = AnnotatedStringEdit.compose(peeked.change.map(c => c.edit));
+			this._value.set(peeked.value, undefined, { edit: e });
 		}
 	}
 
@@ -271,27 +225,6 @@ export class CombineStreamedChanges<TEditData extends (EditKeySourceData | EditS
 		await this._originalDoc.waitForQueue();
 		await this._restart();
 	}
-}
-
-export class DiffService {
-	constructor(
-		@IEditorWorkerService private readonly _editorWorkerService: IEditorWorkerService,
-	) {
-	}
-
-	public async computeDiff(original: string, modified: string): Promise<StringEdit> {
-		const diffEdit = await this._editorWorkerService.computeStringEditFromDiff(original, modified, { maxComputationTimeMs: 500 }, 'advanced');
-		return diffEdit;
-	}
-}
-
-function isChatEdit(next: { value: StringText; change: { edit: AnnotatedStringEdit<EditKeySourceData | EditSourceData> }[] }) {
-	return next.change.every(c => c.edit.replacements.every(e => {
-		if (e.data.source.category === 'ai' && e.data.source.feature === 'chat') {
-			return true;
-		}
-		return false;
-	}));
 }
 
 export class MinimizeEditsProcessor<TEditData extends IEditData<TEditData>> extends Disposable implements IDocumentWithAnnotatedEdits<TEditData> {

@@ -294,7 +294,6 @@ export class InlineCompletionsSource extends Disposable {
 							showRange: comp.showRange,
 							warning: comp.warning,
 							hint: comp.hint,
-							supportsRename: comp.supportsRename,
 							correlationId: comp.correlationId,
 							jumpToPosition: comp.jumpToPosition,
 						};

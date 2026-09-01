@@ -456,11 +456,6 @@ class ViewsExtensionHandler implements IWorkbenchContribution {
 					return;
 				}
 
-				if (key === 'agentSessions') {
-					collector.warn(localize('RequiresChatSessionsProposedAPI', "View container '{0}' is not available to extensions.", key));
-					return;
-				}
-
 				const viewContainer = this.getViewContainer(key);
 				if (!viewContainer) {
 					collector.warn(localize('ViewContainerDoesnotExist', "View container '{0}' does not exist and all views registered to it will be added to 'Explorer'.", key));

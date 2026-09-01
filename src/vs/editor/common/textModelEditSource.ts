@@ -9,7 +9,7 @@ import { LineEdit } from './core/edits/lineEdit.js';
 import { BaseStringEdit } from './core/edits/stringEdit.js';
 import { StringText } from './core/text/abstractText.js';
 import { TextLength } from './core/text/textLength.js';
-import { ProviderId, VersionedExtensionId } from './languages.js';
+import { ProviderId } from './languages.js';
 
 const privateSymbol = Symbol('TextModelEditSource');
 
@@ -75,8 +75,6 @@ export function isAiEdit(source: TextModelEditSource): boolean {
 	switch (source.metadata.source) {
 		case 'inlineCompletionAccept':
 		case 'inlineCompletionPartialAccept':
-		case 'inlineChat.applyEdits':
-		case 'Chat.applyEdits':
 			return true;
 	}
 	return false;
@@ -100,31 +98,6 @@ export const EditSources = {
 
 	rename: (oldName: string | undefined, newName: string) => createEditSource({ source: 'rename', $$$oldName: oldName, $$$newName: newName } as const),
 
-	chatApplyEdits(data: {
-		modelId: string | undefined;
-		sessionId: string | undefined;
-		requestId: string | undefined;
-		languageId: string;
-		mode: string | undefined;
-		extensionId: VersionedExtensionId | undefined;
-		codeBlockSuggestionId: EditSuggestionId | undefined;
-	}) {
-		return createEditSource({
-			source: 'Chat.applyEdits',
-			$modelId: avoidPathRedaction(data.modelId),
-			$extensionId: data.extensionId?.extensionId,
-			$extensionVersion: data.extensionId?.version,
-			$$languageId: data.languageId,
-			$$sessionId: data.sessionId,
-			$$requestId: data.requestId,
-			$$mode: data.mode,
-			$$codeBlockSuggestionId: data.codeBlockSuggestionId,
-		} as const);
-	},
-
-	chatUndoEdits: () => createEditSource({ source: 'Chat.undoEdits' } as const),
-	chatReset: () => createEditSource({ source: 'Chat.reset' } as const),
-
 	inlineCompletionAccept(data: { nes: boolean; requestUuid: string; languageId: string; providerId?: ProviderId; correlationId: string | undefined }) {
 		return createEditSource({
 			source: 'inlineCompletionAccept',
@@ -144,18 +117,6 @@ export const EditSources = {
 			...toProperties(data.providerId),
 			$$correlationId: data.correlationId,
 			$$requestUuid: data.requestUuid,
-			$$languageId: data.languageId,
-		} as const);
-	},
-
-	inlineChatApplyEdit(data: { modelId: string | undefined; requestId: string | undefined; sessionId: string | undefined; languageId: string; extensionId: VersionedExtensionId | undefined }) {
-		return createEditSource({
-			source: 'inlineChat.applyEdits',
-			$modelId: avoidPathRedaction(data.modelId),
-			$extensionId: data.extensionId?.extensionId,
-			$extensionVersion: data.extensionId?.version,
-			$$sessionId: data.sessionId,
-			$$requestId: data.requestId,
 			$$languageId: data.languageId,
 		} as const);
 	},
@@ -194,14 +155,6 @@ type Values<T> = T[keyof T];
 export type ITextModelEditSourceMetadata = Values<{ [TKey in keyof typeof EditSources]: ReturnType<typeof EditSources[TKey]>['metadataT'] }>;
 type ITextModelEditSourceMetadataKeys = Values<{ [TKey in keyof typeof EditSources]: keyof ReturnType<typeof EditSources[TKey]>['metadataT'] }>;
 
-
-function avoidPathRedaction(str: string | undefined): string | undefined {
-	if (str === undefined) {
-		return undefined;
-	}
-	// To avoid false-positive file path redaction.
-	return str.replaceAll('/', '|');
-}
 
 
 export class EditDeltaInfo {

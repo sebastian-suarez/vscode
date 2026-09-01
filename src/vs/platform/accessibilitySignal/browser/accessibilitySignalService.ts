@@ -326,23 +326,14 @@ export class Sound {
 	public static readonly diffLineInserted = Sound.register({ fileName: 'diffLineInserted.mp3' });
 	public static readonly diffLineDeleted = Sound.register({ fileName: 'diffLineDeleted.mp3' });
 	public static readonly diffLineModified = Sound.register({ fileName: 'diffLineModified.mp3' });
-	public static readonly requestSent = Sound.register({ fileName: 'requestSent.mp3' });
-	public static readonly responseReceived1 = Sound.register({ fileName: 'responseReceived1.mp3' });
-	public static readonly responseReceived2 = Sound.register({ fileName: 'responseReceived2.mp3' });
-	public static readonly responseReceived3 = Sound.register({ fileName: 'responseReceived3.mp3' });
-	public static readonly responseReceived4 = Sound.register({ fileName: 'responseReceived4.mp3' });
 	public static readonly clear = Sound.register({ fileName: 'clear.mp3' });
 	public static readonly save = Sound.register({ fileName: 'save.mp3' });
 	public static readonly format = Sound.register({ fileName: 'format.mp3' });
-	public static readonly voiceRecordingStarted = Sound.register({ fileName: 'voiceRecordingStarted.mp3' });
-	public static readonly voiceRecordingStopped = Sound.register({ fileName: 'voiceRecordingStopped.mp3' });
 	public static readonly progress = Sound.register({ fileName: 'progress.mp3' });
-	public static readonly chatEditModifiedFile = Sound.register({ fileName: 'chatEditModifiedFile.mp3' });
 	public static readonly editsKept = Sound.register({ fileName: 'editsKept.mp3' });
 	public static readonly editsUndone = Sound.register({ fileName: 'editsUndone.mp3' });
 	public static readonly nextEditSuggestion = Sound.register({ fileName: 'nextEditSuggestion.mp3' });
 	public static readonly terminalCommandSucceeded = Sound.register({ fileName: 'terminalCommandSucceeded.mp3' });
-	public static readonly chatUserActionRequired = Sound.register({ fileName: 'chatUserActionRequired.mp3' });
 	public static readonly codeActionTriggered = Sound.register({ fileName: 'codeActionTriggered.mp3' });
 	public static readonly codeActionApplied = Sound.register({ fileName: 'codeActionApplied.mp3' });
 
@@ -580,36 +571,6 @@ export class AccessibilitySignal {
 		settingsKey: 'accessibility.signals.diffLineModified',
 	});
 
-	public static readonly chatEditModifiedFile = AccessibilitySignal.register({
-		name: localize('accessibilitySignals.chatEditModifiedFile', 'Chat Edit Modified File'),
-		sound: Sound.chatEditModifiedFile,
-		announcementMessage: localize('accessibility.signals.chatEditModifiedFile', 'File Modified from Chat Edits'),
-		settingsKey: 'accessibility.signals.chatEditModifiedFile',
-	});
-
-	public static readonly chatRequestSent = AccessibilitySignal.register({
-		name: localize('accessibilitySignals.chatRequestSent', 'Chat Request Sent'),
-		sound: Sound.requestSent,
-		legacySoundSettingsKey: 'audioCues.chatRequestSent',
-		legacyAnnouncementSettingsKey: 'accessibility.alert.chatRequestSent',
-		announcementMessage: localize('accessibility.signals.chatRequestSent', 'Chat Request Sent'),
-		settingsKey: 'accessibility.signals.chatRequestSent',
-	});
-
-	public static readonly chatResponseReceived = AccessibilitySignal.register({
-		name: localize('accessibilitySignals.chatResponseReceived', 'Chat Response Received'),
-		legacySoundSettingsKey: 'audioCues.chatResponseReceived',
-		sound: {
-			randomOneOf: [
-				Sound.responseReceived1,
-				Sound.responseReceived2,
-				Sound.responseReceived3,
-				Sound.responseReceived4
-			]
-		},
-		settingsKey: 'accessibility.signals.chatResponseReceived'
-	});
-
 	public static readonly codeActionTriggered = AccessibilitySignal.register({
 		name: localize('accessibilitySignals.codeActionRequestTriggered', 'Code Action Request Triggered'),
 		sound: Sound.codeActionTriggered,
@@ -630,7 +591,6 @@ export class AccessibilitySignal {
 	public static readonly progress = AccessibilitySignal.register({
 		name: localize('accessibilitySignals.progress', 'Progress'),
 		sound: Sound.progress,
-		legacySoundSettingsKey: 'audioCues.chatResponsePending',
 		legacyAnnouncementSettingsKey: 'accessibility.alert.progress',
 		announcementMessage: localize('accessibility.signals.progress', 'Progress'),
 		settingsKey: 'accessibility.signals.progress'
@@ -663,20 +623,6 @@ export class AccessibilitySignal {
 		settingsKey: 'accessibility.signals.format'
 	});
 
-	public static readonly voiceRecordingStarted = AccessibilitySignal.register({
-		name: localize('accessibilitySignals.voiceRecordingStarted', 'Voice Recording Started'),
-		sound: Sound.voiceRecordingStarted,
-		legacySoundSettingsKey: 'audioCues.voiceRecordingStarted',
-		settingsKey: 'accessibility.signals.voiceRecordingStarted'
-	});
-
-	public static readonly voiceRecordingStopped = AccessibilitySignal.register({
-		name: localize('accessibilitySignals.voiceRecordingStopped', 'Voice Recording Stopped'),
-		sound: Sound.voiceRecordingStopped,
-		legacySoundSettingsKey: 'audioCues.voiceRecordingStopped',
-		settingsKey: 'accessibility.signals.voiceRecordingStopped'
-	});
-
 	public static readonly editsKept = AccessibilitySignal.register({
 		name: localize('accessibilitySignals.editsKept', 'Edits Kept'),
 		sound: Sound.editsKept,
@@ -689,12 +635,5 @@ export class AccessibilitySignal {
 		sound: Sound.editsUndone,
 		announcementMessage: localize('accessibility.signals.editsUndone', 'Edits Undone'),
 		settingsKey: 'accessibility.signals.editsUndone',
-	});
-
-	public static readonly chatUserActionRequired = AccessibilitySignal.register({
-		name: localize('accessibilitySignals.chatUserActionRequired', 'Chat User Action Required'),
-		sound: Sound.chatUserActionRequired,
-		announcementMessage: localize('accessibility.signals.chatUserActionRequired', 'Chat User Action Required'),
-		settingsKey: 'accessibility.signals.chatUserActionRequired'
 	});
 }

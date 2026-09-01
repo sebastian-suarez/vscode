@@ -31,7 +31,6 @@ export interface IWorkbenchQuickAccessConfiguration {
 			readonly preserveInput: boolean;
 			readonly experimental: {
 				readonly suggestCommands: boolean;
-				readonly enableNaturalLanguageSearch: boolean;
 			};
 		};
 		readonly quickOpen: {

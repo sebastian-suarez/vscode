@@ -249,7 +249,6 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 	private _onDidChangeTaskProviders = this._register(new Emitter<void>());
 	public onDidChangeTaskProviders = this._onDidChangeTaskProviders.event;
 	private readonly _taskRunStartTimes = new Map<string, number>();
-	private readonly _taskRunSources = new Map<string, TaskRunSource>();
 
 	private _activatedTaskProviders: Set<string> = new Set();
 
@@ -404,7 +403,6 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 						this._handleLongRunningTaskCompletion(processEndedEvent, durationMs);
 					}
 					this._taskRunStartTimes.delete(e.taskId);
-					this._taskRunSources.delete(e.taskId);
 					break;
 				}
 				case TaskEventKind.Inactive: {
@@ -418,12 +416,10 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 						this._handleLongRunningTaskCompletion(processEndedEvent, durationMs);
 					}
 					this._taskRunStartTimes.delete(e.taskId);
-					this._taskRunSources.delete(e.taskId);
 					break;
 				}
 				case TaskEventKind.Terminated:
 					this._taskRunStartTimes.delete(e.taskId);
-					this._taskRunSources.delete(e.taskId);
 					break;
 			}
 			if (e.kind === TaskEventKind.Changed) {
@@ -501,11 +497,6 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 		// If threshold is 0, always show notifications (no minimum duration)
 		// Otherwise, only show if duration meets or exceeds the threshold
 		if (notificationThreshold === -1 || (notificationThreshold > 0 && durationMs < notificationThreshold)) {
-			return;
-		}
-
-		const taskRunSource = this._taskRunSources.get(event.taskId);
-		if (taskRunSource === TaskRunSource.ChatAgent) {
 			return;
 		}
 
@@ -2056,7 +2047,6 @@ export abstract class AbstractTaskService extends Disposable implements ITaskSer
 
 	private async _handleExecuteResult(executeResult: ITaskExecuteResult, runSource?: TaskRunSource): Promise<ITaskSummary> {
 		if (runSource && executeResult.task._id) {
-			this._taskRunSources.set(executeResult.task._id, runSource);
 		}
 
 		if (runSource === TaskRunSource.User) {

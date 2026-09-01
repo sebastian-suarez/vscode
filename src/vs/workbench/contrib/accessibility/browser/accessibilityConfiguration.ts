@@ -18,8 +18,6 @@ export const accessibleViewVerbosityEnabled = new RawContextKey<boolean>('access
 export const accessibleViewGoToSymbolSupported = new RawContextKey<boolean>('accessibleViewGoToSymbolSupported', false, true);
 export const accessibleViewOnLastLine = new RawContextKey<boolean>('accessibleViewOnLastLine', false, true);
 export const accessibleViewCurrentProviderId = new RawContextKey<string>('accessibleViewCurrentProviderId', undefined, undefined);
-export const accessibleViewInCodeBlock = new RawContextKey<boolean>('accessibleViewInCodeBlock', undefined, undefined);
-export const accessibleViewContainsCodeBlocks = new RawContextKey<boolean>('accessibleViewContainsCodeBlocks', undefined, undefined);
 export const accessibleViewHasUnassignedKeybindings = new RawContextKey<boolean>('accessibleViewHasUnassignedKeybindings', undefined, undefined);
 export const accessibleViewHasAssignedKeybindings = new RawContextKey<boolean>('accessibleViewHasAssignedKeybindings', undefined, undefined);
 
@@ -32,8 +30,6 @@ export const enum AccessibilityWorkbenchSettingId {
 	DimUnfocusedOpacity = 'accessibility.dimUnfocused.opacity',
 	HideAccessibleView = 'accessibility.hideAccessibleView',
 	AccessibleViewCloseOnKeyPress = 'accessibility.accessibleView.closeOnKeyPress',
-	VerboseChatProgressUpdates = 'accessibility.verboseChatProgressUpdates',
-	ShowChatCheckmarks = 'accessibility.chat.showCheckmarks'
 }
 
 export const enum ViewDimUnfocusedOpacityProperties {
@@ -46,10 +42,6 @@ export const enum AccessibilityVerbositySettingId {
 	Terminal = 'accessibility.verbosity.terminal',
 	DiffEditor = 'accessibility.verbosity.diffEditor',
 	MergeEditor = 'accessibility.verbosity.mergeEditor',
-	Chat = 'accessibility.verbosity.panelChat',
-	InlineChat = 'accessibility.verbosity.inlineChat',
-	TerminalInlineChat = 'accessibility.verbosity.terminalChat',
-	TerminalChatOutput = 'accessibility.verbosity.terminalChatOutput',
 	InlineCompletions = 'accessibility.verbosity.inlineCompletions',
 	KeybindingsEditor = 'accessibility.verbosity.keybindingsEditor',
 	Notebook = 'accessibility.verbosity.notebook',
@@ -64,9 +56,6 @@ export const enum AccessibilityVerbositySettingId {
 	Walkthrough = 'accessibility.verbosity.walkthrough',
 	SourceControl = 'accessibility.verbosity.sourceControl',
 	Find = 'accessibility.verbosity.find',
-	SessionsChat = 'accessibility.verbosity.sessionsChat',
-	ChatQuestionCarousel = 'accessibility.verbosity.chatQuestionCarousel',
-	Survey = 'accessibility.verbosity.survey'
 }
 
 const baseVerbosityProperty: IConfigurationPropertySchema = {
@@ -135,18 +124,6 @@ const configuration: IConfigurationNode = {
 			description: localize('verbosity.diffEditor.description', 'Provide information about how to navigate changes in the diff editor when it is focused.'),
 			...baseVerbosityProperty
 		},
-		[AccessibilityVerbositySettingId.Chat]: {
-			description: localize('verbosity.chat.description', 'Provide information about how to access the chat help menu when the chat input is focused.'),
-			...baseVerbosityProperty
-		},
-		[AccessibilityVerbositySettingId.InlineChat]: {
-			description: localize('verbosity.interactiveEditor.description', 'Provide information about how to access the inline editor chat accessibility help menu and alert with hints that describe how to use the feature when the input is focused.'),
-			...baseVerbosityProperty
-		},
-		[AccessibilityVerbositySettingId.TerminalChatOutput]: {
-			description: localize('verbosity.terminalChatOutput.description', 'Provide information about how to open the chat terminal output in the Accessible View.'),
-			...baseVerbosityProperty
-		},
 		[AccessibilityVerbositySettingId.InlineCompletions]: {
 			description: localize('verbosity.inlineCompletions.description', 'Provide information about how to access the inline completions hover and Accessible View.'),
 			...baseVerbosityProperty
@@ -202,18 +179,6 @@ const configuration: IConfigurationNode = {
 		},
 		[AccessibilityVerbositySettingId.Find]: {
 			description: localize('verbosity.find', 'Provide information about how to access the find accessibility help menu when the find input is focused.'),
-			...baseVerbosityProperty
-		},
-		[AccessibilityVerbositySettingId.SessionsChat]: {
-			description: localize('verbosity.sessionsChat', 'Provide information about how to access the Agents window accessibility help menu when the chat input is focused.'),
-			...baseVerbosityProperty
-		},
-		[AccessibilityVerbositySettingId.ChatQuestionCarousel]: {
-			description: localize('verbosity.chatQuestionCarousel', 'Provide information about how to navigate and interact with the chat question carousel, including how to focus the terminal when applicable.'),
-			...baseVerbosityProperty
-		},
-		[AccessibilityVerbositySettingId.Survey]: {
-			description: localize('verbosity.survey', 'Provide information about how to navigate and interact with the survey editor pane.'),
 			...baseVerbosityProperty
 		},
 		'accessibility.signalOptions.volume': {
@@ -544,16 +509,6 @@ const configuration: IConfigurationNode = {
 				}
 			}
 		},
-		'accessibility.signals.chatEditModifiedFile': {
-			...defaultNoAnnouncement,
-			'description': localize('accessibility.signals.chatEditModifiedFile', "Plays a sound / audio cue when revealing a file with changes from chat edits"),
-			'properties': {
-				'sound': {
-					'description': localize('accessibility.signals.chatEditModifiedFile.sound', "Plays a sound when revealing a file with changes from chat edits"),
-					...soundFeatureBase
-				}
-			}
-		},
 		'accessibility.signals.notebookCellCompleted': {
 			...signalFeatureBase,
 			'description': localize('accessibility.signals.notebookCellCompleted', "Plays a signal - sound (audio cue) and/or announcement (alert) - when a notebook cell execution is successfully completed."),
@@ -600,30 +555,6 @@ const configuration: IConfigurationNode = {
 				},
 			},
 		},
-		'accessibility.signals.chatRequestSent': {
-			...signalFeatureBase,
-			'description': localize('accessibility.signals.chatRequestSent', "Plays a signal - sound (audio cue) and/or announcement (alert) - when a chat request is made."),
-			'properties': {
-				'sound': {
-					'description': localize('accessibility.signals.chatRequestSent.sound', "Plays a sound when a chat request is made."),
-					...soundFeatureBase
-				},
-				'announcement': {
-					'description': localize('accessibility.signals.chatRequestSent.announcement', "Announces when a chat request is made."),
-					...announcementFeatureBase
-				},
-			}
-		},
-		'accessibility.signals.chatResponseReceived': {
-			...defaultNoAnnouncement,
-			'description': localize('accessibility.signals.chatResponseReceived', "Plays a sound / audio cue when the response has been received."),
-			'properties': {
-				'sound': {
-					'description': localize('accessibility.signals.chatResponseReceived.sound', "Plays a sound on when the response has been received."),
-					...soundFeatureBase
-				},
-			}
-		},
 		'accessibility.signals.codeActionTriggered': {
 			...defaultNoAnnouncement,
 			'description': localize('accessibility.signals.codeActionTriggered', "Plays a sound / audio cue - when a code action has been triggered."),
@@ -641,30 +572,6 @@ const configuration: IConfigurationNode = {
 				'sound': {
 					'description': localize('accessibility.signals.codeActionApplied.sound', "Plays a sound when the code action has been applied."),
 					...soundFeatureBase
-				},
-			}
-		},
-		'accessibility.signals.voiceRecordingStarted': {
-			...defaultNoAnnouncement,
-			'description': localize('accessibility.signals.voiceRecordingStarted', "Plays a sound / audio cue when the voice recording has started."),
-			'properties': {
-				'sound': {
-					'description': localize('accessibility.signals.voiceRecordingStarted.sound', "Plays a sound when the voice recording has started."),
-					...soundFeatureBase,
-				},
-			},
-			'default': {
-				'sound': 'on'
-			}
-		},
-		'accessibility.signals.voiceRecordingStopped': {
-			...defaultNoAnnouncement,
-			'description': localize('accessibility.signals.voiceRecordingStopped', "Plays a sound / audio cue when the voice recording has stopped."),
-			'properties': {
-				'sound': {
-					'description': localize('accessibility.signals.voiceRecordingStopped.sound', "Plays a sound when the voice recording has stopped."),
-					...soundFeatureBase,
-					default: 'off'
 				},
 			}
 		},
@@ -778,31 +685,6 @@ const configuration: IConfigurationNode = {
 				'announcement': 'never'
 			}
 		},
-		'accessibility.signals.chatUserActionRequired': {
-			...signalFeatureBase,
-			'markdownDescription': localize('accessibility.signals.chatUserActionRequired', "Plays a signal - sound (audio cue) and/or announcement (alert) - when user action is required in the chat."),
-			'properties': {
-				'sound': {
-					'description': localize('accessibility.signals.chatUserActionRequired.sound', "Plays a sound when user action is required in the chat."),
-					'type': 'string',
-					'enum': ['auto', 'on', 'off'],
-					'enumDescriptions': [
-						localize('sound.enabled.autoWindow', "Enable sound when a screen reader is attached."),
-						localize('sound.enabled.on', "Enable sound."),
-						localize('sound.enabled.off', "Disable sound.")
-					],
-				},
-				'announcement': {
-					'description': localize('accessibility.signals.chatUserActionRequired.announcement', "Announces when a user action is required in the chat - including information about the action and how to take it."),
-					...announcementFeatureBase
-				},
-			},
-			default: {
-				'sound': 'auto',
-				'announcement': 'auto'
-			},
-			tags: ['accessibility']
-		},
 		'accessibility.underlineLinks': {
 			'type': 'boolean',
 			'description': localize('accessibility.underlineLinks', "Controls whether links should be underlined in the workbench."),
@@ -829,16 +711,6 @@ const configuration: IConfigurationNode = {
 			'default': true,
 			'markdownDescription': localize('accessibility.windowTitleOptimized', "Controls whether the {0} should be optimized for screen readers when in screen reader mode. When enabled, the window title will have {1} appended to the end.", '`#window.title#`', '`activeEditorState`')
 		},
-		'accessibility.openChatEditedFiles': {
-			'type': 'boolean',
-			'default': false,
-			'markdownDescription': localize('accessibility.openChatEditedFiles', "Controls whether files should be opened when the chat agent has applied edits to them.")
-		},
-		'accessibility.verboseChatProgressUpdates': {
-			'type': 'boolean',
-			'default': true,
-			'markdownDescription': localize('accessibility.verboseChatProgressUpdates', "Controls whether verbose progress announcements should be made when a chat request is in progress, including information like searched text for <search term> with X results, created file <file_name>, or read file <file path>.")
-		}
 	}
 };
 
@@ -871,17 +743,6 @@ export function registerAccessibilityConfiguration() {
 				default: false,
 				tags: ['accessibility']
 			},
-			[AccessibilityWorkbenchSettingId.VerboseChatProgressUpdates]: {
-				'type': 'boolean',
-				'default': true,
-				'markdownDescription': localize('accessibility.verboseChatProgressUpdates', "Controls whether verbose progress announcements should be made when a chat request is in progress, including information like searched text for <search term> with X results, created file <file_name>, or read file <file path>.")
-			},
-			[AccessibilityWorkbenchSettingId.ShowChatCheckmarks]: {
-				'type': 'boolean',
-				'default': false,
-				'tags': ['accessibility'],
-				'markdownDescription': localize('accessibility.chat.showCheckmarks', "Controls whether checkmark icons are shown on completed tool calls and other collapsible items in chat responses.")
-			}
 		}
 	});
 }
@@ -972,17 +833,6 @@ function getVolumeFromConfig(accessor: (key: string) => any): string | undefined
 function getDebouncePositionChangesFromConfig(accessor: (key: string) => any): number | undefined {
 	return accessor('accessibility.signalOptions.debouncePositionChanges') || accessor('accessibility.signalOptions')?.debouncePositionChanges || accessor('accessibility.signals.debouncePositionChanges') || accessor('audioCues.debouncePositionChanges');
 }
-
-Registry.as<IConfigurationMigrationRegistry>(WorkbenchExtensions.ConfigurationMigration)
-	.registerConfigurationMigrations([{
-		key: 'accessibility.signals.chatResponsePending',
-		migrateFn: (value, accessor) => {
-			return [
-				['accessibility.signals.progress', { value }],
-				['accessibility.signals.chatResponsePending', { value: undefined }],
-			];
-		}
-	}]);
 
 Registry.as<IConfigurationMigrationRegistry>(WorkbenchExtensions.ConfigurationMigration)
 	.registerConfigurationMigrations(AccessibilitySignal.allAccessibilitySignals.map<ConfigurationMigration | undefined>(item => item.legacySoundSettingsKey ? ({

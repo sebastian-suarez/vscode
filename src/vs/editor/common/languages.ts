@@ -894,7 +894,6 @@ export interface InlineCompletion {
 
 	readonly hint?: IInlineCompletionHint;
 
-	readonly supportsRename?: boolean;
 
 	/**
 	 * Used for telemetry.
@@ -1148,7 +1147,6 @@ export interface CodeAction {
 	diagnostics?: IMarkerData[];
 	kind?: string;
 	isPreferred?: boolean;
-	isAI?: boolean;
 	disabled?: string;
 	ranges?: IRange[];
 }

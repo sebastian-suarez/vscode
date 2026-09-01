@@ -357,10 +357,6 @@ export abstract class BaseCellViewModel extends Disposable {
 		return this.model.getTextLength();
 	}
 
-	enableAutoLanguageDetection() {
-		this.model.enableAutoLanguageDetection();
-	}
-
 	private saveViewState(): void {
 		if (!this._textEditor) {
 			return;

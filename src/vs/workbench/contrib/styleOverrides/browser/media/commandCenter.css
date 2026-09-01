@@ -4,14 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 /*
- * Style-override module: "Agents Window Command Center".
+ * Style-override module: "Command Center".
  *
- * Mirrors the Agents window title-bar styling (see
- * src/vs/sessions/contrib/sessions/browser/media/sessionsTitleBarWidget.css and
- * src/vs/workbench/contrib/chat/browser/agentSessions/experiments/media/agenttitlebarstatuswidget.css):
- * the command center and agent-status input sit on a transparent background at
- * rest and only reveal the command-center active background/border on hover,
- * instead of carrying a solid fill the whole time.
+ * The command center sits on a transparent background at rest and only reveals
+ * the command-center active background/border on hover, instead of carrying a
+ * solid fill the whole time.
  *
  * All rules are gated behind the `.style-override-commandCenter` class, which
  * the StyleOverridesContribution toggles onto the workbench container(s) when

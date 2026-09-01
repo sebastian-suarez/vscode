@@ -7,13 +7,11 @@ import { onUnexpectedError } from '../../../../../base/common/errors.js';
 import { Disposable } from '../../../../../base/common/lifecycle.js';
 import { IObservable, runOnChange } from '../../../../../base/common/observable.js';
 import { AnnotatedStringEdit } from '../../../../../editor/common/core/edits/stringEdit.js';
-import { ITextModelEditSourceMetadata } from '../../../../../editor/common/textModelEditSource.js';
 import { IInstantiationService } from '../../../../../platform/instantiation/common/instantiation.js';
 import { EditSourceData, IDocumentWithAnnotatedEdits, createDocWithJustReason } from '../helpers/documentWithAnnotatedEdits.js';
 import type { ScmRepoAdapter } from './scmAdapter.js';
-import { forwardToChannelIf, isCopilotLikeExtension } from '../../../../../platform/dataChannel/browser/forwardingTelemetryService.js';
+import { forwardToChannelIf } from '../../../../../platform/dataChannel/browser/forwardingTelemetryService.js';
 import { ArcTelemetryReporter } from './arcTelemetryReporter.js';
-import { IRandomService } from '../randomService.js';
 
 export class EditTelemetryReportInlineEditArcSender extends Disposable {
 	constructor(
@@ -90,118 +88,8 @@ export class EditTelemetryReportInlineEditArcSender extends Disposable {
 					currentLineCount: res.currentLineCount,
 					currentDeletedLineCount: res.currentDeletedLineCount,
 
-					...forwardToChannelIf(isCopilotLikeExtension(data.$extensionId)),
-				});
-			}, () => {
-				this._store.delete(reporter);
-			}));
-		}));
-	}
-}
-
-export class EditTelemetryReportEditArcForChatOrInlineChatSender extends Disposable {
-	constructor(
-		docWithAnnotatedEdits: IDocumentWithAnnotatedEdits<EditSourceData>,
-		scmRepoBridge: IObservable<ScmRepoAdapter | undefined>,
-		@IInstantiationService private readonly _instantiationService: IInstantiationService,
-		@IRandomService private readonly _randomService: IRandomService,
-	) {
-		super();
-
-		this._register(runOnChange(docWithAnnotatedEdits.value, (_val, _prev, changes) => {
-			const edit = AnnotatedStringEdit.compose(changes.map(c => c.edit));
-
-			const supportedSource = new Set(['Chat.applyEdits', 'inlineChat.applyEdits'] as ITextModelEditSourceMetadata['source'][]);
-
-			if (!edit.replacements.some(r => supportedSource.has(r.data.editSource.metadata.source))) {
-				return;
-			}
-			if (!edit.replacements.every(r => supportedSource.has(r.data.editSource.metadata.source))) {
-				onUnexpectedError(new Error(`ArcTelemetrySender: Not all edits are ${edit.replacements[0].data.editSource.metadata.source}!`));
-				return;
-			}
-			const data = edit.replacements[0].data.editSource;
-
-			const uniqueEditId = this._randomService.generateUuid();
-
-			const docWithJustReason = createDocWithJustReason(docWithAnnotatedEdits, this._store);
-			const reporter = this._store.add(this._instantiationService.createInstance(ArcTelemetryReporter, [0, 60, 300].map(s => s * 1000), _prev, docWithJustReason, scmRepoBridge, edit, res => {
-				res.telemetryService.publicLog2<{
-					sourceKeyCleaned: string;
-					extensionId: string | undefined;
-					extensionVersion: string | undefined;
-					opportunityId: string | undefined;
-					editSessionId: string | undefined;
-					requestId: string | undefined;
-					modelId: string | undefined;
-					languageId: string | undefined;
-					mode: string | undefined;
-					uniqueEditId: string | undefined;
-
-					didBranchChange: number;
-					timeDelayMs: number;
-
-					originalCharCount: number;
-					originalLineCount: number;
-					originalDeletedLineCount: number;
-					arc: number;
-					currentLineCount: number;
-					currentDeletedLineCount: number;
-				}, {
-					owner: 'hediet';
-					comment: 'Reports the accepted and retained character count for an inline completion/edit. @sentToGitHub';
-
-					sourceKeyCleaned: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The key of the edit source.' };
-					extensionId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The extension id (copilot or copilot-chat); which provided this inline completion.' };
-					extensionVersion: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The version of the extension.' };
-					opportunityId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'Unique identifier for an opportunity to show an inline completion or NES.' };
-					editSessionId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The session id.' };
-					requestId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The request id.' };
-					modelId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The model id.' };
-					languageId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The language id of the document.' };
-					mode: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The mode chat was in.' };
-					uniqueEditId: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'The unique identifier for the edit.' };
-
-					didBranchChange: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; isMeasurement: true; comment: 'Indicates if the branch changed in the meantime. If the branch changed (value is 1); this event should probably be ignored.' };
-					timeDelayMs: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; isMeasurement: true; comment: 'The time delay between the user accepting the edit and measuring the survival rate.' };
-
-					originalCharCount: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; isMeasurement: true; comment: 'The original character count before any edits.' };
-					originalLineCount: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; isMeasurement: true; comment: 'The original line count before any edits.' };
-					originalDeletedLineCount: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; isMeasurement: true; comment: 'The original deleted line count before any edits.' };
-					arc: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; isMeasurement: true; comment: 'The accepted and restrained character count.' };
-					currentLineCount: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; isMeasurement: true; comment: 'The current line count after edits.' };
-					currentDeletedLineCount: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; isMeasurement: true; comment: 'The current deleted line count after edits.' };
-				}>('editTelemetry.reportEditArc', {
-					sourceKeyCleaned: data.toKey(Number.MAX_SAFE_INTEGER, {
-						$extensionId: false,
-						$extensionVersion: false,
-						$$requestUuid: false,
-						$$sessionId: false,
-						$$requestId: false,
-						$$languageId: false,
-						$modelId: false,
-					}),
-					extensionId: data.props.$extensionId,
-					extensionVersion: data.props.$extensionVersion,
-					opportunityId: data.props.$$requestUuid,
-					editSessionId: data.props.$$sessionId,
-					requestId: data.props.$$requestId,
-					modelId: data.props.$modelId,
-					languageId: data.props.$$languageId,
-					mode: data.props.$$mode,
-					uniqueEditId,
-
-					didBranchChange: res.didBranchChange ? 1 : 0,
-					timeDelayMs: res.timeDelayMs,
-
-					originalCharCount: res.originalCharCount,
-					originalLineCount: res.originalLineCount,
-					originalDeletedLineCount: res.originalDeletedLineCount,
-					arc: res.arc,
-					currentLineCount: res.currentLineCount,
-					currentDeletedLineCount: res.currentDeletedLineCount,
-
-					...forwardToChannelIf(isCopilotLikeExtension(data.props.$extensionId)),
+					// this event was only ever forwarded to the first-party AI extension, which no longer exists
+					...forwardToChannelIf(false),
 				});
 			}, () => {
 				this._store.delete(reporter);

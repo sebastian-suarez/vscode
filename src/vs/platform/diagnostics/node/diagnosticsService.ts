@@ -73,16 +73,7 @@ export async function collectWorkspaceStats(folder: string, filter: string[], op
 		{ tag: 'github-prompts-dir', filePattern: /\.prompt\.md$/i, relativePathPattern: /^\.github[\/\\]prompts$/i },
 		{ tag: 'clinerules', filePattern: /^\.clinerules$/i },
 		{ tag: 'clinerules-dir', filePattern: /\.md$/i, relativePathPattern: /^\.clinerules$/i },
-		{ tag: 'agent.md', filePattern: /^agent\.md$/i },
-		{ tag: 'claude.md', filePattern: /^claude\.md$/i },
-		{ tag: 'claude-settings', filePattern: /^settings\.json$/i, relativePathPattern: /^\.claude$/i },
-		{ tag: 'claude-settings-local', filePattern: /^settings\.local\.json$/i, relativePathPattern: /^\.claude$/i },
-		{ tag: 'claude-mcp', filePattern: /^mcp\.json$/i, relativePathPattern: /^\.claude$/i },
-		{ tag: 'claude-commands-dir', filePattern: /\.md$/i, relativePathPattern: /^\.claude[\/\\]commands$/i },
-		{ tag: 'claude-skills-dir', filePattern: /^SKILL\.md$/i, relativePathPattern: /^\.claude[\/\\]skills[\/\\]/i },
-		{ tag: 'claude-rules-dir', filePattern: /\.md$/i, relativePathPattern: /^\.claude[\/\\]rules$/i },
 		{ tag: 'gemini.md', filePattern: /^gemini\.md$/i },
-		{ tag: 'copilot-instructions.md', filePattern: /^copilot\-instructions\.md$/i, relativePathPattern: /^\.github$/i },
 	];
 
 	const fileTypes = new Map<string, number>();

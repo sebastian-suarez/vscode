@@ -17,8 +17,6 @@ import { IObservableDocument, ObservableWorkspace, StringEditWithReason } from '
 import { EditSourceTrackingImpl } from '../../browser/telemetry/editSourceTrackingImpl.js';
 import { ScmAdapter } from '../../browser/telemetry/scmAdapter.js';
 import { EditSources } from '../../../../../editor/common/textModelEditSource.js';
-import { DiffService } from '../../browser/helpers/documentWithAnnotatedEdits.js';
-import { computeStringDiff } from '../../../../../editor/common/services/editorWebWorker.js';
 import { runWithFakedTimers } from '../../../../../base/test/common/timeTravelScheduler.js';
 import { timeout } from '../../../../../base/common/async.js';
 import { ITelemetryService } from '../../../../../platform/telemetry/common/telemetry.js';
@@ -51,7 +49,6 @@ suite('Edit Telemetry', () => {
 				sentTelemetry.push(`${formatTime(Date.now())} ${eventName}: ${JSON.stringify(data)}`);
 			},
 		});
-		instantiationService.stubInstance(DiffService, { computeDiff: async (original, modified) => computeStringDiff(original, modified, { maxComputationTimeMs: 500 }, 'advanced') });
 		instantiationService.stubInstance(ScmAdapter, { getRepo: (uri, reader) => undefined, });
 		instantiationService.stubInstance(UriVisibilityProvider, { isVisible: (uri, reader) => true, });
 		instantiationService.stub(IRandomService, new DeterministicRandomService());
@@ -72,17 +69,14 @@ function fib(n) {
 
 		await timeout(10);
 
-		const chatEdit = EditSources.chatApplyEdits({
+		const completionEdit = EditSources.inlineCompletionAccept({
 			languageId: 'plaintext',
-			modelId: undefined,
-			codeBlockSuggestionId: undefined,
-			extensionId: undefined,
-			mode: undefined,
-			requestId: undefined,
-			sessionId: undefined,
+			nes: false,
+			requestUuid: 'request-uuid',
+			correlationId: undefined,
 		});
 
-		d1.applyEdit(StringEditWithReason.replace(d1.findRange('≪≫function fib(n) {'), '// Computes the nth fibonacci number\n', chatEdit));
+		d1.applyEdit(StringEditWithReason.replace(d1.findRange('≪≫function fib(n) {'), '// Computes the nth fibonacci number\n', completionEdit));
 
 		await timeout(5000);
 
@@ -93,7 +87,7 @@ function fib(n) {
 
 		await timeout(5000);
 
-		d1.applyEdit(StringEditWithReason.replace(d1.findRange('Computes the nth fibonacci number'), 'Berechnet die nte Fibonacci Zahl', chatEdit));
+		d1.applyEdit(StringEditWithReason.replace(d1.findRange('Computes the nth fibonacci number'), 'Berechnet die nte Fibonacci Zahl', completionEdit));
 
 		await timeout(3 * 60 * 1000);
 		userActive.set(false, undefined);
@@ -102,18 +96,24 @@ function fib(n) {
 		await timeout(18 * 60 * 1000);
 
 		assert.deepStrictEqual(sentTelemetry, ([
-			'00:01:010 editTelemetry.reportEditArc: {\"sourceKeyCleaned\":\"source:Chat.applyEdits\",\"languageId\":\"plaintext\",\"uniqueEditId\":\"8c97b7d8-9adb-4bd8-ac9f-a562704ce40e\",\"didBranchChange\":0,\"timeDelayMs\":0,\"originalCharCount\":37,\"originalLineCount\":1,\"originalDeletedLineCount\":0,\"arc\":37,\"currentLineCount\":1,\"currentDeletedLineCount\":0}',
-			'00:11:010 editTelemetry.reportEditArc: {\"sourceKeyCleaned\":\"source:Chat.applyEdits\",\"languageId\":\"plaintext\",\"uniqueEditId\":\"f645627a-cacf-477a-9164-ecd6125616a5\",\"didBranchChange\":0,\"timeDelayMs\":0,\"originalCharCount\":19,\"originalLineCount\":1,\"originalDeletedLineCount\":1,\"arc\":19,\"currentLineCount\":1,\"currentDeletedLineCount\":1}',
-			'01:01:010 editTelemetry.reportEditArc: {\"sourceKeyCleaned\":\"source:Chat.applyEdits\",\"languageId\":\"plaintext\",\"uniqueEditId\":\"8c97b7d8-9adb-4bd8-ac9f-a562704ce40e\",\"didBranchChange\":0,\"timeDelayMs\":60000,\"originalCharCount\":37,\"originalLineCount\":1,\"originalDeletedLineCount\":0,\"arc\":16,\"currentLineCount\":1,\"currentDeletedLineCount\":0}',
-			'01:11:010 editTelemetry.reportEditArc: {\"sourceKeyCleaned\":\"source:Chat.applyEdits\",\"languageId\":\"plaintext\",\"uniqueEditId\":\"f645627a-cacf-477a-9164-ecd6125616a5\",\"didBranchChange\":0,\"timeDelayMs\":60000,\"originalCharCount\":19,\"originalLineCount\":1,\"originalDeletedLineCount\":1,\"arc\":19,\"currentLineCount\":1,\"currentDeletedLineCount\":1}',
-			'05:01:010 editTelemetry.reportEditArc: {\"sourceKeyCleaned\":\"source:Chat.applyEdits\",\"languageId\":\"plaintext\",\"uniqueEditId\":\"8c97b7d8-9adb-4bd8-ac9f-a562704ce40e\",\"didBranchChange\":0,\"timeDelayMs\":300000,\"originalCharCount\":37,\"originalLineCount\":1,\"originalDeletedLineCount\":0,\"arc\":16,\"currentLineCount\":1,\"currentDeletedLineCount\":0}',
-			'05:11:010 editTelemetry.reportEditArc: {\"sourceKeyCleaned\":\"source:Chat.applyEdits\",\"languageId\":\"plaintext\",\"uniqueEditId\":\"f645627a-cacf-477a-9164-ecd6125616a5\",\"didBranchChange\":0,\"timeDelayMs\":300000,\"originalCharCount\":19,\"originalLineCount\":1,\"originalDeletedLineCount\":1,\"arc\":19,\"currentLineCount\":1,\"currentDeletedLineCount\":1}',
-			'12:00:000 editTelemetry.editSources.details: {\"mode\":\"10minFocusWindow\",\"sourceKey\":\"source:Chat.applyEdits\",\"sourceKeyCleaned\":\"source:Chat.applyEdits\",\"trigger\":\"time\",\"languageId\":\"plaintext\",\"statsUuid\":\"055ed5f5-c723-4ede-ba79-cccd7685c7ad\",\"modifiedCount\":35,\"deltaModifiedCount\":56,\"totalModifiedCount\":39}',
-			'12:00:000 editTelemetry.editSources.details: {\"mode\":\"10minFocusWindow\",\"sourceKey\":\"source:cursor-kind:type\",\"sourceKeyCleaned\":\"source:cursor-kind:type\",\"trigger\":\"time\",\"languageId\":\"plaintext\",\"statsUuid\":\"055ed5f5-c723-4ede-ba79-cccd7685c7ad\",\"modifiedCount\":4,\"deltaModifiedCount\":4,\"totalModifiedCount\":39}',
-			'12:00:000 editTelemetry.editSources.stats: {\"mode\":\"10minFocusWindow\",\"languageId\":\"plaintext\",\"statsUuid\":\"055ed5f5-c723-4ede-ba79-cccd7685c7ad\",\"nesModifiedCount\":0,\"inlineCompletionsCopilotModifiedCount\":0,\"inlineCompletionsNESModifiedCount\":0,\"otherAIModifiedCount\":35,\"unknownModifiedCount\":0,\"userModifiedCount\":4,\"ideModifiedCount\":0,\"totalModifiedCharacters\":39,\"externalModifiedCount\":0,\"isTrackedByGit\":0,\"focusTime\":600000,\"actualTime\":720000,\"trigger\":\"time\"}',
-			'22:00:000 editTelemetry.editSources.details: {\"mode\":\"20minFocusWindow\",\"sourceKey\":\"source:Chat.applyEdits\",\"sourceKeyCleaned\":\"source:Chat.applyEdits\",\"trigger\":\"time\",\"languageId\":\"plaintext\",\"statsUuid\":\"1eb8a394-2489-41c2-851b-6a79432fc6bc\",\"modifiedCount\":35,\"deltaModifiedCount\":56,\"totalModifiedCount\":39}',
-			'22:00:000 editTelemetry.editSources.details: {\"mode\":\"20minFocusWindow\",\"sourceKey\":\"source:cursor-kind:type\",\"sourceKeyCleaned\":\"source:cursor-kind:type\",\"trigger\":\"time\",\"languageId\":\"plaintext\",\"statsUuid\":\"1eb8a394-2489-41c2-851b-6a79432fc6bc\",\"modifiedCount\":4,\"deltaModifiedCount\":4,\"totalModifiedCount\":39}',
-			'22:00:000 editTelemetry.editSources.stats: {\"mode\":\"20minFocusWindow\",\"languageId\":\"plaintext\",\"statsUuid\":\"1eb8a394-2489-41c2-851b-6a79432fc6bc\",\"nesModifiedCount\":0,\"inlineCompletionsCopilotModifiedCount\":0,\"inlineCompletionsNESModifiedCount\":0,\"otherAIModifiedCount\":35,\"unknownModifiedCount\":0,\"userModifiedCount\":4,\"ideModifiedCount\":0,\"totalModifiedCharacters\":39,\"externalModifiedCount\":0,\"isTrackedByGit\":0,\"focusTime\":1200000,\"actualTime\":1320000,\"trigger\":\"time\"}'
+			'00:00:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":0,\"originalCharCount\":37,\"originalLineCount\":1,\"originalDeletedLineCount\":0,\"arc\":37,\"currentLineCount\":1,\"currentDeletedLineCount\":0}',
+			'00:10:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":0,\"originalCharCount\":32,\"originalLineCount\":1,\"originalDeletedLineCount\":1,\"arc\":32,\"currentLineCount\":1,\"currentDeletedLineCount\":1}',
+			'00:30:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":30000,\"originalCharCount\":37,\"originalLineCount\":1,\"originalDeletedLineCount\":0,\"arc\":3,\"currentLineCount\":1,\"currentDeletedLineCount\":0}',
+			'00:40:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":30000,\"originalCharCount\":32,\"originalLineCount\":1,\"originalDeletedLineCount\":1,\"arc\":32,\"currentLineCount\":1,\"currentDeletedLineCount\":1}',
+			'02:00:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":120000,\"originalCharCount\":37,\"originalLineCount\":1,\"originalDeletedLineCount\":0,\"arc\":3,\"currentLineCount\":1,\"currentDeletedLineCount\":0}',
+			'02:10:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":120000,\"originalCharCount\":32,\"originalLineCount\":1,\"originalDeletedLineCount\":1,\"arc\":32,\"currentLineCount\":1,\"currentDeletedLineCount\":1}',
+			'05:00:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":300000,\"originalCharCount\":37,\"originalLineCount\":1,\"originalDeletedLineCount\":0,\"arc\":3,\"currentLineCount\":1,\"currentDeletedLineCount\":0}',
+			'05:10:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":300000,\"originalCharCount\":32,\"originalLineCount\":1,\"originalDeletedLineCount\":1,\"arc\":32,\"currentLineCount\":1,\"currentDeletedLineCount\":1}',
+			'10:00:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":600000,\"originalCharCount\":37,\"originalLineCount\":1,\"originalDeletedLineCount\":0,\"arc\":3,\"currentLineCount\":1,\"currentDeletedLineCount\":0}',
+			'10:10:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":600000,\"originalCharCount\":32,\"originalLineCount\":1,\"originalDeletedLineCount\":1,\"arc\":32,\"currentLineCount\":1,\"currentDeletedLineCount\":1}',
+			'12:00:000 editTelemetry.editSources.details: {\"mode\":\"10minFocusWindow\",\"sourceKey\":\"source:inlineCompletionAccept-$nes:false\",\"sourceKeyCleaned\":\"source:inlineCompletionAccept-$nes:false\",\"trigger\":\"time\",\"languageId\":\"plaintext\",\"statsUuid\":\"8c97b7d8-9adb-4bd8-ac9f-a562704ce40e\",\"modifiedCount\":35,\"deltaModifiedCount\":69,\"totalModifiedCount\":39}',
+			'12:00:000 editTelemetry.editSources.details: {\"mode\":\"10minFocusWindow\",\"sourceKey\":\"source:cursor-kind:type\",\"sourceKeyCleaned\":\"source:cursor-kind:type\",\"trigger\":\"time\",\"languageId\":\"plaintext\",\"statsUuid\":\"8c97b7d8-9adb-4bd8-ac9f-a562704ce40e\",\"modifiedCount\":4,\"deltaModifiedCount\":4,\"totalModifiedCount\":39}',
+			'12:00:000 editTelemetry.editSources.stats: {\"mode\":\"10minFocusWindow\",\"languageId\":\"plaintext\",\"statsUuid\":\"8c97b7d8-9adb-4bd8-ac9f-a562704ce40e\",\"nesModifiedCount\":0,\"inlineCompletionsCopilotModifiedCount\":0,\"inlineCompletionsNESModifiedCount\":0,\"otherAIModifiedCount\":0,\"unknownModifiedCount\":0,\"userModifiedCount\":4,\"ideModifiedCount\":0,\"totalModifiedCharacters\":39,\"externalModifiedCount\":0,\"isTrackedByGit\":0,\"focusTime\":600000,\"actualTime\":720000,\"trigger\":\"time\"}',
+			'15:00:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":900000,\"originalCharCount\":37,\"originalLineCount\":1,\"originalDeletedLineCount\":0,\"arc\":3,\"currentLineCount\":1,\"currentDeletedLineCount\":0}',
+			'15:10:010 editTelemetry.reportInlineEditArc: {\"extensionId\":\"\",\"extensionVersion\":\"\",\"opportunityId\":\"request-uuid\",\"languageId\":\"plaintext\",\"didBranchChange\":0,\"timeDelayMs\":900000,\"originalCharCount\":32,\"originalLineCount\":1,\"originalDeletedLineCount\":1,\"arc\":32,\"currentLineCount\":1,\"currentDeletedLineCount\":1}',
+			'22:00:000 editTelemetry.editSources.details: {\"mode\":\"20minFocusWindow\",\"sourceKey\":\"source:inlineCompletionAccept-$nes:false\",\"sourceKeyCleaned\":\"source:inlineCompletionAccept-$nes:false\",\"trigger\":\"time\",\"languageId\":\"plaintext\",\"statsUuid\":\"f645627a-cacf-477a-9164-ecd6125616a5\",\"modifiedCount\":35,\"deltaModifiedCount\":69,\"totalModifiedCount\":39}',
+			'22:00:000 editTelemetry.editSources.details: {\"mode\":\"20minFocusWindow\",\"sourceKey\":\"source:cursor-kind:type\",\"sourceKeyCleaned\":\"source:cursor-kind:type\",\"trigger\":\"time\",\"languageId\":\"plaintext\",\"statsUuid\":\"f645627a-cacf-477a-9164-ecd6125616a5\",\"modifiedCount\":4,\"deltaModifiedCount\":4,\"totalModifiedCount\":39}',
+			'22:00:000 editTelemetry.editSources.stats: {\"mode\":\"20minFocusWindow\",\"languageId\":\"plaintext\",\"statsUuid\":\"f645627a-cacf-477a-9164-ecd6125616a5\",\"nesModifiedCount\":0,\"inlineCompletionsCopilotModifiedCount\":0,\"inlineCompletionsNESModifiedCount\":0,\"otherAIModifiedCount\":0,\"unknownModifiedCount\":0,\"userModifiedCount\":4,\"ideModifiedCount\":0,\"totalModifiedCharacters\":39,\"externalModifiedCount\":0,\"isTrackedByGit\":0,\"focusTime\":1200000,\"actualTime\":1320000,\"trigger\":\"time\"}'
 		]));
 
 		disposables.dispose();
