@@ -276,7 +276,17 @@ export function getTitleBarStyle(configurationService: IConfigurationService): T
 		}
 	}
 
-	return TitlebarStyle.CUSTOM; // default to custom on all OS
+	// The macOS design ships without a title bar of its own, so `window.titleBarStyle`
+	// defaults to `native` there (see `desktop.contribution.ts`). That default is registered
+	// by the workbench and is therefore invisible to the main process, which resolves this
+	// helper against a registry that never saw it: on a profile without the setting written
+	// out, main would fall back to `custom` and act on a title bar the product does not have
+	// (sheet offsets, window controls overlay). The fallback has to agree with the default.
+	if (isMacintosh) {
+		return TitlebarStyle.NATIVE;
+	}
+
+	return TitlebarStyle.CUSTOM; // default to custom on Windows and Linux
 }
 
 export function getWindowControlsStyle(configurationService: IConfigurationService): WindowControlsStyle {
