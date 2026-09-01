@@ -1057,7 +1057,6 @@ export const NotebookSetting = {
 	notebookVariablesView: 'notebook.variablesView',
 	notebookInlineValues: 'notebook.inlineValues',
 	InteractiveWindowPromptToSave: 'interactiveWindow.promptToSaveOnClose',
-	cellFailureDiagnostics: 'notebook.cellFailureDiagnostics',
 	outputBackupSizeLimit: 'notebook.backup.sizeLimit',
 	multiCursor: 'notebook.multiCursor.enabled',
 	markupFontFamily: 'notebook.markup.fontFamily',

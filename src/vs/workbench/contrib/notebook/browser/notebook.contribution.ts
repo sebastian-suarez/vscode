@@ -96,7 +96,6 @@ import './contrib/debug/notebookCellPausing.js';
 import './contrib/debug/notebookDebugDecorations.js';
 import './contrib/execute/executionEditorProgress.js';
 import './contrib/kernelDetection/notebookKernelDetection.js';
-import './contrib/cellDiagnostics/cellDiagnostics.js';
 import './contrib/multicursor/notebookMulticursor.js';
 import './contrib/multicursor/notebookSelectionHighlight.js';
 import './contrib/notebookVariables/notebookInlineVariables.js';
@@ -1287,11 +1286,6 @@ configurationRegistry.registerConfiguration({
 				nls.localize('notebook.inlineValues.off', "Never show inline values."),
 			],
 			default: 'off'
-		},
-		[NotebookSetting.cellFailureDiagnostics]: {
-			markdownDescription: nls.localize('notebook.cellFailureDiagnostics', "Show available diagnostics for cell failures."),
-			type: 'boolean',
-			default: true
 		},
 		[NotebookSetting.outputBackupSizeLimit]: {
 			markdownDescription: nls.localize('notebook.backup.sizeLimit', "The limit of notebook output size in kilobytes (KB) where notebook files will no longer be backed up for hot reload. Use 0 for unlimited."),
