@@ -470,6 +470,17 @@ body {
  * bar: it applies wherever the window is a native macOS one. The auxiliary bar keeps the
  * stock look on purpose. */
 
+/* The part is the only painter of the side bar material, and the rows sit on the coat it has
+ * already laid down. Every list would otherwise lay a second one: the view panes hand their
+ * lists the side bar color as the list background, and the per-list style element paints the
+ * rows container with it, which composites the tree body darker than the surfaces around it.
+ * This rule outweighs that generated one — six classes against three — so it needs no
+ * `!important`, and the drop feedback, which carries one, still wins over both. The row fills —
+ * focus, selection, hover — paint on the rows themselves and are left alone. */
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-list-rows {
+	background: transparent;
+}
+
 /* Sticky (parent folder) headers paint on the bare translucent side bar, so the rows
  * scrolling underneath them have to be clipped away rather than covered up — a translucent
  * header would let them ghost through. `--tree-sticky-scroll-clip` is the bottom edge of the

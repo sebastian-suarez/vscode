@@ -696,14 +696,16 @@ export const TITLE_BAR_BORDER = registerColor('titleBar.border', {
 const MAC_TRANSLUCENT_SURFACE_ALPHA = 0.3;
 
 /**
- * The workbench surfaces that reveal the macOS under-window vibrancy. The color theme
- * resolves them through `translucentSurfaceOnMac`, so that every consumer sees the same
- * translucent value: colors defaulting to one of them, the generated CSS variables and
- * the parts painting their container.
+ * The workbench surfaces that reveal the macOS under-window vibrancy. Each of them is painted
+ * by a part, and by that part alone: the material goes on in a single coat, over the whole
+ * part, so that every region of it reads the same. Anything sitting inside a part paints no
+ * material of its own — a second coat of the same color composites darker than its neighbours
+ * and turns the part into a patchwork. The color theme resolves these through
+ * `translucentSurfaceOnMac`, so that every consumer sees the same translucent value: colors
+ * defaulting to one of them, the generated CSS variables and the parts painting their container.
  */
 export const MAC_TRANSLUCENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_BACKGROUND,
-	SIDE_BAR_TITLE_BACKGROUND,
 	ACTIVITY_BAR_BACKGROUND,
 	ACTIVITY_BAR_TOP_BACKGROUND,
 	TITLE_BAR_ACTIVE_BACKGROUND,
@@ -727,15 +729,18 @@ export function translucentSurfaceOnMac(color: Color): Color {
 const MAC_TRANSPARENT_SURFACE_ALPHA = 0;
 
 /**
- * The surfaces that sit on top of a translucent one and must not paint at all, so that the
- * translucency below them — and the vibrancy below that — stays unbroken. Section headers
- * are such a surface: they are captions over the side bar rather than bands across it. So is
- * the sticky scroll stack: its rows stand in for the rows they pin, so they have to read as
- * those same rows on the bare side bar, and what tells the stack apart is the hairline along
- * its bottom edge and the fade it comes and goes with — not a fill of its own. So is the
- * sticky scroll shadow, which would draw a smudge over the translucency instead of depth.
+ * The surfaces that sit inside a translucent part and must not paint at all, so that the one
+ * coat of material below them — and the vibrancy below that — stays unbroken. They are labels
+ * over the material, not coats of it. The side bar title is such a surface: the caption names
+ * the view showing underneath it rather than banding across the side bar. So are section
+ * headers. So is the sticky scroll stack: its rows stand in for the rows they pin, so they have
+ * to read as those same rows on the bare side bar, and what tells the stack apart is the
+ * hairline along its bottom edge and the fade it comes and goes with — not a fill of its own.
+ * So is the sticky scroll shadow, which would draw a smudge over the translucency instead of
+ * depth.
  */
 export const MAC_TRANSPARENT_SURFACES = new Set<ColorIdentifier>([
+	SIDE_BAR_TITLE_BACKGROUND,
 	SIDE_BAR_SECTION_HEADER_BACKGROUND,
 	SIDE_BAR_STICKY_SCROLL_BACKGROUND,
 	SIDE_BAR_STICKY_SCROLL_SHADOW
