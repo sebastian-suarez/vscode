@@ -234,7 +234,6 @@
 				"Run Dev"
 			],
 			"dependsOrder": "sequence",
-			"inAgents": true,
 			"problemMatcher": []
 		},
 		{
@@ -366,8 +365,7 @@
 			"windows": {
 				"command": ".\\scripts\\code.bat"
 			},
-			"problemMatcher": [],
-			"inAgents": true
+			"problemMatcher": []
 		},
 		{
 			"type": "npm",
@@ -398,15 +396,13 @@
 					"beginsPattern": "Starting compilation\\.\\.\\.",
 					"endsPattern": "Finished compilation with"
 				}
-			},
-			"inAgents": true
+			}
 		},
 		{
 			"label": "Component Explorer Server",
 			"type": "shell",
 			"command": "npx component-explorer serve -p ./test/componentFixtures/component-explorer.json -vv --kill-if-running",
 			"isBackground": true,
-			"inAgents": true,
 			"problemMatcher": {
 				"owner": "component-explorer",
 				"fileLocation": "absolute",
@@ -430,7 +426,6 @@
 			"windows": {
 				"command": "cmd /c \"npm install && npm run watch-transpile\""
 			},
-			"inAgents": true,
 			"runOptions": {
 				"runOn": "worktreeCreated"
 			},

@@ -42,7 +42,6 @@ export interface ICustomizationProperties {
 	isBackground?: boolean;
 	color?: string;
 	icon?: string;
-	inAgents?: boolean;
 }
 
 export interface ITaskFilter {

@@ -20,8 +20,6 @@ export type PolicyValue = string | number | boolean;
 
 export enum PolicyCategory {
 	Extensions = 'Extensions',
-	IntegratedTerminal = 'IntegratedTerminal',
-	InteractiveSession = 'InteractiveSession',
 	Telemetry = 'Telemetry',
 	Update = 'Update',
 }
@@ -32,16 +30,6 @@ export const PolicyCategoryData: {
 	[PolicyCategory.Extensions]: {
 		name: {
 			key: 'extensionsConfigurationTitle', value: localize('extensionsConfigurationTitle', "Extensions"),
-		}
-	},
-	[PolicyCategory.IntegratedTerminal]: {
-		name: {
-			key: 'terminalIntegratedConfigurationTitle', value: localize('terminalIntegratedConfigurationTitle', "Integrated Terminal"),
-		}
-	},
-	[PolicyCategory.InteractiveSession]: {
-		name: {
-			key: 'interactiveSessionConfigurationTitle', value: localize('interactiveSessionConfigurationTitle', "Chat"),
 		}
 	},
 	[PolicyCategory.Telemetry]: {

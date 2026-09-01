@@ -56,12 +56,6 @@ const hide: IJSONSchema = {
 	default: true
 };
 
-const inAgents: IJSONSchema = {
-	type: 'boolean',
-	description: nls.localize('JsonSchema.inAgents', 'Show this task in the Agents run action dropdown'),
-	default: false
-};
-
 const taskIdentifier: IJSONSchema = {
 	type: 'object',
 	additionalProperties: true,
@@ -443,7 +437,6 @@ const taskConfiguration: IJSONSchema = {
 		presentation: Objects.deepClone(presentation),
 		icon: Objects.deepClone(icon),
 		hide: Objects.deepClone(hide),
-		inAgents: Objects.deepClone(inAgents),
 		options: options,
 		problemMatcher: {
 			$ref: '#/definitions/problemMatcherType',
@@ -517,7 +510,6 @@ taskDescriptionProperties.args = Objects.deepClone(args);
 taskDescriptionProperties.isShellCommand = Objects.deepClone(shellCommand);
 taskDescriptionProperties.dependsOn = dependsOn;
 taskDescriptionProperties.hide = Objects.deepClone(hide);
-taskDescriptionProperties.inAgents = Objects.deepClone(inAgents);
 taskDescriptionProperties.dependsOrder = dependsOrder;
 taskDescriptionProperties.identifier = Objects.deepClone(identifier);
 taskDescriptionProperties.type = Objects.deepClone(taskType);
