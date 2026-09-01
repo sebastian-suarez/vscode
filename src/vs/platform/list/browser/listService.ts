@@ -17,6 +17,7 @@ import { CompressibleObjectTree, ICompressibleObjectTreeOptions, ICompressibleOb
 import { IAsyncDataSource, IDataSource, ITreeEvent, ITreeRenderer } from '../../../base/browser/ui/tree/tree.js';
 import { Emitter, Event } from '../../../base/common/event.js';
 import { combinedDisposable, Disposable, DisposableStore, dispose, IDisposable, toDisposable } from '../../../base/common/lifecycle.js';
+import { isMacintosh, isNative } from '../../../base/common/platform.js';
 import { localize } from '../../../nls.js';
 import { IConfigurationService } from '../../configuration/common/configuration.js';
 import { Extensions as ConfigurationExtensions, IConfigurationRegistry } from '../../configuration/common/configurationRegistry.js';
@@ -1416,7 +1417,8 @@ configurationRegistry.registerConfiguration({
 		},
 		[treeIndentKey]: {
 			type: 'number',
-			default: 8,
+			// The macOS source list draws the guides permanently and needs the room for them.
+			default: isMacintosh && isNative ? 16 : 8,
 			minimum: 4,
 			maximum: 40,
 			description: localize('tree indent setting', "Controls tree indentation in pixels.")
@@ -1424,7 +1426,7 @@ configurationRegistry.registerConfiguration({
 		[treeRenderIndentGuidesKey]: {
 			type: 'string',
 			enum: ['none', 'onHover', 'always'],
-			default: 'onHover',
+			default: isMacintosh && isNative ? 'always' : 'onHover',
 			description: localize('render tree indent guides', "Controls whether the tree should render indent guides.")
 		},
 		[listSmoothScrolling]: {

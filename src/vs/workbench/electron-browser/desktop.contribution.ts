@@ -242,7 +242,9 @@ import product from '../../platform/product/common/product.js';
 			'window.titleBarStyle': {
 				'type': 'string',
 				'enum': ['native', 'custom'],
-				'default': 'custom',
+				// The macOS design hosts the window controls inside the workbench rather than
+				// in a title bar of its own, so the product ships without one.
+				'default': isMacintosh ? 'native' : 'custom',
 				'scope': ConfigurationScope.APPLICATION,
 				'description': localize('titleBarStyle', "Adjust the appearance of the window title bar to be native by the OS or custom. Changes require a full restart to apply."),
 			},
@@ -262,7 +264,9 @@ import product from '../../platform/product/common/product.js';
 					localize(`window.customTitleBarVisibility.windowed`, "Hide custom titlebar in full screen. When not in full screen, automatically change custom title bar visibility."),
 					localize(`window.customTitleBarVisibility.never`, "Hide custom titlebar when {0} is set to `native`.", '`#window.titleBarStyle#`'),
 				],
-				'default': 'auto',
+				// Never on macOS: with a native title bar the custom one is what the inline
+				// title bar layout replaces, and the setting is what gates it.
+				'default': isMacintosh ? 'never' : 'auto',
 				'scope': ConfigurationScope.APPLICATION,
 				'markdownDescription': localize('window.customTitleBarVisibility', "Adjust when the custom title bar should be shown. The custom title bar can be hidden when in full screen mode with `windowed`. The custom title bar can only be hidden in non full screen mode with `never` when {0} is set to `native`.", '`#window.titleBarStyle#`'),
 			},
