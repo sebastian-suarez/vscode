@@ -3883,8 +3883,13 @@ export interface InternalEditorRenderLineNumbersOptions {
 class EditorRenderLineNumbersOption extends BaseEditorOption<EditorOption.lineNumbers, LineNumbersType, InternalEditorRenderLineNumbersOptions> {
 
 	constructor() {
+		// The macOS design counts the gutter in lines from the cursor. Relative already draws
+		// the absolute number on the cursor line, which is the hybrid gutter the design asks
+		// for. The setting is shared with the web, so only the native macOS build moves.
+		const relativeByDefault = platform.isMacintosh && platform.isNative;
 		super(
-			EditorOption.lineNumbers, 'lineNumbers', { renderType: RenderLineNumbersType.On, renderFn: null },
+			EditorOption.lineNumbers, 'lineNumbers',
+			{ renderType: relativeByDefault ? RenderLineNumbersType.Relative : RenderLineNumbersType.On, renderFn: null },
 			{
 				type: 'string',
 				enum: ['off', 'on', 'relative', 'interval'],
@@ -3894,7 +3899,7 @@ class EditorRenderLineNumbersOption extends BaseEditorOption<EditorOption.lineNu
 					nls.localize('lineNumbers.relative', "Line numbers are rendered as distance in lines to cursor position."),
 					nls.localize('lineNumbers.interval', "Line numbers are rendered every 10 lines.")
 				],
-				default: 'on',
+				default: relativeByDefault ? 'relative' : 'on',
 				description: nls.localize('lineNumbers', "Controls the display of line numbers.")
 			}
 		);
@@ -4816,7 +4821,9 @@ export type InternalGuidesOptions = Readonly<Required<IGuidesOptions>>;
 class GuideOptions extends BaseEditorOption<EditorOption.guides, IGuidesOptions, InternalGuidesOptions> {
 	constructor() {
 		const defaults: InternalGuidesOptions = {
-			bracketPairs: false,
+			// The macOS design scopes the indent guide to the bracket pair the cursor sits in.
+			// The setting is shared with the web, so only the native macOS build moves.
+			bracketPairs: platform.isMacintosh && platform.isNative ? 'active' : false,
 			bracketPairsHorizontal: 'active',
 			highlightActiveBracketPair: true,
 
