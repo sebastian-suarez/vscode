@@ -368,6 +368,30 @@
 	top: -1px;
 }
 
+/* That row is a fixed number of points tall whatever the zoom level, so its CSS pixel height
+ * shrinks as the level goes up — and anything inside it measured in plain CSS pixels grows
+ * against it until it no longer fits. What the row shows is the file name and its icon, so both
+ * are given physical sizes too: divided by the live zoom factor they keep the size on screen
+ * they have at zoom level 0, which is the size the row was laid out around.
+ *
+ * Only the two of them. The tab box itself, its paddings and its minimum and maximum widths
+ * stay in CSS pixels off the unscaled font size variable — a tab is a box in the layout and
+ * zooming is meant to resize the layout. This is why the size is read off that variable rather
+ * than hardcoded: the configured tab font size still decides how big the text is, the zoom
+ * factor only takes out the scaling the row does not do. The variable is written inline on the
+ * title element by the tabs control, so it resolves there and this only ever reads it. */
+.monaco-workbench.mac:not(.web).inline-titlebar .part.editor > .content .editor-group-container > .title.tabs .tabs-container > .tab > .tab-label {
+	font-size: calc(var(--vscode-workbench-tabs-font-size, 13px) / var(--zoom-factor, 1));
+}
+
+/* The icon is a background image centered in a box as tall as the tab, so its width and the
+ * size the image is drawn at are what give it its size; the height is what centers it and is
+ * left alone. 16px is the size the icon themes draw for. */
+.monaco-workbench.mac:not(.web).inline-titlebar .part.editor > .content .editor-group-container > .title.tabs .tabs-container > .tab > .tab-label.monaco-icon-label::before {
+	width: calc(16px / var(--zoom-factor, 1));
+	background-size: calc(16px / var(--zoom-factor, 1));
+}
+
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sticky-compact:not(.has-icon) .monaco-icon-label {
 	text-align: center; /* ensure that sticky-compact tabs without icon have label centered */
 }

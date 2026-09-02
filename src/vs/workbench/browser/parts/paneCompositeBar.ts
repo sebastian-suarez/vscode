@@ -514,6 +514,16 @@ export class PaneCompositeBar extends Disposable {
 		this.compositeBar.layout(new Dimension(width, height));
 	}
 
+	/**
+	 * Measure the room each composite takes again. The sizes are read off the rendered items
+	 * once and then kept for the overflow computation, so anything that changes the size the
+	 * stylesheets give an item has to ask for them again or the bar keeps deciding what fits
+	 * against the sizes of a layout that is no longer on screen.
+	 */
+	recomputeSizes(): void {
+		this.compositeBar.recomputeSizes();
+	}
+
 	private getViewContainer(id: string): ViewContainer | undefined {
 		const viewContainer = this.viewDescriptorService.getViewContainerById(id);
 		return viewContainer && this.viewDescriptorService.getViewContainerLocation(viewContainer) === this.location ? viewContainer : undefined;

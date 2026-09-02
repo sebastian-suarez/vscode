@@ -36,6 +36,8 @@ import { VisibleViewContainersTracker } from '../visibleViewContainersTracker.js
 import { Extensions } from '../../panecomposite.js';
 import { FONT, getFontSize, updateSidebarSize } from '../../../../base/common/font.js';
 import { onDidChangeZoomLevel } from '../../../../base/browser/browser.js';
+import { scheduleAtNextAnimationFrame } from '../../../../base/browser/dom.js';
+import { MutableDisposable } from '../../../../base/common/lifecycle.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 import { getInlineTitleBarControlsWidth, getInlineTitleBarHeight, INLINE_TITLE_BAR_CAPTION_HEIGHT, isInlineTitleBar, onDidChangeInlineTitleBar } from '../../inlineTitleBar.js';
 
@@ -71,6 +73,7 @@ export class SidebarPart extends AbstractPaneCompositePart {
 
 	private readonly activityBarPart = this._register(this.instantiationService.createInstance(ActivitybarPart, this.location, this));
 	private readonly visibleViewContainersTracker: VisibleViewContainersTracker;
+	private readonly pendingCompositeBarRemeasure = this._register(new MutableDisposable());
 
 	//#endregion
 
@@ -148,6 +151,7 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		this._register(onDidChangeZoomLevel(targetWindowId => {
 			if (targetWindowId === mainWindow.vscodeWindowId) {
 				this.relayout();
+				this.remeasureCompositeBarAfterZoom();
 			}
 		}));
 		this._register(onDidChangeInlineTitleBar(targetWindowId => {
@@ -157,6 +161,18 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		}));
 
 		this.registerActions();
+	}
+
+	/**
+	 * The view switcher pills of that header are sized in physical points as well, and the
+	 * composite bar decides how many of them fit against the width it measured for them once —
+	 * a width that describes the layout the zoom level just left behind. So they are measured
+	 * again, on the frame after the change rather than in the handler: the stylesheets size the
+	 * pills off `--zoom-factor`, which `InlineTitleBarLayout` writes from a handler of its own,
+	 * and this part is built before that contribution and so hears about the zoom first.
+	 */
+	private remeasureCompositeBarAfterZoom(): void {
+		this.pendingCompositeBarRemeasure.value = scheduleAtNextAnimationFrame(mainWindow, () => this.recomputeCompositeBarSizes());
 	}
 
 	/**

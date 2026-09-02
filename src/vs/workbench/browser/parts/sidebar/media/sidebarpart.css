@@ -72,10 +72,16 @@
  * indent off the width the composite bar lays its items out in — and the items lose the side
  * padding and the underline indicator the bottom band gives them, so six of them still fit a
  * side bar of ordinary width. The icon size is set through the variable the composite bar
- * generates its icon masks against, so glyphs drawn as masks match the codicons. */
+ * generates its icon masks against, so glyphs drawn as masks match the codicons.
+ *
+ * Every size the pills are given is physical, for the same reason the row around them is: the
+ * row is a fixed number of points tall whatever the zoom level, so its CSS pixel height shrinks
+ * as the level goes up, and content measured in plain CSS pixels grows against it until it no
+ * longer fits. Dividing by the live zoom factor keeps the pills the size on screen they are at
+ * zoom level 0, which is the size the row was laid out around. */
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header {
 	padding-left: var(--traffic-lights-width);
-	--activity-bar-icon-size: 20px;
+	--activity-bar-icon-size: calc(20px / var(--zoom-factor, 1));
 }
 
 /* `safe` keeps the centering from overflowing on the start side: a plain centered flex box
@@ -102,12 +108,12 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 34px;
-	height: 28px;
+	width: calc(34px / var(--zoom-factor, 1));
+	height: calc(28px / var(--zoom-factor, 1));
 	margin: 0;
 	padding: 0;
-	border-radius: 6px;
-	font-size: 20px;
+	border-radius: calc(6px / var(--zoom-factor, 1));
+	font-size: calc(20px / var(--zoom-factor, 1));
 }
 
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item .active-item-indicator {

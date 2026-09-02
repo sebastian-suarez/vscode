@@ -660,6 +660,14 @@ export abstract class AbstractPaneCompositePart extends CompositePart<PaneCompos
 	}
 
 	/**
+	 * Have the composite bar measure its items again, for when the stylesheets have given them
+	 * a different size than the one the bar cached the last time it looked.
+	 */
+	protected recomputeCompositeBarSizes(): void {
+		this.paneCompositeBar.value?.recomputeSizes();
+	}
+
+	/**
 	 * Horizontal room the stylesheets take away from the area the composite bar lays its
 	 * composites out in, so that its overflow computation agrees with what is on screen.
 	 */
