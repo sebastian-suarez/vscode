@@ -610,6 +610,18 @@
 		},
 		{
 			"component": {
+				"type": "git",
+				"git": {
+					"name": "geist-font",
+					"repositoryUrl": "https://github.com/vercel/geist-font",
+					"commitHash": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24"
+				}
+			},
+			"license": "SIL Open Font License 1.1",
+			"version": "1.800"
+		},
+		{
+			"component": {
 				"type": "npm",
 				"npm": {
 					"name": "mdn-data",

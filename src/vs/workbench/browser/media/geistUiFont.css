@@ -1,0 +1,39 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* "Geist" -- the workbench UI font on macOS.
+ *
+ * Geist is Vercel's developer-interface face, licensed under the SIL Open Font License 1.1
+ * (v1.800, https://github.com/vercel/geist-font). The woff2 files sit next to this stylesheet
+ * and ship with the product, so the family is ours and no longer depends on what the machine
+ * happens to have installed.
+ *
+ * This supersedes the injection-era "HN UI" family -- Helvetica Neue with the whole weight scale
+ * shifted one face lighter, sourced entirely through `local()`. That light-shift is retired.
+ *
+ * Two faces are shipped, Regular (400) and SemiBold (600), and the weight ranges below map every
+ * weight the workbench asks for onto one of them: everything up to 599 renders Regular, 600 and
+ * above renders SemiBold. Editor and terminal monospace fonts do not flow through this variable
+ * and are untouched.
+ */
+
+@font-face { font-family: "Geist"; src: url(./geist-regular.woff2) format("woff2"); font-weight: 400 599; }
+@font-face { font-family: "Geist"; src: url(./geist-semibold.woff2) format("woff2"); font-weight: 600 1000; }
+
+/* The product default on native macOS. Deliberately not gated on the inline-titlebar class:
+ * the UI font is native-always, not a layout mode.
+ *
+ * The fallback tail after "Geist" mirrors the stock macOS `--monaco-font` stack from
+ * ./media/style.css, so a font file that fails to load lands on exactly what the workbench would
+ * have used anyway.
+ *
+ * Cascade contract: `workbench.experimental.fontFamily` (VSCodium's `00-ui-custom-font`) still
+ * wins, because `updateFontFamily()` in ../workbench.ts writes `--vscode-workbench-font-family`
+ * as an INLINE style on this same element and inline declarations beat stylesheet ones. Unset
+ * setting -> the inline property is removed and this default applies.
+ */
+.monaco-workbench.mac:not(.web) {
+	--vscode-workbench-font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+}
