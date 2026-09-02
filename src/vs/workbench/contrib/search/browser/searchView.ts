@@ -128,6 +128,12 @@ export class SearchView extends ViewPane {
 
 	private static readonly ACTIONS_RIGHT_CLASS_NAME = 'actions-right';
 
+	/**
+	 * Side margins `searchview.css` gives the widget column: 2px on the left, 12px on the
+	 * right, summed here because {@link SearchView.reLayout} only ever needs the pair.
+	 */
+	private static readonly WIDGETS_CONTAINER_MARGIN = 14;
+
 	private isDisposed = false;
 
 	private container!: HTMLElement;
@@ -1304,6 +1310,22 @@ export class SearchView extends ViewPane {
 		}
 	}
 
+	/**
+	 * Room taken off the view's width before the widgets and the results are laid out in it.
+	 * The 28 it starts from covers the widget column's side margins along with the room the
+	 * input rows' own controls take beside the inputs. Where the pane body is inset the
+	 * stylesheet drops those side margins: the body already keeps 8px clear on either side,
+	 * `layoutBody` hands this view the width that leaves, and the column spans it whole — so
+	 * the 14px they took is given back. It is the literal the stylesheet no longer draws,
+	 * which is why it is not scaled, while what is left keeps following the side bar font
+	 * size. Read off the body padding rather than off the platform, so the two can only ever
+	 * agree: the stylesheet rule that drops the margins carries the same scope as the one
+	 * that pads the body.
+	 */
+	private get widthOffset(): number {
+		return this.bodyPadding ? FONT.sidebarSize28 - SearchView.WIDGETS_CONTAINER_MARGIN : FONT.sidebarSize28;
+	}
+
 	private reLayout(): void {
 		if (this.isDisposed || !this.size) {
 			return;
@@ -1312,14 +1334,16 @@ export class SearchView extends ViewPane {
 		const actionsPosition = this.searchConfig.actionsPosition;
 		this.getContainer().classList.toggle(SearchView.ACTIONS_RIGHT_CLASS_NAME, actionsPosition === 'right');
 
-		this.searchWidget.setWidth(this.size.width - FONT.sidebarSize28);
+		const width = this.size.width - this.widthOffset;
 
-		this.inputPatternExcludes.setWidth(this.size.width - FONT.sidebarSize28);
-		this.inputPatternIncludes.setWidth(this.size.width - FONT.sidebarSize28);
+		this.searchWidget.setWidth(width);
+
+		this.inputPatternExcludes.setWidth(width);
+		this.inputPatternIncludes.setWidth(width);
 
 		const widgetHeight = dom.getTotalHeight(this.searchWidgetsContainerElement);
 		const messagesHeight = dom.getTotalHeight(this.messagesElement);
-		this.tree.layout(this.size.height - widgetHeight - messagesHeight, this.size.width - FONT.sidebarSize28);
+		this.tree.layout(this.size.height - widgetHeight - messagesHeight, width);
 	}
 
 	protected override layoutBody(height: number, width: number): void {

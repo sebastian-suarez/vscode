@@ -128,17 +128,20 @@
 	line-height: 1.4em;
 }
 
-/* The view body sits in from the rail edges rather than running into them. The rows the views
- * draw already carry an 8px inset of their own (`style.css`), so the 8px here is what lands
- * them 16px off the edge, and it carries the pane headers' own 12px onto the same 20px column.
- * The 6px on top parts the first row from the row above it; the bottom is left flush so a body
- * that fills the part still runs into the status bar. The part layout sizes this box in pixels,
- * which is why the padding has to be drawn inside it — hence `border-box` — and why
- * `SidebarPart` feeds the same four numbers to that layout as a `contentPadding` option: the
- * box keeps the width and height it is given, and the view container inside it is told the size
- * the padding leaves over, so it stops at the padding instead of running underneath. Native
- * macOS windows only, which is where those row insets apply. */
-.monaco-workbench.mac:not(.web) .part.sidebar > .content {
+/* Each section's body sits in from the rail edges rather than running into them, while the
+ * headers above them keep running the full width — the band a header paints reads as the
+ * edge of the section, so it is the content inside that is inset, not the section itself.
+ * The rows the views draw already carry an 8px inset of their own (`style.css`), so the 8px
+ * here is what lands them 16px off the rail edge. The 6px on top parts the first row from
+ * the header above it; the bottom is left flush so a body that fills its section still runs
+ * into the one below. The split view sizes this box in pixels, which is why the padding has
+ * to be drawn inside it — hence `border-box` — and why `ViewPane` reports the same numbers
+ * as its `bodyPadding`: the box keeps the size it is given, and the view inside it is told
+ * the room the padding leaves over, so it stops at the padding instead of running underneath.
+ * The side bar only: a view dragged to the panel or the auxiliary bar is left stock, and the
+ * `ViewPane` numbers follow it there. Native macOS windows only, which is where those row
+ * insets apply. */
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-pane-view .pane > .pane-body {
 	box-sizing: border-box;
 	padding: 6px 8px 0;
 }

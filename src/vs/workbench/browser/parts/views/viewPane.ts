@@ -18,7 +18,7 @@ import { IKeybindingService } from '../../../../platform/keybinding/common/keybi
 import { IContextMenuService } from '../../../../platform/contextview/browser/contextView.js';
 import { IThemeService } from '../../../../platform/theme/common/themeService.js';
 import { ThemeIcon } from '../../../../base/common/themables.js';
-import { IPaneOptions, Pane, IPaneStyles } from '../../../../base/browser/ui/splitview/paneview.js';
+import { IPaneOptions, Pane, IPaneStyles, IPaneBodyPadding } from '../../../../base/browser/ui/splitview/paneview.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { Extensions as ViewContainerExtensions, IView, IViewDescriptorService, ViewContainerLocation, IViewsRegistry, IViewContentDescriptor, defaultViewIcon, ViewContainerLocationToString } from '../../../common/views.js';
 import { IViewsService } from '../../../services/views/common/viewsService.js';
@@ -55,6 +55,7 @@ import { PANEL_BACKGROUND, PANEL_SECTION_DRAG_AND_DROP_BACKGROUND, PANEL_STICKY_
 import { IAccessibleViewInformationService } from '../../../services/accessibility/common/accessibleViewInformationService.js';
 import { renderLabelWithIcons } from '../../../../base/browser/ui/iconLabel/iconLabels.js';
 import { ViewMenuActions } from './viewMenuActions.js';
+import { isMacintosh, isNative } from '../../../../base/common/platform.js';
 
 export enum ViewPaneShowActions {
 	/** Show the actions when the view is hovered. This is the default behavior. */
@@ -311,6 +312,16 @@ class ViewWelcomeController {
 export abstract class ViewPane extends Pane implements IView {
 
 	private static readonly AlwaysShowActionsConfig = 'workbench.view.alwaysShowHeaderActions';
+
+	/**
+	 * Room the body of a side bar view keeps clear of the rail edges: 8px on each side and
+	 * 6px on top, the padding `sidebarpart.css` puts on `.pane-body` there. The rows the
+	 * views draw already carry an 8px inset of their own (`style.css`), so the 8px here is
+	 * what lands them 16px off the edge; the header is left out of it and runs the full
+	 * width. The bottom is flush, so a body that fills the pane still runs into the pane
+	 * below it. Native macOS windows only, which is where those row insets apply.
+	 */
+	private static readonly SIDE_BAR_BODY_PADDING: IPaneBodyPadding | undefined = isMacintosh && isNative ? { horizontal: 16, vertical: 6 } : undefined;
 
 	private _onDidFocus = this._register(new Emitter<void>());
 	readonly onDidFocus: Event<void> = this._onDidFocus.event;
@@ -637,6 +648,15 @@ export abstract class ViewPane extends Pane implements IView {
 
 	protected renderBody(container: HTMLElement): void {
 		this.viewWelcomeController = this._register(this.instantiationService.createInstance(ViewWelcomeController, container, this));
+	}
+
+	/**
+	 * The stylesheet only pads the body of a view while it sits in the side bar, so the
+	 * location is read per layout pass rather than resolved once: a view dragged to the
+	 * panel or to the auxiliary bar is laid out at the size it is given, exactly as before.
+	 */
+	protected override get bodyPadding(): IPaneBodyPadding | undefined {
+		return this.viewDescriptorService.getViewLocationById(this.id) === ViewContainerLocation.Sidebar ? ViewPane.SIDE_BAR_BODY_PADDING : undefined;
 	}
 
 	protected layoutBody(height: number, width: number): void {

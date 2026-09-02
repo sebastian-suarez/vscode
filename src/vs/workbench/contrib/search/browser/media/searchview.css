@@ -21,6 +21,19 @@
 	padding-bottom: 6px;
 }
 
+/* The stock side margins are lopsided — 2px on the left against 12px on the right — which
+ * puts the search boxes all but on the rail edge. In the side bar the pane body already
+ * keeps 8px clear on either side (`sidebarpart.css`), so the column is handed a box that is
+ * inset and even, and the margins are dropped rather than added to: they would land the
+ * widgets at 10px on the left and 20px on the right. `SearchView` gives the same 14px back
+ * to the width it lays the inputs out at, off the same condition. Only the side bar, where
+ * that pane body inset applies: in the panel and the auxiliary bar the widgets keep the
+ * stock margins. */
+.monaco-workbench.mac:not(.web) .part.sidebar .search-view .search-widgets-container {
+	margin-left: 0;
+	margin-right: 0;
+}
+
 .search-view .search-widget .toggle-replace-button {
 	position: absolute;
 	top: 0;
@@ -45,6 +58,17 @@
  * keeps the glyph centered inside it. */
 .monaco-workbench.mac:not(.web) .search-view .search-widget .toggle-replace-button {
 	height: 26px;
+}
+
+/* That top left corner is the widget's only while something makes it one: nothing between
+ * the button and the split view is positioned, so it otherwise lands on the corner of the
+ * pane. Stock that is 2px off the widgets and reads as the same corner, but the inset above
+ * parts the two — the column now starts 8px in and its first row 6px down — and the chevron
+ * would sit on the rail while everything it belongs to is inset. Positioning the widget puts
+ * it back on the column, and on the row the height above is measured off. Only where that
+ * inset applies; elsewhere the corner is still shared and the stock placement stands. */
+.monaco-workbench.mac:not(.web) .part.sidebar .search-view .search-widget {
+	position: relative;
 }
 
 .monaco-workbench .search-view .search-widget .toggle-replace-button:hover {

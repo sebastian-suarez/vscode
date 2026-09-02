@@ -39,6 +39,14 @@ export interface IPaneStyles {
 }
 
 /**
+ * Room a stylesheet's padding on `.pane-body` takes off the body, summed per axis.
+ */
+export interface IPaneBodyPadding {
+	readonly horizontal: number;
+	readonly vertical: number;
+}
+
+/**
  * A Pane is a structured SplitView view.
  *
  * WARNING: You must call `render()` after you construct it.
@@ -170,6 +178,19 @@ export abstract class Pane extends Disposable implements IView {
 	}
 
 	orthogonalSize: number = 0;
+
+	/**
+	 * Room a stylesheet's padding on this pane's body takes off it, summed per axis. The
+	 * split view sizes the body box in pixels, so that padding is drawn inside the box
+	 * rather than growing it, and what the body puts in there has to be told the room the
+	 * padding leaves over — else it is laid out over the whole box and runs underneath.
+	 * Subclasses whose stylesheet pads the body report those two numbers here; the default
+	 * is none, and the body is laid out at the size it is given exactly as before. Read
+	 * once per {@link Pane.layout} pass, so it may change over the life of the pane.
+	 */
+	protected get bodyPadding(): IPaneBodyPadding | undefined {
+		return undefined;
+	}
 
 	protected getAriaHeaderLabel(title: string): string {
 		return localize('viewSection', "{0} Section", title);
@@ -351,7 +372,18 @@ export abstract class Pane extends Disposable implements IView {
 
 		if (this.isExpanded()) {
 			this.body.classList.toggle('wide', width >= 600);
-			this.layoutBody(height, width);
+
+			// The body keeps the whole box — a padded one draws its padding inside it — but
+			// what goes in there is laid out at the room the padding leaves over, so it stops
+			// where the padding starts instead of running underneath it. The `wide` breakpoint
+			// above stays on the box: it is a question about the pane, not about the body.
+			const bodyPadding = this.bodyPadding;
+			if (bodyPadding) {
+				this.layoutBody(Math.max(0, height - bodyPadding.vertical), Math.max(0, width - bodyPadding.horizontal));
+			} else {
+				this.layoutBody(height, width);
+			}
+
 			this.expandedSize = size;
 		}
 	}
