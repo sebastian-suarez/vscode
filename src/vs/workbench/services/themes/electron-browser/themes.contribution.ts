@@ -8,7 +8,7 @@ import { Registry } from '../../../../platform/registry/common/platform.js';
 import { IConfigurationRegistry, Extensions as ConfigurationExtensions, ConfigurationScope } from '../../../../platform/configuration/common/configurationRegistry.js';
 import { ThemeSettings } from '../common/workbenchThemeService.js';
 import { COLOR_THEME_CONFIGURATION_SETTINGS_TAG, formatSettingAsLink } from '../common/themeConfiguration.js';
-import { isLinux } from '../../../../base/common/platform.js';
+import { isLinux, isMacintosh } from '../../../../base/common/platform.js';
 
 const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
 configurationRegistry.registerConfiguration({
@@ -23,7 +23,9 @@ configurationRegistry.registerConfiguration({
 				localize('window.systemColorTheme.dark', "Use dark native widget colors."),
 			],
 			markdownDescription: localize({ key: 'window.systemColorTheme', comment: ['{0} and {1} will become links to other settings.'] }, "Set the color mode for native UI elements such as native dialogs, menus and title bar. Even if your OS is configured in light color mode, you can select a dark system color theme for the window. You can also configure to automatically adjust based on the {0} setting.\n\nNote: This setting is ignored when {1} is enabled.", formatSettingAsLink(ThemeSettings.COLOR_THEME), formatSettingAsLink(ThemeSettings.DETECT_COLOR_SCHEME)),
-			default: 'default',
+			// Kept in sync with the main process fallback in `themeMainServiceImpl.ts`: the
+			// vibrant macOS window needs a dark native appearance even when the OS is light.
+			default: isMacintosh ? 'dark' : 'default',
 			included: !isLinux,
 			scope: ConfigurationScope.APPLICATION,
 			tags: [COLOR_THEME_CONFIGURATION_SETTINGS_TAG],
