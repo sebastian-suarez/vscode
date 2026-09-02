@@ -357,17 +357,6 @@
 	padding-right: 5px; /* ensure that the gradient does not show when tab actions show https://github.com/microsoft/vscode/issues/189625*/
 }
 
-/* In the full height tab row of an inline title bar the label text reads about a pixel low:
- * the font's ascent exceeds its descent, which skews the half-leading of the tall line box.
- * The lift is on the text container alone. The file icon is a separate flex item — the
- * ::before of the icon label, background-centered in its own full height box — and is already
- * dead centered, so lifting the whole label would take the icons a pixel too high, which is
- * what reads as an off-center tab. */
-.monaco-workbench.mac:not(.web).inline-titlebar .part.editor > .content .editor-group-container > .title.tabs .tabs-container > .tab > .tab-label > .monaco-icon-label-container {
-	position: relative;
-	top: -1px;
-}
-
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sticky-compact:not(.has-icon) .monaco-icon-label {
 	text-align: center; /* ensure that sticky-compact tabs without icon have label centered */
 }
