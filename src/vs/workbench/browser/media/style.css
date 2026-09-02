@@ -499,6 +499,19 @@ body {
 	border-radius: 7px;
 }
 
+/* The row label reads about a pixel low inside that pill: the label box measures dead centre,
+ * but the font's ascent exceeds its descent, which skews the half-leading of the line box and
+ * leaves the ink sitting low in it. Same phenomenon as in the tab row, and the same fix — the
+ * lift is on the text container alone. The file icon is a separate flex item, the ::before of
+ * the icon label, background-centered in its own full height box, and is already dead centered;
+ * lifting the whole label would take it a pixel too high, which is exactly what reads as an
+ * off-center row. This is what answers the selected row looking uncentered in its focus pill,
+ * in the explorer and in the source control graph alike — both draw the same list rows. */
+.monaco-workbench.mac:not(.web) .part.sidebar .monaco-list-row .monaco-icon-label-container {
+	position: relative;
+	top: -1px;
+}
+
 /* The sticky header paints nothing of its own — a fill would break the translucency, and its
  * rows are meant to read as the rows they stand in for. A hairline along the bottom edge is
  * all that sets it apart. It fades in rather than snapping: the widget swaps `display` when
