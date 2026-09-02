@@ -128,6 +128,21 @@
 	line-height: 1.4em;
 }
 
+/* The view body sits in from the rail edges rather than running into them. The rows the views
+ * draw already carry an 8px inset of their own (`style.css`), so the 8px here is what lands
+ * them 16px off the edge, and it carries the pane headers' own 12px onto the same 20px column.
+ * The 6px on top parts the first row from the row above it; the bottom is left flush so a body
+ * that fills the part still runs into the status bar. The part layout sizes this box in pixels,
+ * which is why the padding has to be drawn inside it — hence `border-box` — and why
+ * `SidebarPart` feeds the same four numbers to that layout as a `contentPadding` option: the
+ * box keeps the width and height it is given, and the view container inside it is told the size
+ * the padding leaves over, so it stops at the padding instead of running underneath. Native
+ * macOS windows only, which is where those row insets apply. */
+.monaco-workbench.mac:not(.web) .part.sidebar > .content {
+	box-sizing: border-box;
+	padding: 6px 8px 0;
+}
+
 .monaco-workbench .part.sidebar > .title > .title-label h2 {
 	text-transform: uppercase;
 	font-size: calc(var(--vscode-workbench-sidebar-font-size) * 0.846);

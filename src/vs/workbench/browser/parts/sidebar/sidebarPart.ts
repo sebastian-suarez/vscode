@@ -38,11 +38,25 @@ import { FONT, getFontSize, updateSidebarSize } from '../../../../base/common/fo
 import { onDidChangeZoomLevel } from '../../../../base/browser/browser.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 import { getInlineTitleBarControlsWidth, getInlineTitleBarHeight, INLINE_TITLE_BAR_CAPTION_HEIGHT, isInlineTitleBar, onDidChangeInlineTitleBar } from '../../inlineTitleBar.js';
+import { IPartContentPadding } from '../../part.js';
+import { isMacintosh, isNative } from '../../../../base/common/platform.js';
 
 export class SidebarPart extends AbstractPaneCompositePart {
 
 	static readonly activeViewletSettingsKey = 'workbench.sidebar.activeviewletid';
 	static readonly fontSizeSettingsKey = 'workbench.sideBar.experimental.fontSize';
+
+	/**
+	 * Room the view body keeps clear of the rail edges. The rows the views draw already carry
+	 * an 8px inset of their own (`style.css`), so the 8px here is what lands them 16px off the
+	 * edge, and it carries the pane headers' own 12px onto the same 20px column. The 6px on top
+	 * parts the first row from the row above it; the bottom is left flush so a body that fills
+	 * the part still runs into the status bar. These have to agree with the padding
+	 * `sidebarpart.css` puts on the content area: the stylesheet draws it inside that box, this
+	 * only takes it off the size the view container is told it has. Native macOS windows only —
+	 * the scope of the row insets it goes with, and of the stylesheet rule it mirrors.
+	 */
+	private static readonly VIEW_BODY_PADDING: IPartContentPadding | undefined = isMacintosh && isNative ? { top: 6, right: 8, bottom: 0, left: 8 } : undefined;
 
 	//#region IView
 
@@ -96,7 +110,8 @@ export class SidebarPart extends AbstractPaneCompositePart {
 				trailingSeparator: false,
 				borderWidth: () => (this.getColor(SIDE_BAR_BORDER) || this.getColor(contrastBorder)) ? 1 : 0,
 				headerHeight: () => this.inlineTitleBarHeaderHeight,
-				titleHeight: () => this.inlineTitleBarTitleHeight
+				titleHeight: () => this.inlineTitleBarTitleHeight,
+				contentPadding: () => SidebarPart.VIEW_BODY_PADDING
 			},
 			SidebarPart.activeViewletSettingsKey,
 			ActiveViewletContext.bindTo(contextKeyService),

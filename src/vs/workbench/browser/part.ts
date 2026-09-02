@@ -15,6 +15,13 @@ import { IWorkbenchLayoutService } from '../services/layout/browser/layoutServic
 import { assertReturnsDefined } from '../../base/common/types.js';
 import { IDisposable, toDisposable } from '../../base/common/lifecycle.js';
 
+export interface IPartContentPadding {
+	readonly top: number;
+	readonly right: number;
+	readonly bottom: number;
+	readonly left: number;
+}
+
 export interface IPartOptions {
 	readonly hasTitle?: boolean;
 	readonly borderWidth?: () => number;
@@ -32,6 +39,16 @@ export interface IPartOptions {
 	 * only subtracts it from the content area.
 	 */
 	readonly titleHeight?: () => number | undefined;
+
+	/**
+	 * Padding on the content area of this part, per side. The values have to agree with the
+	 * padding the stylesheets give it, the layout only subtracts them from the content size
+	 * it hands out. The content element itself still gets the whole box: a padded content
+	 * area draws its padding inside that box rather than growing past it, which is what the
+	 * stylesheet's `box-sizing: border-box` is for. Parts without this option are laid out
+	 * exactly as before.
+	 */
+	readonly contentPadding?: () => IPartContentPadding | undefined;
 }
 
 export interface ILayoutContentResult {
@@ -271,6 +288,22 @@ class PartLayout {
 		// Content
 		if (this.contentArea) {
 			size(this.contentArea, contentSize.width, contentSize.height);
+		}
+
+		// A padded content area keeps that whole box — the padding is drawn inside it — but
+		// what the part puts in there is told the room the padding leaves over, so it stops
+		// where the padding starts instead of running underneath it.
+		const contentPadding = this.options.contentPadding?.();
+		if (contentPadding) {
+			return {
+				headerSize,
+				titleSize,
+				contentSize: new Dimension(
+					Math.max(0, contentSize.width - contentPadding.left - contentPadding.right),
+					Math.max(0, contentSize.height - contentPadding.top - contentPadding.bottom)
+				),
+				footerSize
+			};
 		}
 
 		return { headerSize, titleSize, contentSize, footerSize };
