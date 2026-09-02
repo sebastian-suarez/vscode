@@ -171,7 +171,7 @@ export const COLOR_THEME_DARK_INITIAL_COLORS = {
 	'sideBarSectionHeader.background': '#191A1B',
 	'sideBarSectionHeader.border': '#2A2B2CFF',
 	'sideBarSectionHeader.foreground': '#bfbfbf',
-	'sideBarTitle.foreground': '#bfbfbf',
+	'sideBarTitle.foreground': '#8c8c8c',
 	'statusBar.background': '#191A1B',
 	'statusBar.border': '#2A2B2CFF',
 	'statusBar.debuggingBackground': '#3994BC',

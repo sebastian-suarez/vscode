@@ -39,14 +39,32 @@
 	height: 24px; /* INLINE_TITLE_BAR_CAPTION_HEIGHT */
 }
 
+/* The label of that caption row centers on the part, not on the space the actions leave over.
+ * The row is read as three items for that: an empty rail on the left, the label, and the
+ * actions on the right, both rails growing from a zero basis at the same factor — the rail
+ * comes out the width the actions take, so the text lands on the middle of the row. Two stock
+ * paddings would tilt that by their own width and are dropped here: the 12px on the label
+ * (`part.css`) and the 8px on the actions (`compositepart.css`, which outranks the 5px
+ * `part.css` asks for); the actions' stock `flex: 1` is restated from an explicit zero basis so
+ * the pairing with the rail reads off the page. The actions keep their automatic minimum size,
+ * which is what a toolbar too wide for its half of the row falls back on: it holds its buttons
+ * and the label slides left of them rather than running underneath. That is also why the label
+ * no longer centers its own text — it is only as wide as the text now, and left aligned it
+ * keeps the ellipsis on the end when the title outgrows the room left for it. */
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title::before {
+	content: '';
+	flex: 1 1 0;
+}
+
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title > .title-label {
-	flex: 1 1 auto;
-	text-align: center;
+	flex: 0 1 auto;
+	padding-left: 0;
 	line-height: 24px;
 }
 
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title > .title-actions {
-	flex: 0 0 auto;
+	flex: 1 1 0;
+	padding-left: 0;
 }
 
 /* The view switcher in that header reads as a row of pills centered in the space the native
