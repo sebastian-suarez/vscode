@@ -1,0 +1,26 @@
+{
+  "name": "theme-vsebcode-icons",
+  "private": true,
+  "version": "10.0.0",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "publisher": "vscode",
+  "license": "MIT",
+  "engines": {
+    "vscode": "*"
+  },
+  "categories": ["Themes"],
+  "contributes": {
+    "iconThemes": [
+      {
+        "id": "vsebcode-icons",
+        "label": "%themeLabel%",
+        "path": "./icons/vsebcode-icon-theme.json"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sebastian-suarez/vscode.git"
+  }
+}

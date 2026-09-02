@@ -44,7 +44,7 @@ export namespace ThemeSettingDefaults {
 	export const COLOR_THEME_HC_DARK = 'Default High Contrast';
 	export const COLOR_THEME_HC_LIGHT = 'Default High Contrast Light';
 
-	export const FILE_ICON_THEME = 'vs-seti';
+	export const FILE_ICON_THEME = 'vsebcode-icons';
 	export const PRODUCT_ICON_THEME = 'Default';
 }
 
