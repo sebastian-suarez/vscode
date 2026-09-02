@@ -35,7 +35,6 @@ import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { VisibleViewContainersTracker } from '../visibleViewContainersTracker.js';
 import { Extensions } from '../../panecomposite.js';
 import { FONT, getFontSize, updateSidebarSize } from '../../../../base/common/font.js';
-import { applyUiFontSizeBase, UI_FONT_SIZE_EXPERIMENT_SETTING } from '../../vsebcodeUiFontExperiment.js';
 import { onDidChangeZoomLevel } from '../../../../base/browser/browser.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 import { getInlineTitleBarControlsWidth, getInlineTitleBarHeight, INLINE_TITLE_BAR_CAPTION_HEIGHT, isInlineTitleBar, onDidChangeInlineTitleBar } from '../../inlineTitleBar.js';
@@ -136,7 +135,7 @@ export class SidebarPart extends AbstractPaneCompositePart {
 			if (e.affectsConfiguration(LayoutSettings.ACTIVITY_BAR_AUTO_HIDE)) {
 				this.onDidChangeActivityBarLocation();
 			}
-			if (e.affectsConfiguration(SidebarPart.fontSizeSettingsKey) || e.affectsConfiguration(UI_FONT_SIZE_EXPERIMENT_SETTING) /* [VSebCode debug] */) {
+			if (e.affectsConfiguration(SidebarPart.fontSizeSettingsKey)) {
 				this.applySidebarFontSize();
 			}
 			if (e.affectsConfiguration('workbench.sideBar.experimental.fontFamily')) {
@@ -406,9 +405,6 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		if (!target) {
 			return;
 		}
-
-		// [VSebCode debug] Refresh the shared base first: this handler runs before the workbench's.
-		applyUiFontSizeBase(this.configurationService);
 
 		const configuredSize = getFontSize(this.configurationService, SidebarPart.fontSizeSettingsKey, FONT.defaultSidebarSize);
 

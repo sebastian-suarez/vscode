@@ -39,7 +39,6 @@ import { IWorkbenchEnvironmentService } from '../../../services/environment/comm
 import { IViewsService } from '../../../services/views/common/viewsService.js';
 import { SwitchCompositeViewAction } from '../compositeBarActions.js';
 import { FONT, getFontSize, updateActivityBarSize } from '../../../../base/common/font.js';
-import { applyUiFontSizeBase, UI_FONT_SIZE_EXPERIMENT_SETTING } from '../../vsebcodeUiFontExperiment.js';
 
 export class ActivitybarPart extends Part {
 
@@ -115,7 +114,7 @@ export class ActivitybarPart extends Part {
 		}));
 
 		this._register(configurationService.onDidChangeConfiguration(e => {
-			if (e.affectsConfiguration('workbench.activityBar.experimental.fontFamily') || e.affectsConfiguration('workbench.activityBar.experimental.fontSize') || e.affectsConfiguration(UI_FONT_SIZE_EXPERIMENT_SETTING) /* [VSebCode debug] */) {
+			if (e.affectsConfiguration('workbench.activityBar.experimental.fontFamily') || e.affectsConfiguration('workbench.activityBar.experimental.fontSize')) {
 				this.applyActivityBarFontFamily();
 				this.applyActivityBarFontSize();
 				this.recreateCompositeBar();
@@ -218,9 +217,6 @@ export class ActivitybarPart extends Part {
 		if (!target) {
 			return;
 		}
-
-		// [VSebCode debug] Refresh the shared base first: this handler runs before the workbench's.
-		applyUiFontSizeBase(this.configurationService);
 
 		const configuredSize = getFontSize(this.configurationService, 'workbench.activityBar.experimental.fontSize', FONT.defaultActivityBarSize);
 

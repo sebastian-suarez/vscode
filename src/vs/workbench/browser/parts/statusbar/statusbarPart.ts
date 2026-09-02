@@ -38,7 +38,6 @@ import { Emitter, Event } from '../../../../base/common/event.js';
 import { IView } from '../../../../base/browser/ui/grid/grid.js';
 import { isManagedHoverTooltipHTMLElement, isManagedHoverTooltipMarkdownString } from '../../../../base/browser/ui/hover/hover.js';
 import { FONT, getFontSize, updateStatusBarSize } from '../../../../base/common/font.js';
-import { applyUiFontSizeBase, UI_FONT_SIZE_EXPERIMENT_SETTING } from '../../vsebcodeUiFontExperiment.js';
 
 export interface IStatusbarEntryContainer extends IDisposable {
 
@@ -182,7 +181,7 @@ class StatusbarPart extends Part implements IStatusbarEntryContainer {
 			if (e.affectsConfiguration('workbench.statusBar.experimental.fontFamily')) {
 				this.applyStatusBarFontFamily();
 			}
-			if (e.affectsConfiguration('workbench.statusBar.experimental.fontSize') || e.affectsConfiguration(UI_FONT_SIZE_EXPERIMENT_SETTING) /* [VSebCode debug] */) {
+			if (e.affectsConfiguration('workbench.statusBar.experimental.fontSize')) {
 				this.applyStatusBarFontSize();
 			}
 		}));
@@ -486,9 +485,6 @@ class StatusbarPart extends Part implements IStatusbarEntryContainer {
 		if (!target) {
 			return;
 		}
-
-		// [VSebCode debug] Refresh the shared base first: this handler runs before the workbench's.
-		applyUiFontSizeBase(this.configurationService);
 
 		const configuredSize = getFontSize(this.configurationService, 'workbench.statusBar.experimental.fontSize', FONT.defaultStatusBarSize);
 

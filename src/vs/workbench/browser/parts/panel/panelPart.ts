@@ -33,7 +33,6 @@ import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { Extensions } from '../../panecomposite.js';
 import { FONT, getFontSize, updatePanelSize as updateBottomPaneSize } from '../../../../base/common/font.js';
-import { applyUiFontSizeBase, UI_FONT_SIZE_EXPERIMENT_SETTING } from '../../vsebcodeUiFontExperiment.js';
 
 export class PanelPart extends AbstractPaneCompositePart {
 
@@ -120,7 +119,7 @@ export class PanelPart extends AbstractPaneCompositePart {
 			if (e.affectsConfiguration('workbench.bottomPane.experimental.fontFamily')) {
 				this.applyPanelFontFamily();
 			}
-			if (e.affectsConfiguration('workbench.bottomPane.experimental.fontSize') || e.affectsConfiguration(UI_FONT_SIZE_EXPERIMENT_SETTING) /* [VSebCode debug] */) {
+			if (e.affectsConfiguration('workbench.bottomPane.experimental.fontSize')) {
 				this.applyPanelFontSize();
 			}
 		}));
@@ -166,9 +165,6 @@ export class PanelPart extends AbstractPaneCompositePart {
 		if (!target) {
 			return;
 		}
-
-		// [VSebCode debug] Refresh the shared base first: this handler runs before the workbench's.
-		applyUiFontSizeBase(this.configurationService);
 
 		const configuredSize = getFontSize(this.configurationService, 'workbench.bottomPane.experimental.fontSize', FONT.defaultBottomPaneSize);
 
