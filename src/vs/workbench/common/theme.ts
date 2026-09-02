@@ -729,21 +729,26 @@ export function translucentSurfaceOnMac(color: Color): Color {
 const MAC_TRANSPARENT_SURFACE_ALPHA = 0;
 
 /**
- * The surfaces that sit inside a translucent part and must not paint at all, so that the one
- * coat of material below them — and the vibrancy below that — stays unbroken. They are labels
- * over the material, not coats of it. The side bar title is such a surface: the caption names
- * the view showing underneath it rather than banding across the side bar. So are section
- * headers. So is the sticky scroll stack: its rows stand in for the rows they pin, so they have
- * to read as those same rows on the bare side bar, and what tells the stack apart is the
- * hairline along its bottom edge and the fade it comes and goes with — not a fill of its own.
- * So is the sticky scroll shadow, which would draw a smudge over the translucency instead of
- * depth.
+ * The surfaces that sit inside another one and must not paint at all, so that the single coat
+ * below them stays unbroken. They are labels over that coat, not coats of it. The side bar
+ * title is such a surface: the caption names the view showing underneath it rather than
+ * banding across the side bar. So are section headers. So is the sticky scroll stack: its rows
+ * stand in for the rows they pin, so they have to read as those same rows on the bare side
+ * bar, and what tells the stack apart is the hairline along its bottom edge and the fade it
+ * comes and goes with — not a fill of its own. So is the sticky scroll shadow, which would
+ * draw a smudge over the translucency instead of depth.
+ *
+ * The tab strip is the same idea over the opaque editor rather than over the vibrancy: the
+ * strip is the top of the editor column, not a band laid across it, so it shows the editor's
+ * own background and the column reads as one surface from the window controls down to the
+ * status bar. Only the strip's own fill goes; the tabs drawn on it keep every color they have.
  */
 export const MAC_TRANSPARENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_TITLE_BACKGROUND,
 	SIDE_BAR_SECTION_HEADER_BACKGROUND,
 	SIDE_BAR_STICKY_SCROLL_BACKGROUND,
-	SIDE_BAR_STICKY_SCROLL_SHADOW
+	SIDE_BAR_STICKY_SCROLL_SHADOW,
+	EDITOR_GROUP_HEADER_TABS_BACKGROUND
 ]);
 
 /**
