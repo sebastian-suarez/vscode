@@ -37,3 +37,20 @@
 .monaco-workbench.mac:not(.web) {
 	--vscode-workbench-font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
 }
+
+/* DEBUG -- TEMPORARY, DELETE ON RULING.
+ *
+ * The Light half of the `vsebcode.uiFontExperiment` A/B switch (../vsebcodeUiFontExperiment.ts),
+ * which exists only so Geist can be judged against SF Pro and SF Pro Light in real use. When the
+ * experiment is set to "sf-pro-light", `updateFontFamily()` in ../workbench.ts puts this class on
+ * the workbench container next to the inline `-apple-system` family, and takes it off again on
+ * the way out of that mode.
+ *
+ * Weight is inherited, so this single declaration carries Light down to every piece of UI text
+ * that does not state a weight of its own, while anything that does -- semibold titles, bold
+ * labels -- keeps what it asked for. No remapping and no `!important`: nothing else states a
+ * weight on the workbench container, so plain inheritance is all this needs.
+ */
+.monaco-workbench.mac:not(.web).uifont-sf-light {
+	font-weight: 300;
+}

@@ -51,6 +51,7 @@ import { AccessibleViewRegistry } from '../../platform/accessibility/browser/acc
 import { NotificationAccessibleView } from './parts/notifications/notificationAccessibleView.js';
 import { IMarkdownRendererService } from '../../platform/markdown/browser/markdownRenderer.js';
 import { EditorMarkdownCodeBlockRenderer } from '../../editor/browser/widget/markdownRenderer/browser/editorMarkdownCodeBlockRenderer.js';
+import { resolveUiFontTreatment, UiFontExperiment, UI_FONT_EXPERIMENT_SETTING, UI_FONT_SF_LIGHT_CLASS } from './vsebcodeUiFontExperiment.js';
 
 export interface IWorkbenchOptions {
 
@@ -236,7 +237,7 @@ export class Workbench extends Layout {
 			if (e.affectsConfiguration('workbench.fontAliasing')) {
 				this.updateFontAliasing(configurationService);
 			}
-			if (e.affectsConfiguration('workbench.experimental.fontFamily')) {
+			if (e.affectsConfiguration('workbench.experimental.fontFamily') || e.affectsConfiguration(UI_FONT_EXPERIMENT_SETTING) /* [VSebCode debug] */) {
 				this.updateFontFamily(configurationService);
 			}
 			if (e.affectsConfiguration('workbench.experimental.fontSize')) {
@@ -302,14 +303,29 @@ export class Workbench extends Layout {
 	}
 
 	private fontFamily: string | undefined;
+	private uiFontExperiment: UiFontExperiment | undefined;
 	private updateFontFamily(configurationService: IConfigurationService) {
 		let family = configurationService.getValue<string>('workbench.experimental.fontFamily');
 
-		if (this.fontFamily === family) {
+		// [VSebCode debug] Temporary UI font A/B switch, see ./vsebcodeUiFontExperiment.ts.
+		const experiment = configurationService.getValue<UiFontExperiment>(UI_FONT_EXPERIMENT_SETTING);
+
+		if (this.fontFamily === family && this.uiFontExperiment === experiment) {
 			return;
 		}
 
 		this.fontFamily = family;
+		this.uiFontExperiment = experiment;
+
+		// [VSebCode debug] The experiment speaks only while no explicit family is set, so the
+		// precedence reads: `workbench.experimental.fontFamily` -> this switch -> the Geist
+		// default in ./media/geistUiFont.css. Both branches below stay the one writer of the
+		// inline `--vscode-workbench-font-family`.
+		const treatment = family ? undefined : resolveUiFontTreatment(experiment);
+		this.mainContainer.classList.toggle(UI_FONT_SF_LIGHT_CLASS, treatment?.light === true);
+		if (treatment) {
+			family = treatment.fontFamily;
+		}
 
 		if (family) {
 			this.mainContainer.style.setProperty('--vscode-workbench-font-family', family);
