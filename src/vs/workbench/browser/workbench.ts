@@ -7,7 +7,6 @@ import './style.js';
 import { runWhenWindowIdle } from '../../base/browser/dom.js';
 import { Event, Emitter, setGlobalLeakWarningThreshold } from '../../base/common/event.js';
 import { RunOnceScheduler, timeout } from '../../base/common/async.js';
-import { getFontSize, updateDefaultSize } from '../../base/common/font.js';
 import { isFirefox, isSafari, isChrome } from '../../base/browser/browser.js';
 import { mark } from '../../base/common/performance.js';
 import { onUnexpectedError, setUnexpectedErrorHandler } from '../../base/common/errors.js';
@@ -51,7 +50,7 @@ import { AccessibleViewRegistry } from '../../platform/accessibility/browser/acc
 import { NotificationAccessibleView } from './parts/notifications/notificationAccessibleView.js';
 import { IMarkdownRendererService } from '../../platform/markdown/browser/markdownRenderer.js';
 import { EditorMarkdownCodeBlockRenderer } from '../../editor/browser/widget/markdownRenderer/browser/editorMarkdownCodeBlockRenderer.js';
-import { resolveUiFontTreatment, UiFontExperiment, UI_FONT_EXPERIMENT_SETTING, UI_FONT_SF_LIGHT_CLASS } from './vsebcodeUiFontExperiment.js';
+import { applyUiFontSizeBase, resolveUiFontTreatment, UiFontExperiment, UI_FONT_EXPERIMENT_SETTING, UI_FONT_SF_LIGHT_CLASS, UI_FONT_SIZE_EXPERIMENT_SETTING } from './vsebcodeUiFontExperiment.js';
 
 export interface IWorkbenchOptions {
 
@@ -240,7 +239,12 @@ export class Workbench extends Layout {
 			if (e.affectsConfiguration('workbench.experimental.fontFamily') || e.affectsConfiguration(UI_FONT_EXPERIMENT_SETTING) /* [VSebCode debug] */) {
 				this.updateFontFamily(configurationService);
 			}
-			if (e.affectsConfiguration('workbench.experimental.fontSize')) {
+			// [VSebCode debug] This handler runs *after* every part's: `startup()` builds them
+			// through `initLayout()` and each registers its own configuration listener while being
+			// built, well before `registerListeners()` gets here, and the emitter delivers in
+			// registration order. So the parts refresh the shared base themselves rather than
+			// waiting on this one -- see ./vsebcodeUiFontExperiment.ts.
+			if (e.affectsConfiguration('workbench.experimental.fontSize') || e.affectsConfiguration(UI_FONT_SIZE_EXPERIMENT_SETTING) /* [VSebCode debug] */) {
 				this.updateFontSize(configurationService);
 			}
 		}));
@@ -336,13 +340,17 @@ export class Workbench extends Layout {
 
 	private fontSize: number | undefined;
 	private updateFontSize(configurationService: IConfigurationService) {
-		const configuredSize = getFontSize(configurationService, 'workbench.experimental.fontSize', 13);
+		// [VSebCode debug] `applyUiFontSizeBase()` is `workbench.experimental.fontSize` resolved
+		// with `vsebcode.uiFontSizeExperiment` folded in underneath it, written into the shared
+		// `FONT.default*Size` record -- see ./vsebcodeUiFontExperiment.ts. The base it hands back
+		// already accounts for the experiment, so it stays the whole memoization key below: an
+		// experiment-only change moves it and is not swallowed, while a re-fire at the same value
+		// still early-returns.
+		const configuredSize = applyUiFontSizeBase(configurationService);
 
 		if (this.fontSize === configuredSize) {
 			return;
 		}
-
-		updateDefaultSize(configuredSize);
 
 		this.fontSize = configuredSize;
 		this.mainContainer.style.setProperty('--vscode-workbench-font-size', `${configuredSize}px`);

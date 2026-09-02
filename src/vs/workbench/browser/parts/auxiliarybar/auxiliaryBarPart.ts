@@ -35,6 +35,7 @@ import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { VisibleViewContainersTracker } from '../visibleViewContainersTracker.js';
 import { Extensions } from '../../panecomposite.js';
 import { FONT, getFontSize, updateSidebarSize } from '../../../../base/common/font.js';
+import { applyUiFontSizeBase, UI_FONT_SIZE_EXPERIMENT_SETTING } from '../../vsebcodeUiFontExperiment.js';
 import { SidebarPart } from '../sidebar/sidebarPart.js';
 
 interface IAuxiliaryBarPartConfiguration {
@@ -147,7 +148,7 @@ export class AuxiliaryBarPart extends AbstractPaneCompositePart {
 			} else if (e.affectsConfiguration(LayoutSettings.ACTIVITY_BAR_AUTO_HIDE)) {
 				this.onDidChangeActivityBarLocation();
 			}
-			if (e.affectsConfiguration(SidebarPart.fontSizeSettingsKey)) {
+			if (e.affectsConfiguration(SidebarPart.fontSizeSettingsKey) || e.affectsConfiguration(UI_FONT_SIZE_EXPERIMENT_SETTING) /* [VSebCode debug] */) {
 				this.applyAuxiliaryBarFontSize();
 			}
 			if (e.affectsConfiguration('workbench.sideBar.experimental.fontFamily')) {
@@ -231,6 +232,9 @@ export class AuxiliaryBarPart extends AbstractPaneCompositePart {
 		if (!target) {
 			return;
 		}
+
+		// [VSebCode debug] Refresh the shared base first: this handler runs before the workbench's.
+		applyUiFontSizeBase(this.configurationService);
 
 		const configuredSize = getFontSize(this.configurationService, SidebarPart.fontSizeSettingsKey, FONT.defaultSidebarSize);
 

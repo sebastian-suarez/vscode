@@ -48,6 +48,7 @@ import { MarkdownString } from '../../../../base/common/htmlContent.js';
 import { IManagedHoverTooltipMarkdownString } from '../../../../base/browser/ui/hover/hover.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { FONT, getFontSize, updateTabsSize } from '../../../../base/common/font.js';
+import { applyUiFontSizeBase, UI_FONT_SIZE_EXPERIMENT_SETTING } from '../../vsebcodeUiFontExperiment.js';
 import { applyDragImage } from '../../../../base/browser/ui/dnd/dnd.js';
 
 export class EditorCommandsContextActionRunner extends ActionRunner {
@@ -162,7 +163,7 @@ export abstract class EditorTabsControl extends Themable implements IEditorTabsC
 			if (e.affectsConfiguration('workbench.tabs.experimental.fontFamily')) {
 				this.applyTabsFontFamily();
 			}
-			if (e.affectsConfiguration('workbench.tabs.experimental.fontSize')) {
+			if (e.affectsConfiguration('workbench.tabs.experimental.fontSize') || e.affectsConfiguration(UI_FONT_SIZE_EXPERIMENT_SETTING) /* [VSebCode debug] */) {
 				this.applyTabsFontSize();
 				this.updateTabHeight();
 				this.groupView.relayout();
@@ -216,6 +217,9 @@ export abstract class EditorTabsControl extends Themable implements IEditorTabsC
 		if (!target) {
 			return;
 		}
+
+		// [VSebCode debug] Refresh the shared base first: this handler runs before the workbench's.
+		applyUiFontSizeBase(this.configurationService);
 
 		const configuredSize = getFontSize(this.configurationService, 'workbench.tabs.experimental.fontSize', FONT.defaultTabsSize);
 
