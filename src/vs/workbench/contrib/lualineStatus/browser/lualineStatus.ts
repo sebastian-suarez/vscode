@@ -52,37 +52,71 @@ const MINUS_SIGN = '\u2212';
 const BLANK_LABEL = ' ';
 
 /**
- * Status bar entries the fork's composition drops. They stay registered - so the status bar's
- * context menu can bring any of them back - they just start out hidden.
+ * Status bar entries the fork's composition drops, in the seed generations that added them.
+ * They stay registered - so the status bar's context menu can bring any of them back - they
+ * just start out hidden.
  *
- * `status.problems` is the stock markers readout, replaced by the two-tier problems segment
- * below. The rest are readouts this bar has no room for: the remote indicator, the source
- * control sync counter, the indentation picker, the notification bell and the language status
- * braces. Everything the stock bar only shows in a scenario (debug, tasks, ports, zoom, screen
- * reader, ...) is left alone and appears exactly as it does in stock.
+ * The generations are the upgrade contract. Every profile remembers the generation it was
+ * seeded at, and a boot hides only the ids from generations newer than that, so an answer the
+ * owner has already given stands: a readout brought back through the context menu is never
+ * dropped a second time, and one that was never offered still gets its one offer. A virgin
+ * profile takes every generation in a single pass. To drop something else later, add a
+ * generation with the new ids and nothing else - never extend an old one, because the profiles
+ * that already passed it will not look at it again.
+ *
+ * Generation 1: `status.problems` is the stock markers readout, replaced by the two-tier
+ * problems segment below; the rest are readouts this bar has no room for - the remote
+ * indicator, the source control sync counter, the indentation picker, the notification bell
+ * and the language status braces.
+ *
+ * Generation 2: the node auto attach chip and the cursor-on-problem text. The latter is still
+ * switched on in the fork's baked defaults (`problems.showCurrentInStatus`) - it is dropped
+ * from the bar the same way as everything else here, so it comes back with a right click.
+ *
+ * Everything the stock bar only shows in a scenario (debug session, tasks, ports, zoom, screen
+ * reader, git blame, ...) is left alone and appears exactly as it does in stock.
  */
-const DROPPED_ENTRY_IDS = [
-	'status.host',
-	'status.scm.1',
-	'status.editor.indentation',
-	'status.notifications',
-	'status.languageStatus',
-	'status.problems'
+const DROPPED_ENTRY_GENERATIONS: readonly { readonly generation: number; readonly ids: readonly string[] }[] = [
+	{
+		generation: 1,
+		ids: [
+			'status.host',
+			'status.scm.1',
+			'status.editor.indentation',
+			'status.notifications',
+			'status.languageStatus',
+			'status.problems'
+		]
+	},
+	{
+		generation: 2,
+		ids: [
+			'vscode.debug-auto-launch.status.debug.autoAttach',
+			'statusbar.currentProblem'
+		]
+	}
 ];
 
+/** The newest generation, and so the value a seeded profile stores. */
+const DROP_SEED_GENERATION = DROPPED_ENTRY_GENERATIONS[DROPPED_ENTRY_GENERATIONS.length - 1].generation;
+
 /**
- * Composes the fork's status bar: it seeds the drop set once per profile and owns the three
- * entries the bar adds of its own. Everything else in the bar is stock, restyled from CSS.
+ * Composes the fork's status bar: it carries each profile up to the current generation of the
+ * drop set and owns the three entries the bar adds of its own. Everything else in the bar is
+ * stock, restyled from CSS.
  */
 export class LualineStatus extends Disposable implements IWorkbenchContribution {
 
 	static readonly ID = 'workbench.contrib.lualineStatus';
 
 	/**
-	 * Marks that the drop set above was applied. It sits in the same storage scope the status
-	 * bar keeps its hidden entries in (`workbench.statusbar.hidden`, `StorageScope.PROFILE`),
-	 * so both travel together: a profile that has been seeded is never seeded again, and an
-	 * entry the owner brings back through the context menu stays back across relaunches.
+	 * Holds the generation of the drop set a profile has been seeded through. It sits in the
+	 * same storage scope the status bar keeps its hidden entries in
+	 * (`workbench.statusbar.hidden`, `StorageScope.PROFILE`), so the two travel together: the
+	 * seed can never run against a hidden set it did not write.
+	 *
+	 * The first shape of this key was a plain boolean, written before there were generations,
+	 * and it means the same thing generation 1 does.
 	 */
 	private static readonly SEED_STORAGE_KEY = 'workbench.statusbar.vsebcode.dropSeed';
 
@@ -101,15 +135,33 @@ export class LualineStatus extends Disposable implements IWorkbenchContribution 
 	}
 
 	private seedDroppedEntries(): void {
-		if (this.storageService.getBoolean(LualineStatus.SEED_STORAGE_KEY, StorageScope.PROFILE, false)) {
+		const seededGeneration = this.readSeededGeneration();
+		if (seededGeneration >= DROP_SEED_GENERATION) {
 			return;
 		}
 
-		for (const id of DROPPED_ENTRY_IDS) {
-			this.statusbarService.updateEntryVisibility(id, false);
+		for (const { generation, ids } of DROPPED_ENTRY_GENERATIONS) {
+			if (generation <= seededGeneration) {
+				continue; // already offered to this profile, and its answer stands
+			}
+
+			for (const id of ids) {
+				this.statusbarService.updateEntryVisibility(id, false);
+			}
 		}
 
-		this.storageService.store(LualineStatus.SEED_STORAGE_KEY, true, StorageScope.PROFILE, StorageTarget.USER);
+		this.storageService.store(LualineStatus.SEED_STORAGE_KEY, DROP_SEED_GENERATION, StorageScope.PROFILE, StorageTarget.USER);
+	}
+
+	private readSeededGeneration(): number {
+		const marker = this.storageService.get(LualineStatus.SEED_STORAGE_KEY, StorageScope.PROFILE);
+		if (!marker) {
+			return 0; // never seeded
+		}
+
+		const generation = parseInt(marker, 10);
+
+		return isNaN(generation) ? 1 : generation; // the boolean the first shape wrote
 	}
 }
 
@@ -229,7 +281,7 @@ class DiffStatusEntry extends Disposable {
 			append(this.content, $(`span.${tiers[index].className}`, undefined, tiers[index].label));
 		}
 
-		const ariaLabel = localize('status.vsebcode.diff.ariaLabel', "{0} lines added, {1} lines changed, {2} lines removed", counts.added, counts.modified, counts.deleted);
+		const ariaLabel = this.getAriaLabel(counts);
 		const props: IStatusbarEntry = {
 			name: localize('status.vsebcode.diff', "Working Tree Changes"),
 			text: BLANK_LABEL,
@@ -243,6 +295,14 @@ class DiffStatusEntry extends Disposable {
 		} else {
 			this.entry.value = this.statusbarService.addEntry(props, DIFF_ENTRY_ID, StatusbarAlignment.LEFT, DIFF_PRIORITY);
 		}
+	}
+
+	private getAriaLabel(counts: { added: number; modified: number; deleted: number }): string {
+		return [
+			counts.added === 1 ? localize('1.lineAdded', "1 line added") : localize('N.linesAdded', "{0} lines added", counts.added),
+			counts.modified === 1 ? localize('1.lineChanged', "1 line changed") : localize('N.linesChanged', "{0} lines changed", counts.modified),
+			counts.deleted === 1 ? localize('1.lineRemoved', "1 line removed") : localize('N.linesRemoved', "{0} lines removed", counts.deleted)
+		].join(', ');
 	}
 }
 
