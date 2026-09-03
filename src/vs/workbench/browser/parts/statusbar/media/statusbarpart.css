@@ -332,3 +332,114 @@
 	outline: 1px dashed var(--vscode-contrastActiveBorder);
 	outline-offset: calc(var(--vscode-workbench-statusbar-font-size) * -0.083333)
 }
+
+
+
+/*** M14: the bar reads as flat text segments ***/
+
+/* The composition is `branch · changes · problems` on the left and the editor readouts on the
+ * right, every one of them plain text in `statusBar.foreground` at the stock 12px on the stock
+ * 22px band. Only the insets, the segment colours and the separators are set here: the part's
+ * paint (D9/D10) and the corner radii the grid work above left behind (M13) are untouched.
+ * macOS native only, like the rest of the fork's cosmetics (D14). */
+
+/* No left segment carries an inset of its own - the separator gutters below own all of the
+ * spacing between them - so the hover feedback hugs the text of each one. The branch segment
+ * is the stock source control entry, so it is answered here; the two the fork composes itself
+ * are answered further down, where their label is taken over wholesale. */
+.monaco-workbench.mac:not(.web) .part.statusbar > .left-items > .statusbar-item[id="status.scm.0"] > .statusbar-item-label {
+	margin: 0;
+	padding: 0;
+}
+
+/* The bar opens 12px in from the window edge and closes 16px short of it: the status bar owns
+ * the window's bottom right corner since M13 and the arc needs that much clearance. */
+.monaco-workbench.mac:not(.web) .part.statusbar > .left-items > .statusbar-item.left.first-visible-item {
+	padding-left: 12px;
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar > .right-items > .statusbar-item.right.last-visible-item {
+	padding-right: 9px; /* + the 7px label inset below reads as 16px of clearance */
+}
+
+/* The right group reads as a row of readouts 14px apart. */
+.monaco-workbench.mac:not(.web) .part.statusbar > .right-items > .statusbar-item.right > .statusbar-item-label {
+	margin: 0;
+	padding: 0 7px;
+}
+
+/* The branch glyph and the problem glyphs read at the type size, not at the 16px a status bar
+ * codicon is otherwise set in. */
+.monaco-workbench.mac:not(.web) .part.statusbar > .left-items > .statusbar-item[id="status.scm.0"] .codicon[class*='codicon-'],
+.monaco-workbench.mac:not(.web) .part.statusbar > .left-items > .statusbar-item[id^="status.vsebcode."] .codicon[class*='codicon-'] {
+	font-size: var(--vscode-workbench-statusbar-font-size);
+}
+
+/* The two segments the fork composes itself paint their own multi-coloured DOM through
+ * `IStatusbarEntry.content` and keep the stock label blank. The label is stretched across the
+ * whole segment because it is what carries the hitbox, the hover feedback, the focus outline
+ * and the screen reader name; the painted content is what gives the segment its width and
+ * sits on top (both are positioned, so tree order decides), passing every pointer through. */
+.monaco-workbench.mac:not(.web) .part.statusbar > .left-items > .statusbar-item[id^="status.vsebcode."] {
+	position: relative;
+	margin-left: 22px; /* the separator gutter, drawn by the `::before` below */
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar > .left-items > .statusbar-item[id^="status.vsebcode."] > .statusbar-item-label {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar .vsebcode-status-segment {
+	position: relative;
+	display: flex;
+	align-items: center;
+	height: 100%;
+	white-space: pre;
+	pointer-events: none;
+}
+
+/* A dot marks each seam between the left segments. It rides in the gutter margin of the
+ * segment that follows it, so a segment that goes takes its separator with it, and whichever
+ * segment ends up first in the bar draws none at all. */
+.monaco-workbench.mac:not(.web) .part.statusbar > .left-items > .statusbar-item[id^="status.vsebcode."]::before {
+	content: '·';
+	position: absolute;
+	top: 0;
+	right: 100%;
+	width: 22px; /* 9px, the dot, 9px */
+	text-align: center;
+	opacity: 0.35;
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar > .left-items > .statusbar-item.first-visible-item[id^="status.vsebcode."] {
+	margin-left: 0;
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar > .left-items > .statusbar-item.first-visible-item[id^="status.vsebcode."]::before {
+	content: none;
+}
+
+/* The change counts speak the editor gutter's own palette and the problem counts the one the
+ * markers UI gives its icons, so a glance at the bar and a glance at the file agree. */
+.monaco-workbench.mac:not(.web) .part.statusbar .vsebcode-status-added {
+	color: var(--vscode-editorGutter-addedBackground);
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar .vsebcode-status-modified {
+	color: var(--vscode-editorGutter-modifiedBackground);
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar .vsebcode-status-deleted {
+	color: var(--vscode-editorGutter-deletedBackground);
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar .vsebcode-status-error {
+	color: var(--vscode-problemsErrorIcon-foreground);
+}
+
+.monaco-workbench.mac:not(.web) .part.statusbar .vsebcode-status-warning {
+	color: var(--vscode-problemsWarningIcon-foreground);
+}

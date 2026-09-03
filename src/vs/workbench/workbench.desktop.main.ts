@@ -183,6 +183,9 @@ import './contrib/policyExport/electron-browser/policyExport.contribution.js';
 // Keybindings Export
 import './contrib/keybindingsExport/electron-browser/keybindingsExport.contribution.js';
 
+// Status Bar composition
+import './contrib/lualineStatus/browser/lualineStatus.contribution.js';
+
 //#endregion
 
 
