@@ -113,9 +113,16 @@ SSH_OPTS=(
 
 VM_IP=""
 
-# Single-quote a value for the guest shell.
+# Quote a value so the guest shell reads it back unchanged.
+#
+# `%q` and not hand-rolled single quoting, because the output gets quoted a
+# second time: the `-- <extra args>` string is built out of shquote calls and
+# then handed to run_guest, which quotes the whole thing again for the
+# `extra_args=` line it writes. Anything that does not survive that second pass
+# reaches the guest as an unterminated quote and every launch carrying extra
+# args dies there before it reaches `eval "set -- $extra_args"`.
 shquote() {
-	printf "'%s'" "${1//\'/\'\\\'\'}"
+	printf '%q' "$1"
 }
 
 # run_guest [VAR=value ...] <<'EOS' ... EOS
