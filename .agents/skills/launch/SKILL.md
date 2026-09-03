@@ -1,6 +1,6 @@
 ---
 name: launch
-description: "Launch Code OSS (VS Code from sources) into an isolated throwaway profile with unique debug ports so you can drive it with @playwright/cli AND attach a Node debugger via dap-cli in the same session. Use when working on VS Code itself and you want to interact with the running workbench, automate chat or UI flows, test UI features, take screenshots, set breakpoints in the renderer / extension host / main process, or combine UI driving with debugging."
+description: "Launch Code OSS (VS Code from sources) into an isolated throwaway profile with unique debug ports so you can drive it with @playwright/cli AND attach a Node debugger via dap-cli in the same session - on the host, or inside the vsebcode VM for clean, reproducible screenshots that never touch the user's desktop. Use when working on VS Code itself and you want to interact with the running workbench, automate chat or UI flows, test UI features, take screenshots for a visual-validation round, set breakpoints in the renderer / extension host / main process, or combine UI driving with debugging."
 ---
 
 # Code OSS Dev - Launch + Debug
@@ -13,6 +13,15 @@ You're working on VS Code itself and you want to:
 4. Run multiple instances at once without port conflicts.
 
 This skill provides a launcher that clones an authenticated user-data-dir to a throwaway temp folder, picks free ports for every debug surface, and prints them as JSON so you can pick them up programmatically.
+
+There are **two modes**:
+
+| Mode | Launcher | Profile | Use it for |
+|------|----------|---------|------------|
+| **Host** | `scripts/launch.sh` | clone of the authenticated profile | chat / agent flows, debugging, anything needing sign-in, and final checkpoints |
+| **VM** | `scripts/launch-vm.sh` | virgin (the guest has no authed profile) | **visual-validation rounds - the default per D23** |
+
+Both print a JSON line and both are driven over CDP the same way; in VM mode you point your tooling at the tunnelled `hostCdpPort`. See [VM mode](#vm-mode---isolated-visual-validation-d23) below.
 
 The clone is **slim**: workspace storage, browser caches, file history, cached VSIX backups, and old logs are excluded by default. Auth tokens themselves live in the OS keychain (shared automatically) plus small files inside `User/globalStorage` - both of which *are* preserved.
 
@@ -91,6 +100,85 @@ PID=$(jq -r .pid            <<<"$INFO")
 | `extHostPort` (`--inspect-extensions`) | Extension host (Node) | `dap-cli` (Node inspector protocol) |
 | `mainPort` (`--inspect`) | Electron main process (Node) | `dap-cli` (Node inspector protocol) |
 | `agentHostPort` (`--inspect-agenthost`) | Agent host process (Node) | `dap-cli` (Node inspector protocol) |
+
+## VM mode - isolated visual validation (D23)
+
+**D23: VM mode is the default for visual-validation rounds.** Host mode stays for anything that needs the authenticated profile (chat, agent, Copilot flows) and for final checkpoints, where the real host build is what gets signed off.
+
+Why a VM at all: a `screencapture` inside the guest is the *real* compositor - vibrancy, blur, shadows, the lot - at a fixed 1512x982@2x, on a desktop with no other windows and no notifications. The picture is the same on every round, the workbench never steals the user's focus, and nothing covers the host screen while a round runs.
+
+**Nothing builds in the guest.** The umbrella repo is shared into the VM and the guest runs the host's `out/`, `node_modules/` and `.build/electron` directly (host and guest are both arm64 macOS). The host owns `watch` and git; the guest is a viewer.
+
+### Prerequisites (VM mode)
+
+- `tart` on the host, and the `vsebcode-vm` VM (macOS 26 guest, arm64).
+- The ssh key at `~/.ssh/vsebcode_vm` (passwordless key auth, user `admin`, passwordless sudo in the guest).
+- A current build on the **host** - `npm run watch` or `npm run compile` as usual. The guest launches whatever `out/` currently holds.
+
+Override with `VSEBCODE_VM_NAME`, `VSEBCODE_VM_SSH_USER`, `VSEBCODE_VM_SSH_KEY`, `VSEBCODE_VM_STATE_DIR` if any of those move.
+
+### Launch
+
+```bash
+# LAUNCH_VM=<dir-of-this-SKILL.md>/scripts/launch-vm.sh
+INFO=$("$LAUNCH_VM" | tail -n1)
+CDP=$(jq -r .hostCdpPort <<<"$INFO")
+ID=$(jq -r .instanceId  <<<"$INFO")
+```
+
+The script does all of this before it returns, so there is nothing to poll afterwards:
+
+1. **Ensures the VM is running** - starts `tart run --no-graphics --dir=vsebcode:<umbrella repo>` detached if needed, then waits for `tart ip` and for ssh to answer.
+2. **Re-applies the display mode.** The guest reverts to 1024x768@2x on *every* boot, ignoring the VZ display config. The fix is idempotent and instant: parse the persistent screen id out of `displayplacer list` and set `1512x982 ... scaling:on`. If it fails the script warns and continues - captures still work, just at the fallback resolution.
+3. **Waits until the GUI session is capture-ready.** Right after boot `screencapture` fails with "could not create image from display" until the session is up, so it probes in a loop.
+4. **Launches Code OSS in the guest** on a fresh short virgin user-data-dir and a free CDP port scanned out of 9222-9271 (so several instances coexist), with a per-instance guest log.
+5. **Waits for CDP** inside the guest.
+6. **Opens a host -> guest tunnel** (`ssh -f -N -L`) so host-side CDP tooling works against `127.0.0.1`, and verifies CDP answers through it.
+
+```json
+{"instanceId":"20260903-015603-72595","vm":"vsebcode-vm","ip":"192.168.64.2","guestCdpPort":9223,"hostCdpPort":62529,"tunnelPid":72647,"guestUserDataDir":"/tmp/vseb-20260903-015603-72595","guestExtensionsDir":"...-ext","guestSharedDataDir":"...-shared","guestLogFile":"/tmp/vseb-20260903-015603-72595.log","guestRepo":"/Volumes/My Shared Files/vsebcode/vscode","stateFile":"..."}
+```
+
+Everything below in this file - `@playwright/cli`, `monaco-paste.sh`, `dap-cli` - works unchanged against `hostCdpPort`:
+
+```bash
+npx @playwright/cli -s=$PW_SESSION attach --cdp=http://127.0.0.1:$CDP
+```
+
+Extra `code.sh` args are forwarded the same way as in host mode: `"$LAUNCH_VM" -- <args>`.
+
+### Capture
+
+```bash
+# CAPTURE_VM=<dir-of-this-SKILL.md>/scripts/capture-vm.sh
+"$CAPTURE_VM" "$PWD/screenshots/round-1/after.png"      # capture now
+"$CAPTURE_VM" "$PWD/screenshots/round-1/after.png" 2    # let the UI settle 2s first
+```
+
+It runs `screencapture -x` in the guest, `scp`s the PNG to the host path you gave, removes the guest temp file, and prints the host path on stdout (dimensions go to stderr). A correct capture is **3024x1964** px; anything else means step 2 above did not take.
+
+> Prefer this over `@playwright/cli screenshot` for visual rounds. Playwright screenshots come from the renderer, so they miss vibrancy, window shadow and everything else the compositor contributes - which is usually the exact thing under review.
+
+### Kill
+
+```bash
+"$LAUNCH_VM" --kill "$ID"     # one instance
+"$LAUNCH_VM" --kill all       # every instance this host launched
+"$LAUNCH_VM" --kill all --stop-vm
+"$LAUNCH_VM" --stop-vm        # same thing; --stop-vm implies --kill all
+```
+
+`--kill` closes the tunnel, kills the guest process tree and **waits until it is really gone**, then removes the guest user-data / extensions / shared dirs. The guest log is left behind for post-mortems. **The VM keeps running** unless you pass `--stop-vm` - leave it up between rounds, booting it costs far more than a launch does.
+
+### Constraints that bite
+
+- **The mount path has spaces**: `/Volumes/My Shared Files/vsebcode`. Always quote it in guest commands.
+- **`export PATH=/usr/local/bin:$PATH` first.** Guest `node` and `displayplacer` live there and it is *not* on the non-interactive ssh PATH.
+- **The guest login shell is zsh.** Keep bare `~` out of anything you send over ssh - it triggers named-directory expansion. Use absolute paths. The scripts also pass values into guest scripts as assignments in the script body rather than argv, so that `pgrep -f <path>` cannot match the shell running it.
+- **The guest must never write to the mount.** The host owns watch and git. The launcher sets `VSCODE_SKIP_PRELAUNCH=1` so nothing tries to download electron, compile or install built-ins into the shared repo, and every writable path it uses is guest-local under `/tmp`.
+- **Virgin profile only.** The guest has no authed profile, and none of host mode's authed-profile copying is done here. If a round needs sign-in, run it in host mode.
+- **User-data-dir paths must stay short.** Past roughly 103 characters the main process dies with `listen EINVAL ... main.sock`, which is why the guest UDD is `/tmp/vseb-<instance-id>`.
+- **Relaunch hazard.** A dying instance keeps writing state after its port frees, so never reuse or delete a UDD until its whole process tree is gone. `--kill` already waits; do the same if you kill by hand.
 
 ## Drive the UI with @playwright/cli
 
@@ -261,6 +349,8 @@ npx @playwright/cli -s=$PW_SESSION screenshot --filename="$SHOTS/after-launch.pn
 
 > Keep screenshots inside the workspace, not `/tmp`, so they survive for review.
 
+> For a **visual-validation round**, use `scripts/capture-vm.sh` in [VM mode](#vm-mode---isolated-visual-validation-d23) instead. A Playwright screenshot is a renderer capture: it has no vibrancy, no window shadow, and no compositor at all.
+
 For wide windows, `--full-page` can make layout easier to inspect, and element screenshots are useful when a snapshot gives a stable ref for the panel you care about:
 
 ```bash
@@ -327,6 +417,8 @@ rm -rf "$(dirname "$LOG")"
 
 Code OSS is a full Electron app and easily eats 1-4 GB. Always clean up.
 
+In VM mode, `"$LAUNCH_VM" --kill "$ID"` does the whole cleanup for you (tunnel, guest process tree, guest dirs, host state file). Leave the VM itself running between rounds.
+
 ## Troubleshooting
 
 - **"Sent env to running instance. Terminating..."** - The dynamic `--user-data-dir` should prevent this. If you see it, another Code OSS is using the same profile path; pass `--source-user-data-dir` to a different source or check that the temp copy actually happened (`ls "$(jq -r .userDataDir <<<"$INFO")"`).
@@ -335,4 +427,8 @@ Code OSS is a full Electron app and easily eats 1-4 GB. Always clean up.
 - **`launch.sh` exits non-zero with a log tail** - either pre-launch failed, `code.sh` died before CDP came up, or CDP never opened within 90s. The tail printed to stderr is from `runDir/code.log` - read it to diagnose.
 - **Snapshot shows the wrong page or no expected controls** - use `tab-list`, switch with `tab-select <index>` if needed, then re-snapshot before interacting.
 - **CLI typing commands complete but the input stays empty** - focus chat with the platform shortcut, use `press` or clipboard paste rather than `fill` / `type`, then verify the input state before sending.
+- **VM mode: the capture is not 3024x1964** - the guest fell back to 1024x768@2x because the display step failed (see the warning on stderr). Re-run `launch-vm.sh`, or apply it by hand: parse `Persistent screen id` from `displayplacer list` in the guest and feed it to `displayplacer "id:<ID> res:1512x982 hz:60 color_depth:7 scaling:on origin:(0,0) degree:0"`. Remember `export PATH=/usr/local/bin:$PATH` first.
+- **VM mode: `screencapture` fails with "could not create image from display"** - the guest GUI session is not up yet. It is a boot-time race; retry in a loop, which both VM scripts already do.
+- **VM mode: `launch-vm.sh` times out waiting for CDP** - it dumps the guest log tail to stderr. The usual cause is a stale build: the guest runs the host's `out/`, so make sure `npm run watch` / `npm run compile` has actually finished on the host.
+- **VM mode: the window shows an old build** - workbench code is read at window start and the guest reads the host's `out/` over the share. Kill the instance and launch again after the host build settles.
 - **Auth missing in the launched window** - confirm the source profile is actually authed (`ls "$SOURCE_UDD"` should contain `User/`, and `ls "$SOURCE_UDD/User/globalStorage"` should show persisted extension state). Some auth lives in the OS keychain - that's per-user, so it follows automatically as long as you're running as the same user.
