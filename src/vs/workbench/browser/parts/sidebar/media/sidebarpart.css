@@ -20,6 +20,17 @@
 	background-color: var(--vscode-sideBarTitle-background);
 }
 
+/* Where the status bar sits in the editor column the left hand side bar runs the full height of
+ * the window and closes its bottom left corner, so its focus outline rounds that corner the way
+ * the status bar's rounds the one it still owns (`statusbarpart.css`). */
+.monaco-workbench.mac.statusbar-in-editor-column:not(.fullscreen) .part.sidebar.left:focus {
+	border-bottom-left-radius: 10px;
+}
+.monaco-workbench.mac.macos-tahoe.statusbar-in-editor-column:not(.fullscreen) .part.sidebar.left:focus {
+	/* macOS Tahoe increased rounded corners size */
+	border-bottom-left-radius: 16px;
+}
+
 /* With an inline title bar the header of the left hand side bar — the composite bar, when
  * the activity bar is configured to sit on top — takes the place of the title bar row and
  * hosts the native window controls, so it takes that row's height. The title underneath it

@@ -38,6 +38,13 @@
 	border-bottom-left-radius: 16px;
 }
 
+/* Where the status bar sits in the editor column it no longer reaches the bottom left corner of
+ * the window: the side bar runs the full height and closes that corner instead, and rounds it in
+ * `sidebarpart.css`. So the focus outline only rounds the corner the status bar still owns. */
+.monaco-workbench.mac.statusbar-in-editor-column:not(.fullscreen) .part.statusbar:focus {
+	border-bottom-left-radius: 0;
+}
+
 .monaco-workbench .part.statusbar:not(:focus).status-border-top::after {
 	/* Top border only visible unless focused to make room for focus outline */
 	content: '';

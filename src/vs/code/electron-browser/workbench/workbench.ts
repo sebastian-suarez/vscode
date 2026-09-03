@@ -121,6 +121,14 @@
 			}
 			layoutInfo.sideBarWidth = Math.min(layoutInfo.sideBarWidth, window.innerWidth - (layoutInfo.activityBarWidth + layoutInfo.editorPartMinWidth + layoutInfo.auxiliaryBarWidth));
 
+			// with the status bar in the editor column every bar beside that
+			// column runs past it to the bottom of the window instead of
+			// stopping on top of a row that spans the window (see
+			// `hasFullHeightSideBar` in `layout.ts`)
+			const sideBarsHeight = layoutInfo.statusBarInEditorColumn
+				? `calc(100% - ${layoutInfo.titleBarHeight}px)`
+				: `calc(100% - ${layoutInfo.titleBarHeight + layoutInfo.statusBarHeight}px)`;
+
 			// part: title
 			if (layoutInfo.titleBarHeight > 0) {
 				const titleDiv = document.createElement('div');
@@ -150,7 +158,7 @@
 				const activityDiv = document.createElement('div');
 				activityDiv.style.position = 'absolute';
 				activityDiv.style.width = `${layoutInfo.activityBarWidth}px`;
-				activityDiv.style.height = `calc(100% - ${layoutInfo.titleBarHeight + layoutInfo.statusBarHeight}px)`;
+				activityDiv.style.height = sideBarsHeight;
 				activityDiv.style.top = `${layoutInfo.titleBarHeight}px`;
 				if (layoutInfo.sideBarSide === 'left') {
 					activityDiv.style.left = '0';
@@ -182,7 +190,7 @@
 				const sideDiv = document.createElement('div');
 				sideDiv.style.position = 'absolute';
 				sideDiv.style.width = `${layoutInfo.sideBarWidth}px`;
-				sideDiv.style.height = `calc(100% - ${layoutInfo.titleBarHeight + layoutInfo.statusBarHeight}px)`;
+				sideDiv.style.height = sideBarsHeight;
 				sideDiv.style.top = `${layoutInfo.titleBarHeight}px`;
 				if (layoutInfo.sideBarSide === 'left') {
 					sideDiv.style.left = `${layoutInfo.activityBarWidth}px`;
@@ -214,7 +222,7 @@
 				const auxSideDiv = document.createElement('div');
 				auxSideDiv.style.position = 'absolute';
 				auxSideDiv.style.width = `${layoutInfo.auxiliaryBarWidth}px`;
-				auxSideDiv.style.height = `calc(100% - ${layoutInfo.titleBarHeight + layoutInfo.statusBarHeight}px)`;
+				auxSideDiv.style.height = sideBarsHeight;
 				auxSideDiv.style.top = `${layoutInfo.titleBarHeight}px`;
 				if (layoutInfo.sideBarSide === 'left') {
 					auxSideDiv.style.right = '0';
@@ -245,10 +253,13 @@
 			if (layoutInfo.statusBarHeight > 0) {
 				const statusDiv = document.createElement('div');
 				statusDiv.style.position = 'absolute';
-				statusDiv.style.width = '100%';
+				// in the editor column the status bar closes that column and not
+				// the window: it starts where the side bar ends and stops where
+				// the auxiliary bar begins
+				statusDiv.style.width = layoutInfo.statusBarInEditorColumn ? `calc(100% - ${layoutInfo.activityBarWidth + layoutInfo.sideBarWidth + layoutInfo.auxiliaryBarWidth}px)` : '100%';
 				statusDiv.style.height = `${layoutInfo.statusBarHeight}px`;
 				statusDiv.style.bottom = '0';
-				statusDiv.style.left = '0';
+				statusDiv.style.left = layoutInfo.statusBarInEditorColumn ? `${layoutInfo.activityBarWidth + layoutInfo.sideBarWidth}px` : '0';
 				if (configuration.workspace && colorInfo.statusBarBackground) {
 					statusDiv.style.backgroundColor = colorInfo.statusBarBackground;
 				} else if (!configuration.workspace && colorInfo.statusBarNoFolderBackground) {

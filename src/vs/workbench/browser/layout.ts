@@ -103,7 +103,8 @@ enum LayoutClasses {
 	MAXIMIZED = 'maximized',
 	WINDOW_BORDER = 'border',
 	NO_SHADOWS = 'no-shadows',
-	FLOATING_PANELS = 'floating-panels'
+	FLOATING_PANELS = 'floating-panels',
+	STATUSBAR_IN_EDITOR_COLUMN = 'statusbar-in-editor-column'
 }
 
 interface IPathToOpen extends IPath {
@@ -1950,7 +1951,8 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			!this.isVisible(Parts.STATUSBAR_PART) ? LayoutClasses.STATUSBAR_HIDDEN : undefined,
 			this.state.runtime.mainWindowFullscreen ? LayoutClasses.FULLSCREEN : undefined,
 			this.isShadowsDisabled() ? LayoutClasses.NO_SHADOWS : undefined,
-			this.isFloatingPanelsEnabled() ? LayoutClasses.FLOATING_PANELS : undefined
+			this.isFloatingPanelsEnabled() ? LayoutClasses.FLOATING_PANELS : undefined,
+			this.hasFullHeightSideBar(this.getSideBarPosition(), this.getPanelPosition()) ? LayoutClasses.STATUSBAR_IN_EDITOR_COLUMN : undefined
 		]);
 	}
 
@@ -2094,6 +2096,13 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 		const isInEditorColumn = this.workbenchGrid.getViewLocation(this.statusBarPartView).length > 1;
 		const belongsInEditorColumn = this.hasFullHeightSideBar(this.getSideBarPosition(), this.getPanelPosition());
+
+		// The grid puts the parts in the DOM as flat siblings, so nothing in a stylesheet can tell
+		// which rows the tree keeps them in. The arrangement is spelled out on the container for
+		// them instead — ahead of the early return below, so that the class is still made true when
+		// the rows already are. `getLayoutClasses` sets it for the grid the descriptor builds.
+		this.mainContainer.classList.toggle(LayoutClasses.STATUSBAR_IN_EDITOR_COLUMN, belongsInEditorColumn);
+
 		if (isInEditorColumn === belongsInEditorColumn) {
 			return;
 		}

@@ -244,6 +244,7 @@ export interface IPartsSplash {
 		sideBarWidth: number;
 		auxiliaryBarWidth: number;
 		statusBarHeight: number;
+		statusBarInEditorColumn?: boolean;
 		windowBorder: boolean;
 		windowBorderRadius: string | undefined;
 	} | undefined;

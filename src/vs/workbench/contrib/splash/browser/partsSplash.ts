@@ -12,7 +12,8 @@ import { editorBackground, foreground } from '../../../../platform/theme/common/
 import { getThemeTypeSelector, IThemeService } from '../../../../platform/theme/common/themeService.js';
 import { DEFAULT_EDITOR_MIN_DIMENSIONS } from '../../../browser/parts/editor/editor.js';
 import * as themes from '../../../common/theme.js';
-import { IWorkbenchLayoutService, Parts, Position } from '../../../services/layout/browser/layoutService.js';
+import { isHorizontal, IWorkbenchLayoutService, Parts, Position } from '../../../services/layout/browser/layoutService.js';
+import { isInlineTitleBar } from '../../../browser/inlineTitleBar.js';
 import { IWorkbenchEnvironmentService } from '../../../services/environment/common/environmentService.js';
 import { IEditorGroupsService } from '../../../services/editor/common/editorGroupsService.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
@@ -97,6 +98,10 @@ export class PartsSplash {
 				sideBarWidth: this._layoutService.isVisible(Parts.SIDEBAR_PART) ? dom.getTotalWidth(assertReturnsDefined(this._layoutService.getContainer(mainWindow, Parts.SIDEBAR_PART))) : 0,
 				auxiliaryBarWidth: this._layoutService.isAuxiliaryBarMaximized() ? Number.MAX_SAFE_INTEGER /* marker for maximized state */ : this._layoutService.isVisible(Parts.AUXILIARYBAR_PART) ? dom.getTotalWidth(assertReturnsDefined(this._layoutService.getContainer(mainWindow, Parts.AUXILIARYBAR_PART))) : 0,
 				statusBarHeight: this._layoutService.isVisible(Parts.STATUSBAR_PART, mainWindow) ? dom.getTotalHeight(assertReturnsDefined(this._layoutService.getContainer(mainWindow, Parts.STATUSBAR_PART))) : 0,
+				// Same condition as `hasFullHeightSideBar` in `layout.ts`, restated over public state:
+				// the splash paints the parts before the workbench exists to ask. The two have to move
+				// together, or the first frame draws an arrangement the grid then rearranges.
+				statusBarInEditorColumn: isInlineTitleBar(mainWindow) && this._layoutService.getSideBarPosition() === Position.LEFT && isHorizontal(this._layoutService.getPanelPosition()),
 				windowBorder: this._layoutService.hasMainWindowBorder(),
 				windowBorderRadius: this._layoutService.getMainWindowBorderRadius()
 			}
