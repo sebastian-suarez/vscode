@@ -32,6 +32,16 @@
 	height: var(--titlebar-height);
 }
 
+/* No line under that header either. Stock draws one because the composite bar on top is a
+ * band the views hang below; here it is the first row of the window, and the row runs on
+ * across the editor column, which ends it with a hairline of its own on top of the
+ * breadcrumbs. A second line over the side bar alone would cut that one band in two at the
+ * seam between the columns, and stop at the seam. With the gate off the header is the stock
+ * band again and keeps the stock separator. */
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header {
+	border-bottom: none;
+}
+
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title,
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title > .title-actions,
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left:has(> .header-or-footer.header) > .composite.title > .global-actions,
