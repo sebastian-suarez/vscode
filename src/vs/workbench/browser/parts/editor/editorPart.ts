@@ -33,6 +33,7 @@ import { SIDE_GROUP } from '../../../services/editor/common/editorService.js';
 import { IBoundarySashes } from '../../../../base/browser/ui/sash/sash.js';
 import { IHostService } from '../../../services/host/browser/host.js';
 import { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';
+import { isMacintosh, isNative } from '../../../../base/common/platform.js';
 import { ServiceCollection } from '../../../../platform/instantiation/common/serviceCollection.js';
 import { EditorAreaFocusContext, EditorPartMaximizedEditorGroupContext, EditorPartMultipleEditorGroupsContext, EditorTabsVisibleContext, IsTopRightEditorGroupContext } from '../../../common/contextkeys.js';
 import { mainWindow } from '../../../../base/browser/window.js';
@@ -999,7 +1000,15 @@ export class EditorPart extends Part<IEditorPartMemento> implements IEditorPart,
 	}
 
 	override updateStyles(): void {
-		this.container.style.backgroundColor = this.getColor(editorBackground) || '';
+
+		// On macOS the part is a container and not a surface: the tab strip at the top of every
+		// group carries the window's vibrancy through a translucent coat, and a coat only shows
+		// it if the layers under it are clear down to the window. The opaque surface starts a
+		// layer lower, at the editor body, which `style.css` pins. The one region of the part
+		// that is not a group -- the margin a centered layout leaves on either side -- is
+		// painted by the centered layout itself, off `editorPane.background`, on every platform.
+		const paintsBackground = !isMacintosh || !isNative;
+		this.container.style.backgroundColor = paintsBackground ? this.getColor(editorBackground) || '' : '';
 
 		const separatorBorderStyle = { separatorBorder: this.gridSeparatorBorder, background: this.theme.getColor(EDITOR_PANE_BACKGROUND) || Color.transparent };
 		this.gridWidget.style(separatorBorderStyle);

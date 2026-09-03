@@ -69,16 +69,33 @@ body {
 }
 
 /* macOS: the workbench root stays transparent so under-window vibrancy reaches the parts
- * that opt into translucent backgrounds. Editor, panel and statusbar are pinned to an
- * opaque backstop underneath their inline theme colors so that content surfaces never go
+ * that opt into translucent backgrounds. Panel and statusbar are pinned to an opaque
+ * backstop underneath their inline theme colors so that content surfaces never go
  * see-through, even when a theme leaves the corresponding color undefined. */
 .monaco-workbench.mac:not(.web) {
 	background-color: transparent;
 }
 
-.monaco-workbench.mac:not(.web) .part.editor,
 .monaco-workbench.mac:not(.web) .part.panel,
 .monaco-workbench.mac:not(.web) .part.statusbar {
+	background-color: var(--vscode-editor-background);
+}
+
+/* The editor takes the same backstop a layer further down. Its title band carries the
+ * translucent material — `editorGroupHeader.tabsBackground` is one of the surfaces the theme
+ * forces to alpha 0.3 — and a coat only reveals the vibrancy if everything under it is clear
+ * all the way to the window. So the part paints nothing, and neither do the grid containers
+ * and the group boxes between it and the band; `EditorPart.updateStyles` leaves its own
+ * container clear for the same reason. What carries the opaque surface is the editor body
+ * under the band, which is where the content actually is.
+ *
+ * A group with no editors in it has no body to pin — it hides its editor container and shows
+ * the watermark — so the fill goes on the box the grid puts that group in rather than on the
+ * group itself. The group is the wrong layer for it: a group that is empty and not the active
+ * one is dimmed to half opacity, which would take an opaque fill down with it and let the
+ * vibrancy through exactly where it must not show. */
+.monaco-workbench.mac:not(.web) .part.editor > .content .editor-group-container > .editor-container,
+.monaco-workbench.mac:not(.web) .part.editor > .content .split-view-view:has(> .editor-group-container.empty) {
 	background-color: var(--vscode-editor-background);
 }
 

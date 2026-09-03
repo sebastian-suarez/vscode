@@ -696,20 +696,27 @@ export const TITLE_BAR_BORDER = registerColor('titleBar.border', {
 const MAC_TRANSLUCENT_SURFACE_ALPHA = 0.3;
 
 /**
- * The workbench surfaces that reveal the macOS under-window vibrancy. Each of them is painted
- * by a part, and by that part alone: the material goes on in a single coat, over the whole
- * part, so that every region of it reads the same. Anything sitting inside a part paints no
+ * The workbench surfaces that reveal the macOS under-window vibrancy. Each of them is the one
+ * coat over the region it covers: the material goes on once, over the whole of that region, so
+ * that every part of it reads the same. Anything sitting inside such a surface paints no
  * material of its own — a second coat of the same color composites darker than its neighbours
- * and turns the part into a patchwork. The color theme resolves these through
+ * and turns the surface into a patchwork. The color theme resolves these through
  * `translucentSurfaceOnMac`, so that every consumer sees the same translucent value: colors
  * defaulting to one of them, the generated CSS variables and the parts painting their container.
+ *
+ * The regions are usually whole parts. The tab strip is the exception: it is the top band of
+ * the editor column and the only coat there, because the editor part paints nothing under it
+ * and the opaque editor surface starts below it, at the editor body. It carries the same
+ * material as the side bar so that the band across the top of the window reads as one row from
+ * the window controls to the far edge of the tabs. `style.css` keeps the layers under it clear.
  */
 export const MAC_TRANSLUCENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_BACKGROUND,
 	ACTIVITY_BAR_BACKGROUND,
 	ACTIVITY_BAR_TOP_BACKGROUND,
 	TITLE_BAR_ACTIVE_BACKGROUND,
-	TITLE_BAR_INACTIVE_BACKGROUND
+	TITLE_BAR_INACTIVE_BACKGROUND,
+	EDITOR_GROUP_HEADER_TABS_BACKGROUND
 ]);
 
 /**
@@ -738,17 +745,21 @@ const MAC_TRANSPARENT_SURFACE_ALPHA = 0;
  * comes and goes with — not a fill of its own. So is the sticky scroll shadow, which would
  * draw a smudge over the translucency instead of depth.
  *
- * The tab strip is the same idea over the opaque editor rather than over the vibrancy: the
- * strip is the top of the editor column, not a band laid across it, so it shows the editor's
- * own background and the column reads as one surface from the window controls down to the
- * status bar. Only the strip's own fill goes; the tabs drawn on it keep every color they have.
+ * The inactive tabs are the same idea one layer further out: they lie on the translucent strip,
+ * so a fill of their own would coat the material a second time and print the shape of every
+ * unselected tab onto the band. What separates them from the active tab is that the active one
+ * is solid — it is the head of the editor showing underneath it, and it paints the editor's own
+ * background. Both unfocused variants go with them, since an unfocused group draws the same two
+ * kinds of tab. Only the inactive fills: hover feedback, drop feedback, the modified markers and
+ * every border are left exactly as they are.
  */
 export const MAC_TRANSPARENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_TITLE_BACKGROUND,
 	SIDE_BAR_SECTION_HEADER_BACKGROUND,
 	SIDE_BAR_STICKY_SCROLL_BACKGROUND,
 	SIDE_BAR_STICKY_SCROLL_SHADOW,
-	EDITOR_GROUP_HEADER_TABS_BACKGROUND
+	TAB_INACTIVE_BACKGROUND,
+	TAB_UNFOCUSED_INACTIVE_BACKGROUND
 ]);
 
 /**
