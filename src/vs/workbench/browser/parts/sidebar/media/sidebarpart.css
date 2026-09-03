@@ -96,11 +96,36 @@
 
 /* `safe` keeps the centering from overflowing on the start side: a plain centered flex box
  * splits its overflow evenly, which would slide the leftmost pill back under the window
- * controls the indent above exists to clear. */
+ * controls the indent above exists to clear.
+ *
+ * The box is rounded down to an even width so that the centering lands the pills on whole
+ * pixels. A centered row sits at half of what it leaves over, and half of an odd number is a
+ * half pixel: in the 209px box a 300px side bar leaves, the 178px row of pills started at
+ * 100.52 and every pill after it was fractional too. The row itself is even at any count —
+ * 36px a pill, less the gap the last one does not carry — so an even box makes the leftover
+ * even, and its half comes out whole at every side bar width. Taking the width off a basis of
+ * `auto` is what lets it apply: the stock `flex: 1` grows the box from a zero basis and a
+ * width on top of that would be ignored. The pixel the rounding gives up is the right hand
+ * one, furthest from the controls, and `SidebarPart` already hands the composite bar a width
+ * that reserves it. */
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container {
 	height: 100%;
 	align-items: center;
 	justify-content: safe center;
+	flex: 0 0 auto;
+	width: round(down, 100%, 2px);
+}
+
+/* The pills are parted by a gap of the row rather than a margin behind each of them. A margin
+ * hangs off the last pill as well, which makes the row a gap wider than what is drawn in it
+ * and lands the centering that much left of the middle; a gap only ever sits between two
+ * pills, so the row measures exactly the pills. Clearing the margin is the other half of it:
+ * `scm.css` gives every `.icon` in a side bar one, and a composite pill is an
+ * `.action-item.icon`, so the row was inheriting `13px * 0.153846` from a rule meant for the
+ * icon in front of a repository name — a hair under 2px, and the hair is what stood the pills
+ * 35.99 apart instead of a whole number. Physical, like every other size in this row. */
+.monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container > .composite-bar > .monaco-action-bar .actions-container {
+	column-gap: calc(2px / var(--zoom-factor, 1));
 }
 
 .monaco-workbench.mac:not(.web).inline-titlebar .part.sidebar.left > .header-or-footer.header > .composite-bar-container > .composite-bar {
@@ -111,6 +136,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	margin: 0;
 	padding: 0;
 }
 

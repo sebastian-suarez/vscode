@@ -202,8 +202,11 @@ export class SidebarPart extends AbstractPaneCompositePart {
 
 			// The indent that clears the native window controls takes the place of the
 			// header's left padding rather than adding to it (see `sidebarpart.css`), so the
-			// composite bar is left with that indent plus the padding on the other side
-			return getInlineTitleBarControlsWidth(mainWindow) + AbstractPaneCompositePart.HEADER_FOOTER_PADDING;
+			// composite bar is left with that indent plus the padding on the other side. Plus
+			// the pixel the box the pills center in rounds off its own width to keep that
+			// centering on whole pixels: it is only taken at odd widths, but reserving it at
+			// every width keeps this a constant and the estimate on the safe side
+			return getInlineTitleBarControlsWidth(mainWindow) + AbstractPaneCompositePart.HEADER_FOOTER_PADDING + 1;
 		}
 
 		return super.getCompositeBarPadding();
