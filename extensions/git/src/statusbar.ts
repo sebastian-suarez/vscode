@@ -52,12 +52,29 @@ class CheckoutStatusBar {
 		const label = operationData[0]?.refLabel ?? `${this.repository.headLabel}${rebasing ? ` (${l10n.t('Rebasing')})` : ''}`;
 		const command = (this.state.isCheckoutRunning || this.state.isCommitRunning || this.state.isSyncRunning) ? '' : 'git.checkout';
 
+		// The status bar shows the bare ref: the `*`/`+`/`!` markers `headLabel` appends for
+		// working tree, index and merge state are dropped there because the bar's own change
+		// segment already counts them. Everything else - the icon, the rebase note, the ref a
+		// running checkout is moving to - stays, and the tooltip still spells the state out.
+		const titleLabel = operationData[0]?.refLabel ?? `${this.bareHeadLabel}${rebasing ? ` (${l10n.t('Rebasing')})` : ''}`;
+
 		return {
 			command,
 			tooltip: `${label}, ${this.getTooltip()}`,
-			title: `${this.getIcon()} ${label}`,
+			title: `${this.getIcon()} ${titleLabel}`,
 			arguments: [this.repository.sourceControl]
 		};
+	}
+
+	/** `Repository.headLabel` without the trailing dirty-state markers. */
+	private get bareHeadLabel(): string {
+		const HEAD = this.repository.HEAD;
+
+		if (!HEAD) {
+			return '';
+		}
+
+		return HEAD.name || (HEAD.commit || '').substr(0, 8);
 	}
 
 	private getIcon(): string {
