@@ -581,3 +581,40 @@ body {
 .monaco-workbench.mac:not(.web) .part.sidebar .monaco-action-bar .action-label.codicon {
 	font-size: 16px;
 }
+
+/* The keyboard cursor. Walking a tree lands a row in the wash `list.focusBackground` gives it,
+ * and the inset rows above round that wash into the pill the row already reads as - so the
+ * cursor is drawn, and what is left over is the ring the same state asks for. `list.focusOutline`
+ * draws a line just inside the pill, and on a row that is an edge of its own that reads as a
+ * second edge a pixel in. The wash is the cursor here and the ring goes.
+ *
+ * Layered on the rules the list styler generates rather than standing in for them: the wash, the
+ * text tone and the selection colours all still arrive from the theme the way they do everywhere
+ * else, and only the outline is taken off, and only on the rows of this one part. It is taken off
+ * every list in the side bar, not the file tree alone, because every one of them draws the same
+ * inset pill and a ring on some of them would read as a difference that is not there.
+ *
+ * Not in the high contrast themes: there the outline is the whole of the indication and the
+ * washes behind it are not what the row is meant to be told by. */
+.monaco-workbench.mac:not(.web):not(.hc-black):not(.hc-light) .part.sidebar .monaco-list .monaco-list-row.focused {
+	outline: none;
+}
+
+/* The git status letter reads as a column of its own rather than as a tail on the file name:
+ * every row sets it against the same right hand edge, so the letters line up down the tree
+ * whatever the names in front of them are. The `auto` margin is what says so - stock leaves the
+ * placing to the label box growing into whatever the name does not use, which comes out in the
+ * same place right up until a name is long enough to take the room back. It sits 6px off the
+ * edge of the row rather than the 16px stock parks it at, and on the row's own centre line
+ * rather than pushed to the foot of it by the `margin-top: auto` an old ellipsis bug left behind
+ * (`iconlabel.css`). It gives up no width, so a long name ellipses into the column instead of
+ * squeezing it. The colour is the decoration's own, the one the file name is tinted with, and is
+ * carried at full strength here, which is what reads the letter and the name as one mark. The
+ * side bar's file tree only: every other list keeps the stock badge. */
+.monaco-workbench.mac:not(.web) .part.sidebar .explorer-folders-view .monaco-icon-label.explorer-item::after {
+	margin: 0 6px 0 auto;
+	padding-left: 6px;
+	flex-shrink: 0;
+	font-size: calc(var(--vscode-workbench-sidebar-font-size) * 0.846154);
+	opacity: 1;
+}
