@@ -242,12 +242,15 @@ export function defaultBrowserWindowOptions(accessor: ServicesAccessor, windowSt
 	// The position is the top left corner of the leftmost button, so it is read
 	// off the center line of the row the workbench draws underneath the chrome:
 	// that row is 46pt tall (`INLINE_TITLE_BAR_HEIGHT`), so its middle is 23pt
-	// down, and the buttons are 12pt across, which puts their top edge at 17.
-	// Everything else on the row — the view switcher pills, the tab icons — is
-	// centered on the same 23.
+	// down, and everything else on it — the view switcher pills, the tab icons —
+	// is centered on the same 23. macOS does not draw the buttons at the nominal
+	// y + 6, though: at 2x they come out centered on y + 6.75, and a fractional
+	// position is truncated to whole points. So 16 is the value that lands
+	// nearest the row's middle, at 22.75 — half a device pixel high, where 17
+	// measures 23.75.
 	if (isMacintosh && !overrides?.forceNativeTitlebar) {
 		options.titleBarStyle = 'hiddenInset';
-		options.trafficLightPosition = { x: 18, y: 17 };
+		options.trafficLightPosition = { x: 18, y: 16 };
 		options.vibrancy = 'under-window';
 		options.backgroundColor = '#00000000'; // vibrancy only shows through a fully transparent background
 	}
