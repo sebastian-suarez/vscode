@@ -1399,9 +1399,10 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 	}
 
 	/**
-	 * Whether the side bar runs the full height of the window and owns its bottom left corner.
-	 * The banner and the status bar give up their rows across the bottom of the grid for that and
-	 * move into the editor column, which asks three things of the arrangement at once:
+	 * Whether the workbench is laid out for a side bar that runs the full height of the window and
+	 * owns its bottom left corner. The banner and the status bar give up their rows across the
+	 * bottom of the grid for that and move into the editor column, which asks three things of the
+	 * arrangement at once:
 	 *
 	 * - the window controls are inset into the workbench, which is also what makes the banner open
 	 *   last, so the side bar already heads the window and may as well close it too;
@@ -1410,9 +1411,29 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 	 * - the panel is at the top or the bottom, where it forms a column with the editor for the two
 	 *   rows to join. A panel at the side leaves the editor flat in the middle row with no column
 	 *   to move into, so that arrangement keeps the stock one as well.
+	 *
+	 * This is where the parts of the middle section go, and the part moves are the ones that ask:
+	 * the side bar sits beside the editor column, never inside it, for as long as the workbench is
+	 * laid out this way. Whether the side bar has the height at this moment is a further question
+	 * that only the rows answer — `hasFullHeightSideBar`.
+	 */
+	private wantsFullHeightSideBar(sideBarPosition: Position, panelPosition: Position): boolean {
+		return isInlineTitleBar(mainWindow) && sideBarPosition === Position.LEFT && isHorizontal(panelPosition);
+	}
+
+	/**
+	 * Whether the side bar runs the full height of the window as things stand: the arrangement
+	 * above, and the editor or the panel showing underneath it. Those two are the only rows in the
+	 * column that can give the banner and the status bar their height. With both of them gone — the
+	 * auxiliary bar maximised over them — the status bar is the only row left in a column as tall as
+	 * the window, and a row of fixed height cannot fill one: the grid puts it at the top and leaves
+	 * the rest of the column empty. So that state hands the rows back to the bottom of the grid,
+	 * which shortens the side bar along with them, and takes them into the column again the moment
+	 * either part comes back.
 	 */
 	private hasFullHeightSideBar(sideBarPosition: Position, panelPosition: Position): boolean {
-		return isInlineTitleBar(mainWindow) && sideBarPosition === Position.LEFT && isHorizontal(panelPosition);
+		return this.wantsFullHeightSideBar(sideBarPosition, panelPosition) &&
+			(this.isVisible(Parts.EDITOR_PART, mainWindow) || this.isVisible(Parts.PANEL_PART));
 	}
 
 	focus(): void {
@@ -1932,8 +1953,21 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			this.mainContainer.classList.remove(LayoutClasses.MAIN_EDITOR_AREA_HIDDEN);
 		}
 
+		// The editor is one of the two rows that can give the banner and the status bar their height
+		// where a full height side bar has them close the editor column, so the column is about to
+		// lose or regain the last row that could. They move around the line below and never across
+		// it: out while the editor is still in the column to give up their height, back in once it
+		// has returned (see `updateBannerAndStatusBarPlacement`).
+		if (hidden) {
+			this.updateBannerAndStatusBarPlacement();
+		}
+
 		// Propagate to grid
 		this.workbenchGrid.setViewVisible(this.editorPartView, !hidden);
+
+		if (!hidden) {
+			this.updateBannerAndStatusBarPlacement();
+		}
 
 		// The editor and panel cannot be hidden at the same time
 		// unless we have a maximized auxiliary bar
@@ -2012,9 +2046,12 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 		// A full height side bar and a panel aligned to one side of the window are two ways of asking
 		// for the same corner, so the moves below read the alignment as centered for as long as the
-		// side bar has the height. The setting itself is left alone: it comes back the moment the side
-		// bar goes back to being a strip between the other rows.
-		const effectiveAlignment = this.hasFullHeightSideBar(sideBarPosition, panelPosition) ? 'center' : panelAlignment;
+		// workbench is laid out for the height. The setting itself is left alone: it comes back the
+		// moment the side bar goes back to being a strip between the other rows. It is the layout and
+		// not the height that is asked, so that a side bar with the rows temporarily out of its column
+		// — the auxiliary bar maximised over them — is not nested next to the editor and left there
+		// for the rows to come back to.
+		const effectiveAlignment = this.wantsFullHeightSideBar(sideBarPosition, panelPosition) ? 'center' : panelAlignment;
 		const sideBarSiblingToEditor = isPanelVertical || !(effectiveAlignment === 'center' || (sideBarPosition === Position.LEFT && effectiveAlignment === 'right') || (sideBarPosition === Position.RIGHT && effectiveAlignment === 'left'));
 		const auxiliaryBarSiblingToEditor = isPanelVertical || !(effectiveAlignment === 'center' || (sideBarPosition === Position.RIGHT && effectiveAlignment === 'right') || (sideBarPosition === Position.LEFT && effectiveAlignment === 'left'));
 		const preMovePanelWidth = !this.isVisible(Parts.PANEL_PART) ? Sizing.Invisible(this.workbenchGrid.getViewCachedVisibleSize(this.panelPartView) ?? this.panelPartView.minimumWidth) : this.workbenchGrid.getViewSize(this.panelPartView).width;
@@ -2087,7 +2124,11 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 	 * it is inside the column.
 	 *
 	 * The panel move that makes and unmakes that column calls this from both of its sides, so that
-	 * the rows leave the column before it goes and join it once it is there.
+	 * the rows leave the column before it goes and join it once it is there. Hiding and showing the
+	 * editor and the panel call it from one side each, and both times it is the side on which the
+	 * column still holds a row that can stretch: taking the last of those out of a column leaves it
+	 * a child of the middle section that reports a maximum height of nothing, and the section
+	 * shrinks to it and takes the whole workbench with it.
 	 */
 	private updateBannerAndStatusBarPlacement(): void {
 		if (!this.workbenchGrid) {
@@ -2180,8 +2221,20 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			this.toggleMaximizedPanel();
 		}
 
+		// The panel is the other row that can give the banner and the status bar their height where a
+		// full height side bar has them close the editor column, so with the editor gone as well the
+		// column has nothing left to hold them. Same as for the editor: they move out ahead of the
+		// line below and back in behind it, never the other way round.
+		if (hidden) {
+			this.updateBannerAndStatusBarPlacement();
+		}
+
 		// Propagate layout changes to grid
 		this.workbenchGrid.setViewVisible(this.panelPartView, !hidden);
+
+		if (!hidden) {
+			this.updateBannerAndStatusBarPlacement();
+		}
 
 		// If panel part becomes hidden, also hide the current active panel if any
 		let focusEditor = false;
@@ -2679,13 +2732,16 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 				result.push(nodes.activityBar);
 			}
 		} else {
+			const wantsFullHeightSideBar = this.wantsFullHeightSideBar(sideBarPosition, panelPostion);
 			const fullHeightSideBar = this.hasFullHeightSideBar(sideBarPosition, panelPostion);
 
 			// A full height side bar and a panel aligned to one side of the window are two ways of
 			// asking for the same corner, so the arrangement reads the alignment as centered for as
-			// long as the side bar has the height. The setting itself is left alone: it comes back
-			// the moment the side bar goes back to being a strip between the other rows.
-			const panelAlignment = fullHeightSideBar ? 'center' : this.stateModel.getRuntimeValue(LayoutStateKeys.PANEL_ALIGNMENT);
+			// long as the workbench is laid out for the height. The setting itself is left alone: it
+			// comes back the moment the side bar goes back to being a strip between the other rows.
+			// A window put away with the auxiliary bar maximised opens without the rows in the column
+			// but with the side bar beside it all the same, ready for them.
+			const panelAlignment = wantsFullHeightSideBar ? 'center' : this.stateModel.getRuntimeValue(LayoutStateKeys.PANEL_ALIGNMENT);
 			const sideBarNextToEditor = !(panelAlignment === 'center' || (sideBarPosition === Position.LEFT && panelAlignment === 'right') || (sideBarPosition === Position.RIGHT && panelAlignment === 'left'));
 			const auxiliaryBarNextToEditor = !(panelAlignment === 'center' || (sideBarPosition === Position.RIGHT && panelAlignment === 'right') || (sideBarPosition === Position.LEFT && panelAlignment === 'left'));
 

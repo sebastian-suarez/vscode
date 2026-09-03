@@ -100,8 +100,11 @@ export class PartsSplash {
 				statusBarHeight: this._layoutService.isVisible(Parts.STATUSBAR_PART, mainWindow) ? dom.getTotalHeight(assertReturnsDefined(this._layoutService.getContainer(mainWindow, Parts.STATUSBAR_PART))) : 0,
 				// Same condition as `hasFullHeightSideBar` in `layout.ts`, restated over public state:
 				// the splash paints the parts before the workbench exists to ask. The two have to move
-				// together, or the first frame draws an arrangement the grid then rearranges.
-				statusBarInEditorColumn: isInlineTitleBar(mainWindow) && this._layoutService.getSideBarPosition() === Position.LEFT && isHorizontal(this._layoutService.getPanelPosition()),
+				// together, or the first frame draws an arrangement the grid then rearranges — which
+				// is what the last term is for: a window put away with the auxiliary bar maximised has
+				// neither the editor nor the panel to hold the status bar in the column, so both the
+				// splash and the grid it opens into keep the row across the bottom of the window.
+				statusBarInEditorColumn: isInlineTitleBar(mainWindow) && this._layoutService.getSideBarPosition() === Position.LEFT && isHorizontal(this._layoutService.getPanelPosition()) && (this._layoutService.isVisible(Parts.EDITOR_PART, mainWindow) || this._layoutService.isVisible(Parts.PANEL_PART)),
 				windowBorder: this._layoutService.hasMainWindowBorder(),
 				windowBorderRadius: this._layoutService.getMainWindowBorderRadius()
 			}
