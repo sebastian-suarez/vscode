@@ -351,10 +351,11 @@ export class SidebarPart extends AbstractPaneCompositePart {
 	/**
 	 * The keyboard hint footer: the letter keymap the explorer takes on this platform
 	 * (`fileActions.contribution.ts`), written along the foot of the rail so that the tree says
-	 * how it is driven. Five of the letters, the ones a hand reaches for while reading a tree;
-	 * the two that change the workspace on their own - `d` for the trash, `A` for a folder - are
-	 * bound but left off the line. The dots between them are punctuation and nothing else, so
-	 * they are kept out of the accessibility tree and the hints read as five phrases.
+	 * how it is driven. Six of the letters, in the order the keymap reads: the walk, then the
+	 * edits, then the filter. Only `A`, which adds a folder, is bound without being named here -
+	 * it is the shifted half of the `a` already on the line, and the line says the letter that
+	 * teaches the pair. The dots between them are punctuation and nothing else, so they are kept
+	 * out of the accessibility tree and the row reads as six phrases.
 	 */
 	private createKeyboardHintsFooter(): HTMLElement {
 		const footer = $('.keyboard-hints');
@@ -364,6 +365,7 @@ export class SidebarPart extends AbstractPaneCompositePart {
 			{ keys: 'h/l', action: localize('keyboardHint.fold', "fold") },
 			{ keys: 'a', action: localize('keyboardHint.add', "add") },
 			{ keys: 'r', action: localize('keyboardHint.rename', "rename") },
+			{ keys: 'd', action: localize('keyboardHint.delete', "delete") },
 			{ keys: '/', action: localize('keyboardHint.filter', "filter") }
 		];
 

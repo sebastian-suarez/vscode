@@ -182,16 +182,15 @@
  * the other side of the seam between the columns, and the pair reads as one band closing the
  * window.
  *
- * The line is set from the right hand edge inwards, on the 16px the rows of the tree above end
- * at, and grows leftward as it is read - which is what keeps it clear of the rounded corner the
- * rail closes the window with on the other side. It stays one row: a side bar too narrow for
- * all five hints loses the leftmost ones off its edge rather than folding them onto a second
- * line the layout has left no room for. */
+ * The line is centered on the row, held off both edges by the 16px the rows of the tree above
+ * end at. It stays one row: a side bar too narrow for all six hints loses the ends of the line
+ * rather than folding them onto a second one the layout has left no room for, and centering is
+ * what makes it give the two ends up evenly instead of taking the whole loss off one side. */
 .monaco-workbench.mac:not(.web) .part.sidebar > .header-or-footer.footer.keyboard-hints {
 	height: 22px; /* SidebarPart.KEYBOARD_HINTS_FOOTER_HEIGHT */
 	align-items: center;
-	justify-content: flex-end;
-	padding: 0 16px 0 0;
+	justify-content: center;
+	padding: 0 16px;
 	white-space: nowrap;
 	cursor: default;
 }
