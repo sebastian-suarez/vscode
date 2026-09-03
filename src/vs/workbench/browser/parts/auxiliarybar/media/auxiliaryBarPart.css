@@ -20,6 +20,18 @@
 	background-color: var(--vscode-sideBarTitle-background);
 }
 
+/* Where the status bar sits in the editor column a visible auxiliary bar runs the full height of
+ * the window and closes its bottom right corner, so its focus outline rounds that corner the way
+ * the side bar's rounds the one on the left (`sidebarpart.css`). The status bar gives the corner
+ * up for it in `statusbarpart.css`. */
+.monaco-workbench.mac.statusbar-in-editor-column:not(.noauxiliarybar):not(.fullscreen) .part.auxiliarybar:focus {
+	border-bottom-right-radius: 10px;
+}
+.monaco-workbench.mac.macos-tahoe.statusbar-in-editor-column:not(.noauxiliarybar):not(.fullscreen) .part.auxiliarybar:focus {
+	/* macOS Tahoe increased rounded corners size */
+	border-bottom-right-radius: 16px;
+}
+
 .monaco-workbench .part.auxiliarybar > .content {
 	font-size: var(--vscode-workbench-sidebar-font-size, 13px);
 	font-family: var(--vscode-workbench-sidebar-font-family, inherit);

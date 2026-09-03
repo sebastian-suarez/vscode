@@ -1436,6 +1436,21 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			(this.isVisible(Parts.EDITOR_PART, mainWindow) || this.isVisible(Parts.PANEL_PART));
 	}
 
+	/**
+	 * The panel alignment the arrangement is built on, which is the stored setting everywhere except
+	 * under a full height side bar: that and a panel aligned to one side of the window are two ways
+	 * of asking for the same corner, so the side bar takes it and the alignment reads as centered
+	 * for as long as the workbench is laid out that way. The setting itself is left alone and comes
+	 * back the moment the side bar goes back to being a strip between the other rows.
+	 *
+	 * Everything that clamps on the alignment reads it through here, so that the part moves, the
+	 * grid descriptor and the maximized panel all answer for the same arrangement. It is the layout
+	 * and not the height that is asked, for the reason `adjustPartPositions` gives.
+	 */
+	private getEffectivePanelAlignment(): PanelAlignment {
+		return this.wantsFullHeightSideBar(this.getSideBarPosition(), this.getPanelPosition()) ? 'center' : this.getPanelAlignment();
+	}
+
 	focus(): void {
 		if (this.isPanelMaximized() && this.mainContainer === this.activeContainer) {
 			this.focusPart(Parts.PANEL_PART);
@@ -2364,8 +2379,8 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 	isPanelMaximized(): boolean {
 		return (
-			this.getPanelAlignment() === 'center' || 	// the workbench grid currently prevents us from supporting panel
-			!isHorizontal(this.getPanelPosition())		// maximization with non-center panel alignment
+			this.getEffectivePanelAlignment() === 'center' || 	// the workbench grid currently prevents us from supporting panel
+			!isHorizontal(this.getPanelPosition())				// maximization with non-center panel alignment
 		) && !this.isVisible(Parts.EDITOR_PART, mainWindow) && !this.isAuxiliaryBarMaximized();
 	}
 
@@ -2396,7 +2411,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 	}
 
 	private panelOpensMaximized(): boolean {
-		if (this.getPanelAlignment() !== 'center' && isHorizontal(this.getPanelPosition())) {
+		if (this.getEffectivePanelAlignment() !== 'center' && isHorizontal(this.getPanelPosition())) {
 			return false; // The workbench grid currently prevents us from supporting panel maximization with non-center panel alignment
 		}
 

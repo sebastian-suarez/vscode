@@ -45,6 +45,15 @@
 	border-bottom-left-radius: 0;
 }
 
+/* The other corner goes the same way whenever there is an auxiliary bar to take it: that bar runs
+ * the full height on the right of the column and closes the window's bottom right corner, and
+ * rounds it in `auxiliaryBarPart.css`. With the auxiliary bar hidden the column reaches the edge
+ * of the window again and the corner comes back to the status bar. The selector outranks both of
+ * the stock tiers above, so the one declaration answers for the Tahoe radius as well. */
+.monaco-workbench.mac.statusbar-in-editor-column:not(.noauxiliarybar):not(.fullscreen) .part.statusbar:focus {
+	border-bottom-right-radius: 0;
+}
+
 .monaco-workbench .part.statusbar:not(:focus).status-border-top::after {
 	/* Top border only visible unless focused to make room for focus outline */
 	content: '';
