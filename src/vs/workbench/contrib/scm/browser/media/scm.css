@@ -799,6 +799,35 @@
 	opacity: 0.5;
 }
 
+/* The rows of the changes view that never render a twistie stop reserving room for one. The
+ * tree writes its indentation as padding on the twistie box, so a row that has no twistie
+ * still carries the whole gutter with nothing in it: 24px on the commit message and on the
+ * action button under a repository, 40px on a resource under its group. Taking that empty box
+ * out of the row's flow and giving the contents the 8px a top level row is indented by lands
+ * every one of them where a side bar row's content starts everywhere else (`style.css` insets
+ * the rows themselves by the same 8px), and the commit box gains the room back as width.
+ *
+ * Out of the flow rather than sized down: the padding that makes up the gutter is written on
+ * the element by `TreeRenderer`, and no rule can reach an inline style without `!important`.
+ * Nothing is lost by taking the box out — it is empty, zero width and hidden already, since a
+ * leaf in a file icon tree draws no chevron.
+ *
+ * Resources only in list view mode, where every one of them is a leaf. In tree view mode the
+ * folder rows have real twisties, and pulling the files out from under them would leave the
+ * leaves standing left of the folders they sit in. Repository rows and resource group rows
+ * have real twisties in both modes and keep their gutter. The graph view is excluded by name:
+ * its rows carry the same `force-no-twistie` marker and would otherwise be caught, and they
+ * are already flush with the row edge. */
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-row:has(> .monaco-tl-contents > :is(.scm-input, .button-container)) > .monaco-tl-twistie,
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view).list-view-mode .monaco-tl-row:has(> .monaco-tl-contents > .resource) > .monaco-tl-twistie {
+	position: absolute;
+}
+
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-row:has(> .monaco-tl-contents > :is(.scm-input, .button-container)) > .monaco-tl-contents,
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view).list-view-mode .monaco-tl-row:has(> .monaco-tl-contents > .resource) > .monaco-tl-contents {
+	margin-left: 8px;
+}
+
 
 
 /*** Generated for Custom Font Size ***/
