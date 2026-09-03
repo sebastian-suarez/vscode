@@ -47,6 +47,7 @@ import { AuxiliaryBarPart } from './parts/auxiliarybar/auxiliaryBarPart.js';
 import { ITelemetryService } from '../../platform/telemetry/common/telemetry.js';
 import { IAuxiliaryWindowService } from '../services/auxiliaryWindow/browser/auxiliaryWindowService.js';
 import { CodeWindow, mainWindow } from '../../base/browser/window.js';
+import { isInlineTitleBar, onDidChangeInlineTitleBar } from './inlineTitleBar.js';
 
 //#region Layout Implementation
 
@@ -485,6 +486,14 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			this._register(addDisposableListener((navigator as unknown as { windowControlsOverlay: EventTarget }).windowControlsOverlay, 'geometrychange', () => this.onDidChangeWCO()));
 		}
 
+		// Inline title bar changes: it is what lets the side bar run the full height of the window,
+		// which is in turn what sends the banner and the status bar into the editor column
+		this._register(onDidChangeInlineTitleBar(targetWindowId => {
+			if (targetWindowId === mainWindow.vscodeWindowId) {
+				this.updateBannerAndStatusBarPlacement();
+			}
+		}));
+
 		// Auxiliary windows
 		this._register(this.auxiliaryWindowService.onDidOpenAuxiliaryWindow(({ window, disposables }) => {
 			const windowId = window.window.vscodeWindowId;
@@ -662,6 +671,10 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 		// Move activity bar and side bars
 		this.adjustPartPositions(position, panelAlignment, panelPosition);
+
+		// The side bar only runs the full height on the left, so the banner and the status bar
+		// change rows along with it
+		this.updateBannerAndStatusBarPlacement();
 	}
 
 	private updateWindowBorder(skipLayout = false) {
@@ -1384,6 +1397,23 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		return isMacintosh && isNative;
 	}
 
+	/**
+	 * Whether the side bar runs the full height of the window and owns its bottom left corner.
+	 * The banner and the status bar give up their rows across the bottom of the grid for that and
+	 * move into the editor column, which asks three things of the arrangement at once:
+	 *
+	 * - the window controls are inset into the workbench, which is also what makes the banner open
+	 *   last, so the side bar already heads the window and may as well close it too;
+	 * - the side bar is on the left, the corner it takes. On the right the stock arrangement is
+	 *   kept, so that the bottom of the window stays one uninterrupted row;
+	 * - the panel is at the top or the bottom, where it forms a column with the editor for the two
+	 *   rows to join. A panel at the side leaves the editor flat in the middle row with no column
+	 *   to move into, so that arrangement keeps the stock one as well.
+	 */
+	private hasFullHeightSideBar(sideBarPosition: Position, panelPosition: Position): boolean {
+		return isInlineTitleBar(mainWindow) && sideBarPosition === Position.LEFT && isHorizontal(panelPosition);
+	}
+
 	focus(): void {
 		if (this.isPanelMaximized() && this.mainContainer === this.activeContainer) {
 			this.focusPart(Parts.PANEL_PART);
@@ -1977,8 +2007,14 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 		// Move activity bar and side bars
 		const isPanelVertical = !isHorizontal(panelPosition);
-		const sideBarSiblingToEditor = isPanelVertical || !(panelAlignment === 'center' || (sideBarPosition === Position.LEFT && panelAlignment === 'right') || (sideBarPosition === Position.RIGHT && panelAlignment === 'left'));
-		const auxiliaryBarSiblingToEditor = isPanelVertical || !(panelAlignment === 'center' || (sideBarPosition === Position.RIGHT && panelAlignment === 'right') || (sideBarPosition === Position.LEFT && panelAlignment === 'left'));
+
+		// A full height side bar and a panel aligned to one side of the window are two ways of asking
+		// for the same corner, so the moves below read the alignment as centered for as long as the
+		// side bar has the height. The setting itself is left alone: it comes back the moment the side
+		// bar goes back to being a strip between the other rows.
+		const effectiveAlignment = this.hasFullHeightSideBar(sideBarPosition, panelPosition) ? 'center' : panelAlignment;
+		const sideBarSiblingToEditor = isPanelVertical || !(effectiveAlignment === 'center' || (sideBarPosition === Position.LEFT && effectiveAlignment === 'right') || (sideBarPosition === Position.RIGHT && effectiveAlignment === 'left'));
+		const auxiliaryBarSiblingToEditor = isPanelVertical || !(effectiveAlignment === 'center' || (sideBarPosition === Position.RIGHT && effectiveAlignment === 'right') || (sideBarPosition === Position.LEFT && effectiveAlignment === 'left'));
 		const preMovePanelWidth = !this.isVisible(Parts.PANEL_PART) ? Sizing.Invisible(this.workbenchGrid.getViewCachedVisibleSize(this.panelPartView) ?? this.panelPartView.minimumWidth) : this.workbenchGrid.getViewSize(this.panelPartView).width;
 		const preMovePanelHeight = !this.isVisible(Parts.PANEL_PART) ? Sizing.Invisible(this.workbenchGrid.getViewCachedVisibleSize(this.panelPartView) ?? this.panelPartView.minimumHeight) : this.workbenchGrid.getViewSize(this.panelPartView).height;
 		const preMoveSideBarSize = !this.isVisible(Parts.SIDEBAR_PART) ? Sizing.Invisible(this.workbenchGrid.getViewCachedVisibleSize(this.sideBarPartView) ?? this.sideBarPartView.minimumWidth) : this.workbenchGrid.getViewSize(this.sideBarPartView).width;
@@ -2038,6 +2074,47 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 				height: this.workbenchGrid.getViewSize(this.auxiliaryBarPartView).height,
 				width: preMoveAuxiliaryBarSize as number
 			});
+		}
+	}
+
+	/**
+	 * Puts the banner and the status bar in the rows the arrangement wants them in, and leaves the
+	 * grid alone when they are already there. A full height side bar has them close the editor
+	 * column; every other arrangement has them close the grid. Which of the two the grid is in is
+	 * read off the status bar itself: at the root it is one of the grid's own rows, anywhere deeper
+	 * it is inside the column.
+	 *
+	 * The panel move that makes and unmakes that column calls this from both of its sides, so that
+	 * the rows leave the column before it goes and join it once it is there.
+	 */
+	private updateBannerAndStatusBarPlacement(): void {
+		if (!this.workbenchGrid) {
+			return; // not laid out yet: the grid descriptor already puts them in the right rows
+		}
+
+		const isInEditorColumn = this.workbenchGrid.getViewLocation(this.statusBarPartView).length > 1;
+		const belongsInEditorColumn = this.hasFullHeightSideBar(this.getSideBarPosition(), this.getPanelPosition());
+		if (isInEditorColumn === belongsInEditorColumn) {
+			return;
+		}
+
+		if (belongsInEditorColumn) {
+
+			// The arrangement asks for a panel at the top or the bottom, so the editor is inside the
+			// column it forms with the panel and the first two steps of the editor's location name
+			// that column: the middle section, then the column within it. An alignment that puts a
+			// side bar next to the editor nests the editor one step deeper still, which leaves those
+			// two steps as they are.
+			const editorColumn = this.workbenchGrid.getViewLocation(this.editorPartView).slice(0, 2);
+			this.workbenchGrid.moveViewTo(this.bannerPartView, [...editorColumn, -1]);
+			this.workbenchGrid.moveViewTo(this.statusBarPartView, [...editorColumn, -1]);
+		} else {
+
+			// Only ever reached on macOS desktop: nowhere else can the side bar have had the height
+			// to begin with. So the rows go back in the order that platform keeps them in, the banner
+			// above the status bar at the end of the grid.
+			this.workbenchGrid.moveViewTo(this.bannerPartView, [-1]);
+			this.workbenchGrid.moveViewTo(this.statusBarPartView, [-1]);
 		}
 	}
 
@@ -2420,6 +2497,12 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 		this.stateModel.setRuntimeValue(LayoutStateKeys.PANEL_POSITION, position);
 
+		// A panel at the side leaves the editor with no column to keep the banner and the status bar
+		// in, so they have to be out of it before the move below takes that column apart
+		if (!isHorizontal(position)) {
+			this.updateBannerAndStatusBarPlacement();
+		}
+
 		const sideBarVisible = this.isVisible(Parts.SIDEBAR_PART);
 		const auxiliaryBarVisible = this.isVisible(Parts.AUXILIARYBAR_PART);
 
@@ -2453,6 +2536,10 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		if (isHorizontal(position)) {
 			this.adjustPartPositions(this.getSideBarPosition(), this.getPanelAlignment(), position);
 		}
+
+		// A panel that comes back to the top or the bottom rebuilds the editor column, which the
+		// banner and the status bar can now join
+		this.updateBannerAndStatusBarPlacement();
 
 		this._onDidChangePanelPosition.fire(newPositionValue);
 	}
@@ -2554,7 +2641,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		};
 	}
 
-	private arrangeMiddleSectionNodes(nodes: { editor: ISerializedNode; panel: ISerializedNode; activityBar: ISerializedNode; sideBar: ISerializedNode; auxiliaryBar: ISerializedNode }, availableWidth: number, availableHeight: number): ISerializedNode[] {
+	private arrangeMiddleSectionNodes(nodes: { editor: ISerializedNode; panel: ISerializedNode; activityBar: ISerializedNode; sideBar: ISerializedNode; auxiliaryBar: ISerializedNode; banner: ISerializedNode; statusBar: ISerializedNode }, availableWidth: number, availableHeight: number): ISerializedNode[] {
 		const activityBarSize = this.stateModel.getRuntimeValue(LayoutStateKeys.ACTIVITYBAR_HIDDEN) ? 0 : nodes.activityBar.size;
 		const sideBarSize = this.stateModel.getRuntimeValue(LayoutStateKeys.SIDEBAR_HIDDEN) ? 0 : nodes.sideBar.size;
 		const auxiliaryBarSize = this.stateModel.getRuntimeValue(LayoutStateKeys.AUXILIARYBAR_HIDDEN) ? 0 : nodes.auxiliaryBar.size;
@@ -2583,19 +2670,35 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 				result.push(nodes.activityBar);
 			}
 		} else {
-			const panelAlignment = this.stateModel.getRuntimeValue(LayoutStateKeys.PANEL_ALIGNMENT);
+			const fullHeightSideBar = this.hasFullHeightSideBar(sideBarPosition, panelPostion);
+
+			// A full height side bar and a panel aligned to one side of the window are two ways of
+			// asking for the same corner, so the arrangement reads the alignment as centered for as
+			// long as the side bar has the height. The setting itself is left alone: it comes back
+			// the moment the side bar goes back to being a strip between the other rows.
+			const panelAlignment = fullHeightSideBar ? 'center' : this.stateModel.getRuntimeValue(LayoutStateKeys.PANEL_ALIGNMENT);
 			const sideBarNextToEditor = !(panelAlignment === 'center' || (sideBarPosition === Position.LEFT && panelAlignment === 'right') || (sideBarPosition === Position.RIGHT && panelAlignment === 'left'));
 			const auxiliaryBarNextToEditor = !(panelAlignment === 'center' || (sideBarPosition === Position.RIGHT && panelAlignment === 'right') || (sideBarPosition === Position.LEFT && panelAlignment === 'left'));
 
 			const editorSectionWidth = availableWidth - activityBarSize - (sideBarNextToEditor ? 0 : sideBarSize) - (auxiliaryBarNextToEditor ? 0 : auxiliaryBarSize);
 
+			// The rows the full height side bar displaces close the editor column instead, and the
+			// middle section is the taller for it: the root keeps no status bar row of its own. Only
+			// that row comes off the editor's height — the banner starts out closed here for the
+			// same reason it does at the root.
+			const statusBarHeight = fullHeightSideBar ? nodes.statusBar.size : 0;
+
 			const editorNodes = this.arrangeEditorNodes({
 				editor: nodes.editor,
 				sideBar: sideBarNextToEditor ? nodes.sideBar : undefined,
 				auxiliaryBar: auxiliaryBarNextToEditor ? nodes.auxiliaryBar : undefined
-			}, availableHeight - panelSize, editorSectionWidth);
+			}, availableHeight - panelSize - statusBarHeight, editorSectionWidth);
 
 			const data = panelPostion === Position.BOTTOM ? [editorNodes, nodes.panel] : [nodes.panel, editorNodes];
+			if (fullHeightSideBar) {
+				data.push(nodes.banner, nodes.statusBar); // whichever end the panel is at, the status bar is the bottom most row
+			}
+
 			result.push({
 				type: 'branch',
 				data,
@@ -2639,7 +2742,11 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		const bannerHeight = this.bannerPartView.minimumHeight;
 		const statusBarHeight = this.statusBarPartView.minimumHeight;
 		const activityBarWidth = this.activityBarPartView.minimumWidth;
-		const middleSectionHeight = height - titleBarHeight - statusBarHeight;
+
+		// A full height side bar takes the status bar row into the middle section instead of leaving
+		// it underneath one, so the height that row used to cost the root is what the section grows by
+		const fullHeightSideBar = this.hasFullHeightSideBar(this.stateModel.getRuntimeValue(LayoutStateKeys.SIDEBAR_POSITON), this.stateModel.getRuntimeValue(LayoutStateKeys.PANEL_POSITION));
+		const middleSectionHeight = height - titleBarHeight - (fullHeightSideBar ? 0 : statusBarHeight);
 
 		const titleBarNode: ISerializedLeafNode = {
 			type: 'leaf',
@@ -2655,10 +2762,24 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			visible: false
 		};
 
+		const statusBarNode: ISerializedLeafNode = {
+			type: 'leaf',
+			data: { type: Parts.STATUSBAR_PART },
+			size: statusBarHeight,
+			visible: !this.stateModel.getRuntimeValue(LayoutStateKeys.STATUSBAR_HIDDEN)
+		};
+
 		const bannerLast = this.shouldShowBannerLast();
 		const topSection: ISerializedNode[] = bannerLast
 			? [titleBarNode]
 			: this.shouldShowBannerFirst() ? [bannerNode, titleBarNode] : [titleBarNode, bannerNode];
+
+		// Where the side bar runs the full height, the rows that would close the grid underneath it
+		// belong to the editor column instead and the root ends at the middle section. A full height
+		// side bar always shows the banner last, so the banner is only ever in one of the two places.
+		const bottomSection: ISerializedNode[] = fullHeightSideBar
+			? []
+			: [...(bannerLast ? [bannerNode] : []), statusBarNode];
 
 		const activityBarNode: ISerializedLeafNode = {
 			type: 'leaf',
@@ -2700,7 +2821,9 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			auxiliaryBar: auxiliaryBarNode,
 			editor: editorNode,
 			panel: panelNode,
-			sideBar: sideBarNode
+			sideBar: sideBarNode,
+			banner: bannerNode,
+			statusBar: statusBarNode
 		}, width, middleSectionHeight);
 
 		const result: ISerializedGrid = {
@@ -2714,13 +2837,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 						data: middleSection,
 						size: middleSectionHeight
 					},
-					...(bannerLast ? [bannerNode] : []),
-					{
-						type: 'leaf',
-						data: { type: Parts.STATUSBAR_PART },
-						size: statusBarHeight,
-						visible: !this.stateModel.getRuntimeValue(LayoutStateKeys.STATUSBAR_HIDDEN)
-					}
+					...bottomSection
 				]
 			},
 			orientation: Orientation.VERTICAL,
