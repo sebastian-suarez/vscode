@@ -697,7 +697,12 @@ export class Grid<T extends IView = IView> extends Disposable {
 			.map(node => node.view);
 	}
 
-	private getViewLocation(view: T): GridLocation {
+	/**
+	 * Returns the {@link GridLocation location} of a {@link IView view} within the grid.
+	 *
+	 * @param view The {@link IView view}.
+	 */
+	getViewLocation(view: T): GridLocation {
 		const element = this.views.get(view);
 
 		if (!element) {

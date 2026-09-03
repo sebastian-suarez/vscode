@@ -1986,21 +1986,26 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 		const focusedPart = [Parts.PANEL_PART, Parts.SIDEBAR_PART, Parts.AUXILIARYBAR_PART].find(part => this.hasFocus(part)) as SINGLE_WINDOW_PARTS | undefined;
 
+		// The editor anchors the middle section, so its root index is that section's index.
+		// The rows around it vary: the banner sits before or after the middle section
+		// depending on the platform arrangement.
+		const middleSectionIndex = this.workbenchGrid.getViewLocation(this.editorPartView)[0];
+
 		if (sideBarPosition === Position.LEFT) {
-			this.workbenchGrid.moveViewTo(this.activityBarPartView, [2, 0]);
+			this.workbenchGrid.moveViewTo(this.activityBarPartView, [middleSectionIndex, 0]);
 			this.workbenchGrid.moveView(this.sideBarPartView, preMoveSideBarSize, sideBarSiblingToEditor ? this.editorPartView : this.activityBarPartView, sideBarSiblingToEditor ? Direction.Left : Direction.Right);
 			if (auxiliaryBarSiblingToEditor) {
 				this.workbenchGrid.moveView(this.auxiliaryBarPartView, preMoveAuxiliaryBarSize, this.editorPartView, Direction.Right);
 			} else {
-				this.workbenchGrid.moveViewTo(this.auxiliaryBarPartView, [2, -1]);
+				this.workbenchGrid.moveViewTo(this.auxiliaryBarPartView, [middleSectionIndex, -1]);
 			}
 		} else {
-			this.workbenchGrid.moveViewTo(this.activityBarPartView, [2, -1]);
+			this.workbenchGrid.moveViewTo(this.activityBarPartView, [middleSectionIndex, -1]);
 			this.workbenchGrid.moveView(this.sideBarPartView, preMoveSideBarSize, sideBarSiblingToEditor ? this.editorPartView : this.activityBarPartView, sideBarSiblingToEditor ? Direction.Right : Direction.Left);
 			if (auxiliaryBarSiblingToEditor) {
 				this.workbenchGrid.moveView(this.auxiliaryBarPartView, preMoveAuxiliaryBarSize, this.editorPartView, Direction.Left);
 			} else {
-				this.workbenchGrid.moveViewTo(this.auxiliaryBarPartView, [2, 0]);
+				this.workbenchGrid.moveViewTo(this.auxiliaryBarPartView, [middleSectionIndex, 0]);
 			}
 		}
 
