@@ -799,31 +799,53 @@
 	opacity: 0.5;
 }
 
-/* The rows of the changes view that never render a twistie stop reserving room for one. The
- * tree writes its indentation as padding on the twistie box, so a row that has no twistie
- * still carries the whole gutter with nothing in it: 24px on the commit message and on the
- * action button under a repository, 40px on a resource under its group. Taking that empty box
- * out of the row's flow and giving the contents the 8px a top level row is indented by lands
- * every one of them where a side bar row's content starts everywhere else (`style.css` insets
- * the rows themselves by the same 8px), and the commit box gains the room back as width.
+/* The changes view reads as one column. The commit message, the action button, every resource
+ * group header and — in list view mode — every resource start at the same place: 8px inside
+ * the row, which is where a side bar row's content starts everywhere else, `style.css` having
+ * inset the rows themselves by the same 8px. The only rows left holding a twistie are the
+ * repositories, which is the one hierarchy the view really has, and no indent guide is drawn
+ * at all. This supersedes the gutter collapse of the rows that never had a twistie: the
+ * mechanism it found is the one used here, extended to the rows that do.
  *
- * Out of the flow rather than sized down: the padding that makes up the gutter is written on
- * the element by `TreeRenderer`, and no rule can reach an inline style without `!important`.
- * Nothing is lost by taking the box out — it is empty, zero width and hidden already, since a
- * leaf in a file icon tree draws no chevron.
+ * That mechanism: the gutter is inline padding. `TreeRenderer` writes a row's indentation onto
+ * its twistie box as `padding-left`, so a row carries the whole gutter whether or not there is
+ * a chevron standing in it — 24px in front of the commit message and the action button under a
+ * repository, 40px in front of a resource under its group, 24px in front of a group header —
+ * and no rule can reach an inline style without `!important`. So the box comes out of the row's
+ * flow instead and the contents take the 8px back as a margin. Nothing here encodes
+ * `workbench.tree.indent`, so moving that setting keeps working on the rows that keep a gutter.
  *
- * Resources only in list view mode, where every one of them is a leaf. In tree view mode the
- * folder rows have real twisties, and pulling the files out from under them would leave the
- * leaves standing left of the folders they sit in. Repository rows and resource group rows
- * have real twisties in both modes and keep their gutter. The graph view is excluded by name:
- * its rows carry the same `force-no-twistie` marker and would otherwise be caught, and they
- * are already flush with the row edge. */
-.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-row:has(> .monaco-tl-contents > :is(.scm-input, .button-container)) > .monaco-tl-twistie,
+ * The group headers are what this adds. Their twistie is real, the group folds, so taking it
+ * out of the flow leaves it drawn over the label it used to stand in front of, and it is faded
+ * out rather than hidden away: a box that is invisible still answers the mouse, so the click
+ * that folds a group lands where it always did. That matters on a header that has scrolled up
+ * into the sticky row, where the twistie is the only thing a click will toggle. On every other
+ * row the row itself takes the click, and the keyboard path is untouched either way.
+ *
+ * The indent guides go with the gutter. They are drawn in a box of their own, held at the
+ * tree's indent stops rather than at the content, so with the content pulled left they ruled
+ * lines straight through the commit box, the button and every file row. The view has no
+ * hierarchy left for them to describe, so the box is not drawn — in both view modes, tree mode
+ * included, where the nesting of the folders reads from the indentation itself.
+ *
+ * Resources are pulled in list view mode only, where every one of them is a leaf. In tree view
+ * mode the folders under a group keep their twisties and their nesting, and the files under
+ * them stay where the tree puts them. The graph view is excluded by name: its rows carry the
+ * same markers and would otherwise be caught, and they are already flush with the row edge. */
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-indent {
+	display: none;
+}
+
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-row:has(> .monaco-tl-contents > :is(.scm-input, .button-container, .resource-group)) > .monaco-tl-twistie,
 .monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view).list-view-mode .monaco-tl-row:has(> .monaco-tl-contents > .resource) > .monaco-tl-twistie {
 	position: absolute;
 }
 
-.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-row:has(> .monaco-tl-contents > :is(.scm-input, .button-container)) > .monaco-tl-contents,
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-row:has(> .monaco-tl-contents > .resource-group) > .monaco-tl-twistie {
+	opacity: 0;
+}
+
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-row:has(> .monaco-tl-contents > :is(.scm-input, .button-container, .resource-group)) > .monaco-tl-contents,
 .monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view).list-view-mode .monaco-tl-row:has(> .monaco-tl-contents > .resource) > .monaco-tl-contents {
 	margin-left: 8px;
 }
