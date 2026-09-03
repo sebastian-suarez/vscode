@@ -30,7 +30,7 @@ import { IObservable, autorun, observableValue } from '../../../base/common/obse
 import { StandardMouseEvent } from '../../../base/browser/mouseEvent.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../storage/common/storage.js';
 import { IConfigurationService } from '../../configuration/common/configuration.js';
-import { Platform, platform, setTimeout0 } from '../../../base/common/platform.js';
+import { isMacintosh, isNative, Platform, platform, setTimeout0 } from '../../../base/common/platform.js';
 import { getWindowControlsStyle, WindowControlsStyle } from '../../window/common/window.js';
 import { getZoomFactor } from '../../../base/browser/browser.js';
 import { TriStateCheckbox, createToggleActionViewItemProvider } from '../../../base/browser/ui/toggle/toggle.js';
@@ -49,8 +49,28 @@ type QuickInputViewState = {
 	readonly left?: number;
 };
 
+/**
+ * The picker is a telescope panel on this platform: one wide, low pane, in the same place every
+ * time it opens, with the prompt on a line the eye can learn and the results stacked over it. The
+ * place is baked in - a remembered position and the drag that would set one are both off, because
+ * a panel that is where it was left is a panel you have to look for.
+ */
+const telescopePanel = isMacintosh && isNative;
+
 export class QuickInputController extends Disposable {
 	private static readonly MAX_WIDTH = 600; // Max total width of quick input widget
+
+	/**
+	 * The telescope panel, measured off the mockup: 920 wide by 405 tall, border box, drawn in a
+	 * 1280 by 859 window at left 180 and top 163. Centred across, and down the window the free
+	 * height splits 36 above to 64 below - which is what the panel is anchored by, since the
+	 * prompt is on its bottom edge and has to hold that line whether six results stand over it or
+	 * twenty. The height is only ever used to work that split out: the panel itself is as tall as
+	 * its contents make it.
+	 */
+	private static readonly TELESCOPE_WIDTH = 920;
+	private static readonly TELESCOPE_HEIGHT = 405;
+	private static readonly TELESCOPE_BOTTOM_SHARE = 0.64;
 
 	private idPrefix: string;
 	private ui: QuickInputUI | undefined;
@@ -733,7 +753,10 @@ export class QuickInputController extends Disposable {
 
 		ui.container.style.display = '';
 		this.updateLayout();
-		this.dndController?.setEnabled(!controller.anchor);
+		// Anchored inputs never took the drag, and the telescope panel does not take it either:
+		// the same call is what puts the widget in `no-drag`, so the header stops offering a grab
+		// cursor for a move that would be thrown away on the next layout.
+		this.dndController?.setEnabled(!controller.anchor && !telescopePanel);
 		this.dndController?.layoutContainer();
 		if (controller.anchor) {
 			// Anchored quick inputs are positioned near a specific element, not
@@ -895,7 +918,13 @@ export class QuickInputController extends Disposable {
 	private updateLayout() {
 		if (this.ui && this.isVisible()) {
 			const style = this.ui.container.style;
-			let width = Math.min(this.dimension!.width * 0.62 /* golden cut */, QuickInputController.MAX_WIDTH);
+			// The golden cut has no say in the telescope panel's width: it is a measured figure,
+			// and the cut would hold the panel to 794px in the very window the measurement was
+			// taken in. A window too narrow for it gives the panel everything but a 16px margin
+			// down each side instead.
+			let width = telescopePanel
+				? Math.min(QuickInputController.TELESCOPE_WIDTH, this.dimension!.width - 32)
+				: Math.min(this.dimension!.width * 0.62 /* golden cut */, QuickInputController.MAX_WIDTH);
 			style.width = width + 'px';
 
 			let listHeight = this.dimension && this.dimension.height * 0.4;
@@ -952,6 +981,17 @@ export class QuickInputController extends Disposable {
 				}
 
 				style.width = `${width}px`;
+				style.height = '';
+			} else if (telescopePanel) {
+				// Held by its bottom edge, so the prompt keeps the same line however tall the list
+				// standing over it happens to be. The share is worked out against the full panel and
+				// not against the panel as it stands, so a two result list and a twenty result list
+				// are both read off the same line.
+				const freeHeight = this.dimension!.height - QuickInputController.TELESCOPE_HEIGHT;
+				style.bottom = `${Math.max(0, Math.round(freeHeight * QuickInputController.TELESCOPE_BOTTOM_SHARE))}px`;
+				style.top = 'initial';
+				style.left = `${Math.round((this.dimension!.width * 0.5 /* center */) - (width / 2))}px`;
+				style.right = '';
 				style.height = '';
 			} else {
 				style.top = `${this.viewState?.top !== undefined ? Math.round(this.dimension!.height * this.viewState.top) : this.titleBarOffset}px`;
@@ -1028,6 +1068,10 @@ export class QuickInputController extends Disposable {
 	}
 
 	private loadViewState(): QuickInputViewState | undefined {
+		if (telescopePanel) {
+			return undefined; // the baked position is the only one
+		}
+
 		try {
 			const data = JSON.parse(this.storageService.get(VIEWSTATE_STORAGE_KEY, StorageScope.APPLICATION, '{}'));
 			if (data.top !== undefined || data.left !== undefined) {
@@ -1039,6 +1083,10 @@ export class QuickInputController extends Disposable {
 	}
 
 	private saveViewState(viewState: QuickInputViewState | undefined): void {
+		if (telescopePanel) {
+			return; // nothing to remember, and nothing to clear out of storage either
+		}
+
 		const isMainWindow = this.layoutService.activeContainer === this.layoutService.mainContainer;
 		if (!isMainWindow) {
 			return;

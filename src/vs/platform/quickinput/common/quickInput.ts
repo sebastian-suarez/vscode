@@ -500,7 +500,13 @@ export enum QuickPickFocus {
 	/**
 	 * Focus the first item under the current separator.
 	 */
-	PreviousSeparator
+	PreviousSeparator,
+	/**
+	 * Focus the second to last item in the list. The mirror of `Second`, and there for the
+	 * platforms where the list runs in descending order and the second best match is the
+	 * second row from the bottom rather than from the top (`quickInputList.ts`).
+	 */
+	SecondLast
 }
 
 /**

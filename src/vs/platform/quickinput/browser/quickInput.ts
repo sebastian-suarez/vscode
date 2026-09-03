@@ -20,7 +20,7 @@ import { Codicon } from '../../../base/common/codicons.js';
 import { Emitter, Event, EventBufferer } from '../../../base/common/event.js';
 import { KeyCode } from '../../../base/common/keyCodes.js';
 import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
-import { isIOS } from '../../../base/common/platform.js';
+import { isIOS, isMacintosh, isNative } from '../../../base/common/platform.js';
 import Severity from '../../../base/common/severity.js';
 import { ThemeIcon } from '../../../base/common/themables.js';
 import './media/quickInput.css';
@@ -35,6 +35,18 @@ import type { IHoverOptions } from '../../../base/browser/ui/hover/hover.js';
 import { ContextKeyExpr, RawContextKey } from '../../contextkey/common/contextkey.js';
 import { QuickInputTreeController } from './tree/quickInputTreeController.js';
 import { observableValue } from '../../../base/common/observable.js';
+
+/**
+ * Where an item activation lands once the list runs in descending order (`quickInputList.ts`).
+ * The list's own `First` and `Last` go on meaning its top and bottom row - that is what the
+ * go-to-first and go-to-last keybindings ask for, and they should keep taking the eye where the
+ * name says. An activation asks for something else: `FIRST` means the item the picker leads with,
+ * and on a descending list that item is on the bottom row, against the prompt. So the activations
+ * are the ones that change hands here, and only here.
+ */
+const firstItemFocus = isMacintosh && isNative ? QuickPickFocus.Last : QuickPickFocus.First;
+const secondItemFocus = isMacintosh && isNative ? QuickPickFocus.SecondLast : QuickPickFocus.Second;
+const lastItemFocus = isMacintosh && isNative ? QuickPickFocus.First : QuickPickFocus.Last;
 
 export const inQuickInputContextKeyValue = 'inQuickInput';
 export const InQuickInputContextKey = new RawContextKey<boolean>(inQuickInputContextKeyValue, false, localize('inQuickInput', "Whether keyboard focus is inside the quick input control"));
@@ -883,7 +895,7 @@ export class QuickPick<T extends IQuickPickItem, O extends { useSeparators: bool
 
 	private trySelectFirst() {
 		if (!this.canSelectMany) {
-			this.ui.list.focus(QuickPickFocus.First);
+			this.ui.list.focus(firstItemFocus);
 		}
 	}
 
@@ -1097,11 +1109,11 @@ export class QuickPick<T extends IQuickPickItem, O extends { useSeparators: bool
 						this._itemActivation = ItemActivation.FIRST; // only valid once, then unset
 						break;
 					case ItemActivation.SECOND:
-						this.ui.list.focus(QuickPickFocus.Second);
+						this.ui.list.focus(secondItemFocus);
 						this._itemActivation = ItemActivation.FIRST; // only valid once, then unset
 						break;
 					case ItemActivation.LAST:
-						this.ui.list.focus(QuickPickFocus.Last);
+						this.ui.list.focus(lastItemFocus);
 						this._itemActivation = ItemActivation.FIRST; // only valid once, then unset
 						break;
 					default:
@@ -1148,7 +1160,7 @@ export class QuickPick<T extends IQuickPickItem, O extends { useSeparators: bool
 
 			// Focus the first element in the list if multiselect is enabled
 			if (this.canSelectMany) {
-				this.ui.list.focus(QuickPickFocus.First);
+				this.ui.list.focus(firstItemFocus);
 			}
 		}
 

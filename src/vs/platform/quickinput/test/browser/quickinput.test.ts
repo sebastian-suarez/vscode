@@ -178,13 +178,21 @@ suite('QuickInput', () => { // https://github.com/microsoft/vscode/issues/147543
 			items.push({ label: `item ${i}` });
 		}
 		quickpick.items = items;
-		// setting the active item should cause the quick pick to scroll to the bottom
-		quickpick.activeItems = [items[items.length - 1]];
 		quickpick.show();
 
+		// Where the view comes to rest on the item the picker leads with. On a descending list
+		// that item is the last row rather than the first (`quickInputList.ts`), so the position
+		// is measured rather than assumed - and measured by scrolling onto it from the far end,
+		// which is how the assertions below reach it too.
+		quickpick.activeItems = [items[items.length - 1]];
+		quickpick.activeItems = [items[0]];
+		const restingScrollTop = quickpick.scrollTop;
+
+		// setting the active item should cause the quick pick to scroll off that resting position
+		quickpick.activeItems = [items[items.length - 1]];
 		const cursorTop = quickpick.scrollTop;
 
-		assert.notStrictEqual(cursorTop, 0);
+		assert.notStrictEqual(cursorTop, restingScrollTop);
 
 		quickpick.keepScrollPosition = true;
 		quickpick.activeItems = [items[0]];
@@ -192,7 +200,7 @@ suite('QuickInput', () => { // https://github.com/microsoft/vscode/issues/147543
 
 		quickpick.keepScrollPosition = false;
 		quickpick.activeItems = [items[0]];
-		assert.strictEqual(quickpick.scrollTop, 0);
+		assert.strictEqual(quickpick.scrollTop, restingScrollTop);
 	});
 
 	test('keepScrollPosition - works with items', async () => {
@@ -203,12 +211,16 @@ suite('QuickInput', () => { // https://github.com/microsoft/vscode/issues/147543
 			items.push({ label: `item ${i}` });
 		}
 		quickpick.items = items;
-		// setting the active item should cause the quick pick to scroll to the bottom
-		quickpick.activeItems = [items[items.length - 1]];
 		quickpick.show();
 
+		// As above: a fresh list does not always rest at the top, so the position it takes on
+		// its own is what a re-set of the items has to come back to.
+		const restingScrollTop = quickpick.scrollTop;
+
+		// setting the active item should cause the quick pick to scroll off that resting position
+		quickpick.activeItems = [items[items.length - 1]];
 		const cursorTop = quickpick.scrollTop;
-		assert.notStrictEqual(cursorTop, 0);
+		assert.notStrictEqual(cursorTop, restingScrollTop);
 
 		quickpick.keepScrollPosition = true;
 		quickpick.items = items;
@@ -216,7 +228,7 @@ suite('QuickInput', () => { // https://github.com/microsoft/vscode/issues/147543
 
 		quickpick.keepScrollPosition = false;
 		quickpick.items = items;
-		assert.strictEqual(quickpick.scrollTop, 0);
+		assert.strictEqual(quickpick.scrollTop, restingScrollTop);
 	});
 
 	test('selectedItems - verify previous selectedItems does not hang over to next set of items', async () => {

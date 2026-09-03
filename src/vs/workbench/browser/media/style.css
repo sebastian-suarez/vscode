@@ -618,3 +618,20 @@ body {
 	font-size: calc(var(--vscode-workbench-sidebar-font-size) * 0.846154);
 	opacity: 1;
 }
+
+/* macOS: the quick input is a telescope panel. Its prompt is on the bottom edge and the results
+ * stand over it, the best match on the row against the prompt, so the list reads outwards from
+ * the line the query is being typed on. Only the painting order turns over here: the input box
+ * is still the first thing in the widget, which is what the focus order and a screen reader
+ * follow, and neither is touched. The geometry the panel is placed by - 920 wide, centred, held
+ * by its bottom edge - and the order the results are ranked in are set under the same platform
+ * condition in `quickInputController.ts` and `quickInputList.ts`.
+ *
+ * Two things ride along with the turn and are meant to. The validation line sits under the input
+ * inside the header, so it comes to rest along the panel's bottom edge rather than between the
+ * prompt and the list. And the title bar, which only a multi step picker shows anything in,
+ * moves from the head of the panel to its foot. */
+.monaco-workbench.mac:not(.web) .quick-input-widget {
+	display: flex;
+	flex-direction: column-reverse;
+}

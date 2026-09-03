@@ -30,7 +30,7 @@ import { IParsedLabelWithIcons, getCodiconAriaLabel, matchesFuzzyIconAware, pars
 import { Lazy } from '../../../base/common/lazy.js';
 import { Disposable, DisposableStore, MutableDisposable } from '../../../base/common/lifecycle.js';
 import { observableValue, observableValueOpts, transaction } from '../../../base/common/observable.js';
-import { OS } from '../../../base/common/platform.js';
+import { isMacintosh, isNative, OS } from '../../../base/common/platform.js';
 import { escape, ltrim } from '../../../base/common/strings.js';
 import { URI } from '../../../base/common/uri.js';
 import { localize } from '../../../nls.js';
@@ -46,6 +46,17 @@ import { IQuickInputStyles } from './quickInput.js';
 import { quickInputButtonsToActionArrays } from './quickInputUtils.js';
 
 const $ = dom.$;
+
+/**
+ * The picker lists its results the way a telescope does: the best match at the foot of the list,
+ * against the prompt the query was typed into, and the ones after it climbing away from the hand.
+ * It is the rendering order that turns over and nothing else - the items arrive in the order the
+ * provider ranked them, and every index the rest of the widget holds still means what it meant -
+ * so the reversal is done where the elements are handed to the tree, and the label sort that
+ * ranks a query's matches is read backwards to match. Native macOS only; every other platform
+ * keeps the stock ascending list.
+ */
+const descendingOrder = isMacintosh && isNative;
 
 interface IQuickInputItemLazyParts {
 	readonly saneLabel: string;
@@ -785,7 +796,11 @@ export class QuickInputList extends Disposable {
 							return 0;
 						}
 						const normalizedSearchValue = this._lastQueryString.toLowerCase();
-						return compareEntries(element, otherElement, normalizedSearchValue);
+						const order = compareEntries(element, otherElement, normalizedSearchValue);
+						// This is the one ordering the array handed to the tree does not decide:
+						// when a query ranks the matches, the tree sorts them itself. Reading the
+						// comparison backwards is what puts the best of them last (`descendingOrder`).
+						return descendingOrder ? -order : order;
 					},
 				},
 				accessibilityProvider: new QuickInputAccessibilityProvider(),
@@ -1079,7 +1094,7 @@ export class QuickInputList extends Disposable {
 			const elementsWithoutSeparators = e.elements.filter((e): e is QuickPickItemElement => e instanceof QuickPickItemElement);
 			if (elementsWithoutSeparators.length !== e.elements.length) {
 				if (e.elements.length === 1 && e.elements[0] instanceof QuickPickSeparatorElement) {
-					this._tree.setFocus([e.elements[0].children[0]]);
+					this._tree.setFocus([this._firstRenderedChild(e.elements[0])]);
 					this._tree.reveal(e.elements[0], 0);
 				}
 				this._tree.setSelection(elementsWithoutSeparators);
@@ -1220,6 +1235,10 @@ export class QuickInputList extends Disposable {
 			what = QuickPickFocus.First;
 		}
 
+		if (what === QuickPickFocus.SecondLast && this._itemElements.length < 2) {
+			what = QuickPickFocus.Last;
+		}
+
 		switch (what) {
 			case QuickPickFocus.First:
 				this._tree.scrollTop = 0;
@@ -1244,6 +1263,21 @@ export class QuickInputList extends Disposable {
 				this._tree.scrollTop = this._tree.scrollHeight;
 				this._tree.focusLast(undefined, (e) => e.element instanceof QuickPickItemElement);
 				break;
+			case QuickPickFocus.SecondLast: {
+				this._tree.scrollTop = this._tree.scrollHeight;
+				let isSecondItem = false;
+				this._tree.focusLast(undefined, (e) => {
+					if (!(e.element instanceof QuickPickItemElement)) {
+						return false;
+					}
+					if (isSecondItem) {
+						return true;
+					}
+					isSecondItem = !isSecondItem;
+					return false;
+				});
+				break;
+			}
 			case QuickPickFocus.Next: {
 				const prevFocus = this._tree.getFocus();
 				this._tree.focusNext(undefined, this._shouldLoop, undefined, (e) => {
@@ -1266,7 +1300,7 @@ export class QuickInputList extends Disposable {
 						return false;
 					}
 					const parent = this._tree.getParentElement(e.element);
-					if (parent === null || (parent as QuickPickSeparatorElement).children[0] !== e.element) {
+					if (parent === null || this._firstRenderedChild(parent as QuickPickSeparatorElement) !== e.element) {
 						this._tree.reveal(e.element);
 					} else {
 						// Only if we are the first child of a separator do we reveal the separator
@@ -1295,7 +1329,7 @@ export class QuickInputList extends Disposable {
 						return false;
 					}
 					const parent = this._tree.getParentElement(e.element);
-					if (parent === null || (parent as QuickPickSeparatorElement).children[0] !== e.element) {
+					if (parent === null || this._firstRenderedChild(parent as QuickPickSeparatorElement) !== e.element) {
 						this._tree.reveal(e.element);
 					} else {
 						this._tree.reveal(parent);
@@ -1317,7 +1351,7 @@ export class QuickInputList extends Disposable {
 						foundSeparatorAsItem = true;
 						// If the separator is visible, then we should just reveal its first child so it's not as jarring.
 						if (this._separatorRenderer.isSeparatorVisible(e.element)) {
-							this._tree.reveal(e.element.children[0]);
+							this._tree.reveal(this._firstRenderedChild(e.element));
 						} else {
 							// If the separator is not visible, then we should
 							// push it up to the top of the list.
@@ -1331,7 +1365,7 @@ export class QuickInputList extends Disposable {
 								this._tree.reveal(e.element, 0);
 							}
 							return true;
-						} else if (e.element === this._elementTree[0]) {
+						} else if (e.element === this._firstRenderedElement) {
 							// We should stop at the first item in the list if it's a regular item.
 							this._tree.reveal(e.element, 0);
 							return true;
@@ -1363,7 +1397,7 @@ export class QuickInputList extends Disposable {
 								} else {
 									this._tree.reveal(e.element, 0);
 								}
-								focusElement = e.element.children[0];
+								focusElement = this._firstRenderedChild(e.element);
 							}
 						} else {
 							foundSeparator = true;
@@ -1378,7 +1412,7 @@ export class QuickInputList extends Disposable {
 								}
 
 								focusElement = e.element;
-							} else if (e.element === this._elementTree[0]) {
+							} else if (e.element === this._firstRenderedElement) {
 								// We should stop at the first item in the list if it's a regular item.
 								this._tree.reveal(e.element, 0);
 								return true;
@@ -1540,15 +1574,41 @@ export class QuickInputList extends Disposable {
 
 	//#region private methods
 
+	/**
+	 * The element on the list's first row. Reading it off the front of the array is only right
+	 * while the array runs the way the tree does, which in `descendingOrder` it does not.
+	 */
+	private get _firstRenderedElement(): IQuickPickElement {
+		return descendingOrder ? this._elementTree[this._elementTree.length - 1] : this._elementTree[0];
+	}
+
+	/**
+	 * The item on the first row a separator heads, for the same reason. The separator itself is
+	 * always the row above it.
+	 */
+	private _firstRenderedChild(separator: QuickPickSeparatorElement): QuickPickItemElement {
+		return descendingOrder ? separator.children[separator.children.length - 1] : separator.children[0];
+	}
+
+	/**
+	 * The single door every set of elements goes through on its way to the tree, and so the one
+	 * place the list's order is decided. In `descendingOrder` the groups are walked from the back
+	 * and each group's items with them, which puts the best match on the last row. The separators
+	 * are not walked backwards past their own group: the tree renders a parent before its children
+	 * whichever way the array runs, so a heading stays over the items it names. Nothing here
+	 * touches the arrays it reads - `_elementTree`, `_itemElements` and a separator's `children`
+	 * keep the provider's order, which is the order every index in the widget is counted in.
+	 */
 	private _setElementsToTree(elements: IQuickPickElement[]) {
 		const treeElements = new Array<IObjectTreeElement<IQuickPickElement>>();
-		for (const element of elements) {
+		for (const element of descendingOrder ? [...elements].reverse() : elements) {
 			if (element instanceof QuickPickSeparatorElement) {
+				const children = descendingOrder ? [...element.children].reverse() : element.children;
 				treeElements.push({
 					element,
 					collapsible: false,
 					collapsed: false,
-					children: element.children.map(e => ({
+					children: children.map(e => ({
 						element: e,
 						collapsible: false,
 						collapsed: false,
