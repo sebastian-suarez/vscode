@@ -566,9 +566,11 @@ body {
 	display: none;
 }
 
-/* Section titles clear the inset rows below them. */
+/* A section title sits on the same content column as the row ink below it: 4px here, plus the
+ * twistie's 2px margin, its 16px codicon and 2px more, puts the text at 24. The chevron hangs in
+ * the gutter the inset rows keep clear, the way a tree twistie hangs in front of its row. */
 .monaco-workbench.mac:not(.web) .part.sidebar .pane-header {
-	padding-left: 12px;
+	padding-left: 4px;
 }
 
 /* The vendored side bar font scaling sizes every action label off the text size, which leaves

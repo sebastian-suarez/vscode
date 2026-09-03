@@ -831,7 +831,13 @@
  * Resources are pulled in list view mode only, where every one of them is a leaf. In tree view
  * mode the folders under a group keep their twisties and their nesting, and the files under
  * them stay where the tree puts them. The graph view is excluded by name: its rows carry the
- * same markers and would otherwise be caught, and they are already flush with the row edge. */
+ * same markers and would otherwise be caught, and they are already flush with the row edge.
+ *
+ * The commit box and the action button take one thing more. Both carry a stock 11px of inner
+ * padding on top of the row edge, which pushed their visible boxes 11px right of the column
+ * everything else sits on. That padding goes, and the box edges land on the same x as the group
+ * header text and the file icons. The right edge is left alone: the vendored right padding
+ * already ends the box on the same line as the header count badges. */
 .monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-indent {
 	display: none;
 }
@@ -848,6 +854,11 @@
 .monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .monaco-tl-row:has(> .monaco-tl-contents > :is(.scm-input, .button-container, .resource-group)) > .monaco-tl-contents,
 .monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view).list-view-mode .monaco-tl-row:has(> .monaco-tl-contents > .resource) > .monaco-tl-contents {
 	margin-left: 8px;
+}
+
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .scm-input,
+.monaco-workbench.mac:not(.web) .part.sidebar .scm-view:not(.scm-history-view) .button-container {
+	padding-left: 0;
 }
 
 
