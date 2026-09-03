@@ -8,6 +8,7 @@ import { URI } from '../../../../../base/common/uri.js';
 import * as perf from '../../../../../base/common/performance.js';
 import { WorkbenchActionExecutedEvent, WorkbenchActionExecutedClassification } from '../../../../../base/common/actions.js';
 import { memoize } from '../../../../../base/common/decorators.js';
+import { isMacintosh, isNative } from '../../../../../base/common/platform.js';
 import { IFilesConfiguration, ExplorerFolderContext, FilesExplorerFocusedContext, ExplorerFocusedContext, ExplorerRootContext, ExplorerResourceReadonlyContext, ExplorerResourceCut, ExplorerResourceMoveableToTrash, ExplorerCompressedFocusContext, ExplorerCompressedFirstFocusContext, ExplorerCompressedLastFocusContext, ExplorerResourceAvailableEditorIdsContext, VIEW_ID, ExplorerResourceWritableContext, ViewHasSomeCollapsibleRootItemContext, FoldersViewVisibleContext, ExplorerResourceParentReadOnlyContext, ExplorerFindProviderActive } from '../../common/files.js';
 import { FileCopiedContext, NEW_FILE_COMMAND_ID, NEW_FOLDER_COMMAND_ID } from '../fileActions.js';
 import * as DOM from '../../../../../base/browser/dom.js';
@@ -512,6 +513,15 @@ export class ExplorerView extends ViewPane implements IExplorerView {
 			paddingBottom: ExplorerDelegate.getHeight(),
 			overrideStyles: this.getLocationBasedColors().listOverrideStyles,
 			findProvider: this.findProvider,
+			// Type-ahead hands its letters to the keymap (`fileActions.contribution.ts`). The two
+			// cannot share them: a letter the keymap does not bind opens an 800ms type-ahead
+			// session, and for the rest of it every keystroke is a search term rather than a
+			// command, so the bound letters stop working until it lapses. Finding a file is `/`
+			// instead, and the explorer's find provider makes a better job of it than type-ahead
+			// could - it searches the workspace rather than passing over the rows on screen. This
+			// tree only, so every other tree in the workbench keeps stock type-ahead, and native
+			// macOS only, which is where the keymap that replaces it applies.
+			typeNavigationEnabled: !(isMacintosh && isNative),
 		});
 		this._register(this.tree);
 		this._register(this.themeService.onDidColorThemeChange(() => this.tree.rerender()));

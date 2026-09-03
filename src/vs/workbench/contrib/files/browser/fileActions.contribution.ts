@@ -18,8 +18,9 @@ import { FilesExplorerFocusCondition, ExplorerRootContext, ExplorerFolderContext
 import { ADD_ROOT_FOLDER_COMMAND_ID, ADD_ROOT_FOLDER_LABEL } from '../../../browser/actions/workspaceCommands.js';
 import { CLOSE_SAVED_EDITORS_COMMAND_ID, CLOSE_EDITORS_IN_GROUP_COMMAND_ID, CLOSE_EDITOR_COMMAND_ID, CLOSE_OTHER_EDITORS_IN_GROUP_COMMAND_ID, REOPEN_WITH_COMMAND_ID } from '../../../browser/parts/editor/editorCommands.js';
 import { AutoSaveAfterShortDelayContext } from '../../../services/filesConfiguration/common/filesConfigurationService.js';
-import { WorkbenchListDoubleSelection } from '../../../../platform/list/browser/listService.js';
+import { WorkbenchListDoubleSelection, WorkbenchListSupportsFind, WorkbenchTreeElementCanCollapse, WorkbenchTreeElementCanExpand, WorkbenchTreeElementHasChild, WorkbenchTreeElementHasParent } from '../../../../platform/list/browser/listService.js';
 import { Schemas } from '../../../../base/common/network.js';
+import { isMacintosh, isNative } from '../../../../base/common/platform.js';
 import { DirtyWorkingCopiesContext, EnterMultiRootWorkspaceSupportContext, HasWebFileSystemAccess, WorkbenchStateContext, WorkspaceFolderCountContext, SidebarFocusContext, ActiveEditorCanRevertContext, ActiveEditorContext, ResourceContextKey, ActiveEditorAvailableEditorIdsContext, MultipleEditorsSelectedInGroupContext, TwoEditorsSelectedInGroupContext, SelectedEditorsInGroupFileOrUntitledResourceContextKey } from '../../../common/contextkeys.js';
 import { IsWebContext } from '../../../../platform/contextkey/common/contextkeys.js';
 import { ServicesAccessor } from '../../../../platform/instantiation/common/instantiation.js';
@@ -143,6 +144,53 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 	primary: KeyCode.Space,
 	handler: openFilePreserveFocusHandler
 });
+
+/**
+ * The letter keymap, in the manner of a neo-tree file tree: with the explorer focused, the
+ * letters under the resting hand do what the arrow keys and the editing shortcuts do, so the
+ * tree is walked and edited without reaching for them. Nothing here is a new command - every
+ * letter is a second key on a command the explorer already ships - and every rule carries the
+ * same condition its stock counterpart does, so a letter is only live where the command behind
+ * it can act, and falls through where it cannot.
+ *
+ * `FilesExplorerFocusCondition` is what keeps the letters from being typed at. It negates
+ * `inputFocus`, and the boxes a letter could land in - the inline rename box, the box a new
+ * file or folder is named in, the tree's find box - are all real `input` elements, which is
+ * exactly what that context key watches. So each of these goes back to being a plain letter
+ * the moment one of those boxes takes the focus.
+ *
+ * The weight is the one every other explorer binding above uses: a workbench contribution plus
+ * the bonus that outranks the generic list and tree commands, so `j` reaches `list.focusDown`
+ * rather than something a list further out has asked the same key for. Native macOS only, like
+ * the rest of this fork's own surfaces, and user keybindings outrank all of it as usual.
+ */
+if (isMacintosh && isNative) {
+	const registerExplorerLetter = (id: string, primary: number, when?: ContextKeyExpression) => {
+		KeybindingsRegistry.registerKeybindingRule({
+			id,
+			weight: KeybindingWeight.WorkbenchContrib + explorerCommandsWeightBonus,
+			when: ContextKeyExpr.and(FilesExplorerFocusCondition, when),
+			primary
+		});
+	};
+
+	// Walking the tree: j and k move the cursor, h and l fold and unfold
+	registerExplorerLetter('list.focusDown', KeyCode.KeyJ);
+	registerExplorerLetter('list.focusUp', KeyCode.KeyK);
+	registerExplorerLetter('list.collapse', KeyCode.KeyH, ContextKeyExpr.or(WorkbenchTreeElementCanCollapse, WorkbenchTreeElementHasParent));
+	registerExplorerLetter('list.expand', KeyCode.KeyL, ContextKeyExpr.or(WorkbenchTreeElementCanExpand, WorkbenchTreeElementHasChild));
+
+	// Editing the tree: a adds a file and A a folder, r renames, d moves to the trash behind
+	// the confirmation the delete command already asks for
+	registerExplorerLetter(NEW_FILE_COMMAND_ID, KeyCode.KeyA);
+	registerExplorerLetter(NEW_FOLDER_COMMAND_ID, KeyMod.Shift | KeyCode.KeyA);
+	registerExplorerLetter(RENAME_ID, KeyCode.KeyR, ContextKeyExpr.and(ExplorerRootContext.toNegated(), ExplorerResourceWritableContext));
+	registerExplorerLetter(MOVE_FILE_TO_TRASH_ID, KeyCode.KeyD, ExplorerResourceMoveableToTrash);
+
+	// Filtering the tree: the tree's own find widget, which the explorer's find provider turns
+	// into a search of the whole workspace rather than a pass over the rows already rendered
+	registerExplorerLetter('list.find', KeyCode.Slash, WorkbenchListSupportsFind);
+}
 
 const copyPathCommand = {
 	id: COPY_PATH_COMMAND_ID,
