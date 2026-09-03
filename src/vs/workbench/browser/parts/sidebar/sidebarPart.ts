@@ -30,21 +30,31 @@ import { IConfigurationService } from '../../../../platform/configuration/common
 import { Action2, IMenuService, MenuId, registerAction2 } from '../../../../platform/actions/common/actions.js';
 import { Separator } from '../../../../base/common/actions.js';
 import { ToggleActivityBarVisibilityActionId } from '../../actions/layoutActions.js';
-import { localize2 } from '../../../../nls.js';
+import { localize, localize2 } from '../../../../nls.js';
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { VisibleViewContainersTracker } from '../visibleViewContainersTracker.js';
 import { Extensions } from '../../panecomposite.js';
 import { FONT, getFontSize, updateSidebarSize } from '../../../../base/common/font.js';
 import { onDidChangeZoomLevel } from '../../../../base/browser/browser.js';
-import { scheduleAtNextAnimationFrame } from '../../../../base/browser/dom.js';
+import { $, append, scheduleAtNextAnimationFrame } from '../../../../base/browser/dom.js';
 import { MutableDisposable } from '../../../../base/common/lifecycle.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 import { getInlineTitleBarControlsWidth, getInlineTitleBarHeight, INLINE_TITLE_BAR_CAPTION_HEIGHT, isInlineTitleBar, onDidChangeInlineTitleBar } from '../../inlineTitleBar.js';
+
+/** U+00B7, the middle dot that parts one keyboard hint from the next in the footer. */
+const KEYBOARD_HINT_SEPARATOR = '·';
 
 export class SidebarPart extends AbstractPaneCompositePart {
 
 	static readonly activeViewletSettingsKey = 'workbench.sidebar.activeviewletid';
 	static readonly fontSizeSettingsKey = 'workbench.sideBar.experimental.fontSize';
+
+	/**
+	 * Height of the keyboard hint footer, in pixels. It is the height of the status bar, which
+	 * runs alongside it across the seam between the two columns, so the two rows read as one
+	 * band along the bottom of the window. Kept in sync with `sidebarpart.css`.
+	 */
+	private static readonly KEYBOARD_HINTS_FOOTER_HEIGHT = 22;
 
 	//#region IView
 
@@ -74,6 +84,8 @@ export class SidebarPart extends AbstractPaneCompositePart {
 	private readonly activityBarPart = this._register(this.instantiationService.createInstance(ActivitybarPart, this.location, this));
 	private readonly visibleViewContainersTracker: VisibleViewContainersTracker;
 	private readonly pendingCompositeBarRemeasure = this._register(new MutableDisposable());
+	private keyboardHintsFooter: HTMLElement | undefined;
+	private created = false;
 
 	//#endregion
 
@@ -99,7 +111,8 @@ export class SidebarPart extends AbstractPaneCompositePart {
 				trailingSeparator: false,
 				borderWidth: () => (this.getColor(SIDE_BAR_BORDER) || this.getColor(contrastBorder)) ? 1 : 0,
 				headerHeight: () => this.inlineTitleBarHeaderHeight,
-				titleHeight: () => this.inlineTitleBarTitleHeight
+				titleHeight: () => this.inlineTitleBarTitleHeight,
+				footerHeight: () => this.keyboardHintsFooterHeight
 			},
 			SidebarPart.activeViewletSettingsKey,
 			ActiveViewletContext.bindTo(contextKeyService),
@@ -156,6 +169,7 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		}));
 		this._register(onDidChangeInlineTitleBar(targetWindowId => {
 			if (targetWindowId === mainWindow.vscodeWindowId) {
+				this.updateKeyboardHintsFooter();
 				this.relayout();
 			}
 		}));
@@ -195,6 +209,27 @@ export class SidebarPart extends AbstractPaneCompositePart {
 
 	private get inlineTitleBarTitleHeight(): number | undefined {
 		return this.hasInlineTitleBarLayout ? INLINE_TITLE_BAR_CAPTION_HEIGHT : undefined;
+	}
+
+	/**
+	 * Whether the side bar carries the keyboard hint footer: the same arrangement the rest of
+	 * this fork's geometry rides on, an inline title bar - which only ever happens on native
+	 * macOS - with the side bar on the left, where it is the column that reaches the bottom of
+	 * the window and the footer is the row that closes it against the status bar. Unlike the
+	 * header above, this does not wait on a composite bar: the hints are about the tree rather
+	 * than about the view switcher, so they stay whether or not the switcher is showing.
+	 */
+	private get hasKeyboardHintsFooter(): boolean {
+		return isInlineTitleBar(mainWindow) && this.layoutService.getSideBarPosition() === SideBarPosition.LEFT;
+	}
+
+	/**
+	 * The height the part layout takes off the content for the footer. Only the hint footer is
+	 * answered for: with the composite bar in the footer instead - the collision
+	 * `getCompositeBarPosition` settles - the layout keeps the default height that band has.
+	 */
+	private get keyboardHintsFooterHeight(): number | undefined {
+		return this.keyboardHintsFooter ? SidebarPart.KEYBOARD_HINTS_FOOTER_HEIGHT : undefined;
 	}
 
 	protected override getCompositeBarPadding(): number {
@@ -242,8 +277,20 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		this.rememberActivityBarVisiblePosition();
 	}
 
+	override create(parent: HTMLElement): void {
+		super.create(parent);
+
+		// The footer joins a part whose own areas are up, and after the composite bar has taken
+		// the row it wants, so that the two never reach for the footer in the same pass
+		this.created = true;
+		this.updateKeyboardHintsFooter();
+	}
+
 	override updateStyles(): void {
 		super.updateStyles();
+
+		// The side bar changing sides comes through here, and the footer only applies on the left
+		this.updateKeyboardHintsFooter();
 
 		const container = assertReturnsDefined(this.getContainer());
 
@@ -270,6 +317,67 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		}
 
 		super.layout(width, height, top, left);
+	}
+
+	/**
+	 * Puts the keyboard hint footer in or takes it out, for whatever the arrangement is now. The
+	 * composite bar is asked to settle again on either side of the change, because the two share
+	 * the one footer a part has: it has to be out of the row before the hints move in, and the
+	 * row has to be free before it can move back.
+	 */
+	private updateKeyboardHintsFooter(): void {
+		if (!this.created) {
+			return; // the areas the footer sits among are not up yet; `create` comes back for it
+		}
+
+		const wanted = this.hasKeyboardHintsFooter;
+		if (wanted === !!this.keyboardHintsFooter) {
+			return;
+		}
+
+		if (wanted) {
+			this.updateCompositeBar();
+
+			this.keyboardHintsFooter = this.createKeyboardHintsFooter();
+			this.setFooterArea(this.keyboardHintsFooter);
+		} else {
+			this.removeFooterArea();
+			this.keyboardHintsFooter = undefined;
+
+			this.updateCompositeBar();
+		}
+	}
+
+	/**
+	 * The keyboard hint footer: the letter keymap the explorer takes on this platform
+	 * (`fileActions.contribution.ts`), written along the foot of the rail so that the tree says
+	 * how it is driven. Five of the letters, the ones a hand reaches for while reading a tree;
+	 * the two that change the workspace on their own - `d` for the trash, `A` for a folder - are
+	 * bound but left off the line. The dots between them are punctuation and nothing else, so
+	 * they are kept out of the accessibility tree and the hints read as five phrases.
+	 */
+	private createKeyboardHintsFooter(): HTMLElement {
+		const footer = $('.keyboard-hints');
+
+		const hints = [
+			{ keys: 'j/k', action: localize('keyboardHint.move', "move") },
+			{ keys: 'h/l', action: localize('keyboardHint.fold', "fold") },
+			{ keys: 'a', action: localize('keyboardHint.add', "add") },
+			{ keys: 'r', action: localize('keyboardHint.rename', "rename") },
+			{ keys: '/', action: localize('keyboardHint.filter', "filter") }
+		];
+
+		for (const hint of hints) {
+			if (footer.hasChildNodes()) {
+				const separator = append(footer, $('span.keyboard-hint-separator'));
+				separator.setAttribute('aria-hidden', 'true');
+				separator.textContent = KEYBOARD_HINT_SEPARATOR;
+			}
+
+			append(footer, $('span.keyboard-hint')).textContent = localize('keyboardHint', "{0} {1}", hint.keys, hint.action);
+		}
+
+		return footer;
 	}
 
 	protected override getTitleAreaDropDownAnchorAlignment(): AnchorAlignment {
@@ -349,7 +457,15 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		const activityBarPosition = this.configurationService.getValue<ActivityBarPosition>(LayoutSettings.ACTIVITY_BAR_LOCATION);
 		switch (activityBarPosition) {
 			case ActivityBarPosition.TOP: return CompositeBarPosition.TOP;
-			case ActivityBarPosition.BOTTOM: return CompositeBarPosition.BOTTOM;
+
+			// `bottom` asks for the part's footer, which is the row the keyboard hints take under
+			// the gate - and a part has one footer, not two. The hints win there and the view
+			// switcher goes to the header instead: the row `top` puts it in, and the row this
+			// fork ships it in anyway, so the setting still does the thing that asking for the
+			// switcher out of the caption row means here. Off the gate nothing else wants the
+			// footer and the setting is answered as stock.
+			case ActivityBarPosition.BOTTOM: return this.hasKeyboardHintsFooter ? CompositeBarPosition.TOP : CompositeBarPosition.BOTTOM;
+
 			case ActivityBarPosition.HIDDEN:
 			case ActivityBarPosition.DEFAULT: // noop
 			default: return CompositeBarPosition.TITLE;

@@ -176,6 +176,51 @@
 	left: auto;
 }
 
+/* The keyboard hint footer, the row at the foot of the rail that says how the tree above it is
+ * driven. The part layout reserves the row and `SidebarPart` feeds it the height given here, so
+ * the two have to agree. That height is the status bar's: the bar runs alongside this row on
+ * the other side of the seam between the columns, and the pair reads as one band closing the
+ * window.
+ *
+ * The line is set from the right hand edge inwards, on the 16px the rows of the tree above end
+ * at, and grows leftward as it is read - which is what keeps it clear of the rounded corner the
+ * rail closes the window with on the other side. It stays one row: a side bar too narrow for
+ * all five hints loses the leftmost ones off its edge rather than folding them onto a second
+ * line the layout has left no room for. */
+.monaco-workbench.mac:not(.web) .part.sidebar > .header-or-footer.footer.keyboard-hints {
+	height: 22px; /* SidebarPart.KEYBOARD_HINTS_FOOTER_HEIGHT */
+	align-items: center;
+	justify-content: flex-end;
+	padding: 0 16px 0 0;
+	white-space: nowrap;
+	cursor: default;
+}
+
+/* The row paints nothing. The part is the single painter of the side bar material (`style.css`)
+ * and the composite bar band this row would otherwise take its look from carries a fill of its
+ * own, which here would lay a second coat over the translucent rail. So the fill goes and a
+ * hairline is all that parts the hints from the tree - the same one the sticky headers and the
+ * breadcrumbs row are set apart by. */
+.monaco-workbench.mac:not(.web) .part.sidebar > .header-or-footer.footer.keyboard-hints {
+	background-color: transparent;
+	border-top: 1px solid rgba(204, 204, 204, 0.13);
+}
+
+/* The type is a fixed size rather than one scaled off the side bar's, the way the text in the
+ * views above it is: this is a row of a fixed height, and type that grew inside it would be cut
+ * off by the row instead of moving it. The tone is the workbench's own dim foreground, which
+ * the 2026 theme resolves to the grey these are drawn in, at the two strengths that tell the
+ * hints from the punctuation between them. */
+.monaco-workbench.mac:not(.web) .part.sidebar > .header-or-footer.footer.keyboard-hints {
+	font-size: 10.5px;
+	color: color-mix(in srgb, var(--vscode-descriptionForeground) 72%, transparent);
+}
+
+.monaco-workbench.mac:not(.web) .part.sidebar > .header-or-footer.footer.keyboard-hints > .keyboard-hint-separator {
+	padding: 0 5px;
+	color: color-mix(in srgb, var(--vscode-descriptionForeground) 34%, transparent);
+}
+
 .monaco-workbench .part.sidebar > .content {
 	font-size: var(--vscode-workbench-sidebar-font-size);
 	line-height: 1.4em;

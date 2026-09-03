@@ -32,6 +32,13 @@ export interface IPartOptions {
 	 * only subtracts it from the content area.
 	 */
 	readonly titleHeight?: () => number | undefined;
+
+	/**
+	 * Height of the footer area when it should differ from the default. The value has to
+	 * agree with the height the stylesheets give the footer area of this part, the layout
+	 * only subtracts it from the content area.
+	 */
+	readonly footerHeight?: () => number | undefined;
 }
 
 export interface ILayoutContentResult {
@@ -255,7 +262,7 @@ class PartLayout {
 		// Footer Size: Width (Fill), Height (Variable)
 		let footerSize: Dimension;
 		if (this.footerVisible) {
-			footerSize = new Dimension(width, Math.min(height, PartLayout.Footer_HEIGHT));
+			footerSize = new Dimension(width, Math.min(height, this.options.footerHeight?.() ?? PartLayout.Footer_HEIGHT));
 		} else {
 			footerSize = Dimension.None;
 		}
