@@ -59,6 +59,14 @@ const fullscreenIcon = registerIcon('fullscreen', Codicon.screenFull, localize('
 const centerLayoutIcon = registerIcon('centerLayoutIcon', Codicon.layoutCentered, localize('centerLayoutIcon', "Represents centered layout mode"));
 const zenModeIcon = registerIcon('zenMode', Codicon.target, localize('zenModeIcon', "Represents zen mode"));
 
+/**
+ * The picker is a telescope panel on this platform - see `telescopePanel` in
+ * `quickInputController.ts` - and its place is baked in, so the two commands that align it have
+ * nothing left to align. Here they are neither registered nor listed in the Customize Layout
+ * picker: a control that moves nothing is worse than no control at all.
+ */
+const telescopePanel = isMacintosh && isNative;
+
 export const ToggleActivityBarVisibilityActionId = 'workbench.action.toggleActivityBarVisibility';
 
 // --- Toggle Centered Layout
@@ -1268,7 +1276,7 @@ registerAction2(DecreaseViewHeightAction);
 
 //#region Quick Input Alignment Actions
 
-registerAction2(class AlignQuickInputTopAction extends Action2 {
+class AlignQuickInputTopAction extends Action2 {
 
 	constructor() {
 		super({
@@ -1282,9 +1290,9 @@ registerAction2(class AlignQuickInputTopAction extends Action2 {
 		const quickInputService = accessor.get(IQuickInputService);
 		quickInputService.setAlignment('top');
 	}
-});
+}
 
-registerAction2(class AlignQuickInputCenterAction extends Action2 {
+class AlignQuickInputCenterAction extends Action2 {
 
 	constructor() {
 		super({
@@ -1298,7 +1306,12 @@ registerAction2(class AlignQuickInputCenterAction extends Action2 {
 		const quickInputService = accessor.get(IQuickInputService);
 		quickInputService.setAlignment('center');
 	}
-});
+}
+
+if (!telescopePanel) {
+	registerAction2(AlignQuickInputTopAction);
+	registerAction2(AlignQuickInputCenterAction);
+}
 
 //#endregion
 
@@ -1373,10 +1386,13 @@ const AlignPanelActions: CustomizeLayoutItem[] = [
 	CreateOptionLayoutItem('workbench.action.alignPanelJustify', PanelAlignmentContext.isEqualTo('justify'), localize('justifyPanel', "Justify"), panelAlignmentJustifyIcon),
 ];
 
-const QuickInputActions: CustomizeLayoutItem[] = [
-	CreateOptionLayoutItem('workbench.action.alignQuickInputTop', QuickInputAlignmentContextKey.isEqualTo('top'), localize('top', "Top"), quickInputAlignmentTopIcon),
-	CreateOptionLayoutItem('workbench.action.alignQuickInputCenter', QuickInputAlignmentContextKey.isEqualTo('center'), localize('center', "Center"), quickInputAlignmentCenterIcon),
-];
+const QuickInputActions: CustomizeLayoutItem[] = [];
+if (!telescopePanel) {
+	QuickInputActions.push(...[
+		CreateOptionLayoutItem('workbench.action.alignQuickInputTop', QuickInputAlignmentContextKey.isEqualTo('top'), localize('top', "Top"), quickInputAlignmentTopIcon),
+		CreateOptionLayoutItem('workbench.action.alignQuickInputCenter', QuickInputAlignmentContextKey.isEqualTo('center'), localize('center', "Center"), quickInputAlignmentCenterIcon),
+	]);
+}
 
 const MiscLayoutOptions: CustomizeLayoutItem[] = [
 	CreateOptionLayoutItem('workbench.action.toggleFullScreen', IsMainWindowFullscreenContext, localize('fullscreen', "Full Screen"), fullscreenIcon),
@@ -1477,6 +1493,16 @@ registerAction2(class CustomizeLayoutAction extends Action2 {
 				]
 			};
 		};
+
+		// The header would be left standing over nothing once the two rows are gone, so it goes with them.
+		const quickInputSection: QuickPickItem[] = telescopePanel ? [] : [
+			{
+				type: 'separator',
+				label: localize('quickOpen', "Quick Input Position")
+			},
+			...QuickInputActions.map(toQuickPickItem)
+		];
+
 		return [
 			{
 				type: 'separator',
@@ -1493,11 +1519,7 @@ registerAction2(class CustomizeLayoutAction extends Action2 {
 				label: localize('panelAlignment', "Panel Alignment")
 			},
 			...AlignPanelActions.map(toQuickPickItem),
-			{
-				type: 'separator',
-				label: localize('quickOpen', "Quick Input Position")
-			},
-			...QuickInputActions.map(toQuickPickItem),
+			...quickInputSection,
 			{
 				type: 'separator',
 				label: localize('layoutModes', "Modes"),
@@ -1592,7 +1614,10 @@ registerAction2(class CustomizeLayoutAction extends Action2 {
 				}
 
 				commandService.executeCommand('workbench.action.alignPanelCenter');
-				commandService.executeCommand('workbench.action.alignQuickInputTop');
+
+				if (!telescopePanel) {
+					commandService.executeCommand('workbench.action.alignQuickInputTop');
+				}
 			}
 		}));
 
