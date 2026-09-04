@@ -638,8 +638,13 @@ body {
  * clip has to be taken here, at the container, or the list and the strip run square out past the
  * curve. Nothing inside the panel wants out of that box: the hovers and the menus a picker opens
  * are put in the workbench container, not in the widget, and the input box is built without a
- * context view, so its validation never leaves the header. */
+ * context view, so its validation never leaves the header.
+ *
+ * The 920 the panel is written to is the box, edge and all: the mockup measures it border box -
+ * 920 by 405, 918 by 403 inside - so the sheet's own border is counted in that width, not added
+ * to it. */
 .monaco-workbench.mac:not(.web) .quick-input-widget {
+	box-sizing: border-box;
 	display: flex;
 	flex-direction: column-reverse;
 	overflow: hidden;
