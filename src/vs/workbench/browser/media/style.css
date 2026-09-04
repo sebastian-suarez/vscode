@@ -883,12 +883,36 @@ body {
 	padding: 0;
 }
 
-/* The pinned separator's own glass. The strip stands over the rows of its group as they scroll
- * under it, and the coat it is fed - `quickInput.background`, the panel's own colour, handed to the
- * tree as `treeStickyScrollBackground` in `quickInputService.ts` - is three tenths now, where it
- * used to be nine. Three tenths of anything hides nothing, so the rows would read straight through
- * the heading pinned over them. What hides them instead is a blur of their own, the way a pinned
- * header in a macOS list carries what it covers as a smear rather than as words.
+/* The strip is painted once, on the pinned row, and the box that spans it paints nothing at all.
+ * The tree writes its tint twice from the one feed - `abstractTree.ts` hands the same colour to the
+ * container and to the row inside it, `quickInput.background` reaching the tree as
+ * `treeStickyScrollBackground` from `quickInputService.ts` - and letting both of them speak is what
+ * turns the strip into a band. The row is held 8px off each side like every other row on this panel,
+ * so the container's coat is what shows in the gutters either side of the pill: three tenths laid
+ * over the sheet's own three tenths there, denser again inside the pill where the row's coat is
+ * stacked on that as well, against the three tenths the panel is drawn at everywhere else. Two
+ * painters, three densities, one strip. So the container is starved and the row is left as the only
+ * painter - a trap worth naming, because feeding the container is the obvious thing to do and it
+ * puts the band straight back.
+ *
+ * Starving it is enough on weight alone: five classes against the four of the generated
+ * `.monaco-list<domId> .monaco-scrollable-element .monaco-tree-sticky-container`, so there is no
+ * `!important` here and none needed. Nothing is lost with the coat, either - the scrolled rows sit
+ * in the identical 8px inset column and a list row is `overflow: hidden`, so there is never anything
+ * painted in the gutters the container has stopped covering for it to have been hiding.
+ *
+ * Both pickers at once: the list and the tree are each a `WorkbenchObjectTree` styled from that
+ * same feed, so one selector under the widget names the pair. The preview's editor has sticky
+ * scroll turned off outright (`quickInputPreview.ts`), so nothing else in the panel answers here. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-tree-sticky-container {
+	background-color: transparent;
+}
+
+/* The pinned separator's own glass, carried by the pill itself. The strip stands over the rows of
+ * its group as they scroll under it, and the coat it is fed is three tenths now, where it used to be
+ * nine. Three tenths of anything hides nothing, so the rows would read straight through the heading
+ * pinned over them. What hides them instead is a blur of their own, the way a pinned header in a
+ * macOS list carries what it covers as a smear rather than as words.
  *
  * 12px of standard deviation is well past the point a 13px line stops being legible, and it is
  * deliberately nowhere near the sheet's own 52: this is a shield over the panel's own contents, not
@@ -896,21 +920,14 @@ body {
  * with it either - what it filters is the panel's rows and not the desktop, and pushing their
  * colour would print the list back onto the heading in another form.
  *
- * On the container rather than on the pinned row, because the container is the box that spans the
- * strip: the tree gives it a real height the moment something is pinned (`abstractTree.ts`), while
- * the row inside it keeps the 8px inset every row on this panel is held to. The feed reaches that
- * row as well as the container, so the pill sits a shade denser than the gutter either side of it,
- * and with no border and no shadow fed to the strip that step is the whole of what tells it apart.
- *
- * Nothing stock sets a backdrop filter on either element, so there is nothing here to outweigh and
- * no `!important` to answer. The coat underneath arrives from the tree's own generated rule,
- * `.monaco-list<domId> .monaco-scrollable-element .monaco-tree-sticky-container`, which already
- * beats the `sideBar.background` fallback `tree.css` writes one class shorter.
- *
- * Both pickers at once: the list and the tree are each a `WorkbenchObjectTree` styled from that
- * same feed, so one selector under the widget names the pair. The preview's editor has sticky
- * scroll turned off outright (`quickInputPreview.ts`), so nothing else in the panel answers here. */
-.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-tree-sticky-container {
+ * The filter is the whole of what is written here. The coat the smear is drawn under arrives from
+ * the tree's second generated rule, the one naming the row, which beats the `sideBar.background`
+ * fallback `tree.css` writes at the same weight by standing later in the document - the tree appends
+ * its style element into the list's own node. A backdrop filter is clipped to the element's rounded
+ * box, so the 7px the row is given with every other row on this panel holds the smear to the pill,
+ * and the pill blurs the rows passing under it and nothing beside them. The selector is the shape
+ * the inset above is written with, so the two rules are speaking about the one row. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-tree-sticky-container .monaco-tree-sticky-row.monaco-list-row {
 	backdrop-filter: blur(12px);
 }
 
