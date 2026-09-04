@@ -267,13 +267,15 @@ export class QuickInputService extends Themable implements IQuickInputService {
 				listInactiveFocusOutline: activeContrastBorder,
 				// The one place inside the panel that has to paint. A pinned separator stands over
 				// the rows of its own group as they scroll under it, so it needs something behind
-				// it or they read through. It keeps the container's color and so lays a second
-				// coat on that strip - a step in density and no more, now that the coat is three
-				// tenths. What actually hides the rows is the blur `style.css` gives the strip;
-				// this feed is what that blur is drawn over. Left to the stock fallback the strip
-				// would take the side bar's color instead: the same alpha now that the two share a
-				// tier, but the side bar's tint and keyed to the side bar, so it would sit a shade
-				// off the panel it is on and a theme retinting the panel would not move it.
+				// it or they read through. The coat lands on the pinned row: the tree writes this
+				// feed for the row and for the container both, and `style.css` starves the
+				// container's copy, because two coats over the one strip made a band. Three tenths
+				// hides nothing on its own, so what keeps the rows passing beneath the separator a
+				// smear rather than words is the backdrop blur `style.css` gives that same row,
+				// drawn over this coat. Left to the stock fallback the strip would take the side
+				// bar's color instead: the same alpha now that the two share a tier, but the side
+				// bar's tint and keyed to the side bar, so it would sit a shade off the panel it
+				// is on and a theme retinting the panel would not move it.
 				treeStickyScrollBackground: quickInputBackground,
 			}),
 			pickerGroup: {
