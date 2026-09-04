@@ -10,6 +10,7 @@ import { IObjectTreeElement, ObjectTreeElementCollapseState } from '../../../../
 import { IIdentityProvider } from '../../../../base/browser/ui/list/list.js';
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
+import { isMacintosh, isNative } from '../../../../base/common/platform.js';
 import { IInstantiationService } from '../../../instantiation/common/instantiation.js';
 import { WorkbenchObjectTree } from '../../../list/browser/listService.js';
 import { IQuickTreeCheckboxEvent, IQuickTreeItem, IQuickTreeItemButtonEvent, QuickPickFocus } from '../../common/quickInput.js';
@@ -24,6 +25,20 @@ import { IQuickInputStyles } from '../quickInput.js';
 
 const $ = dom.$;
 const flatHierarchyClass = 'quick-input-tree-flat';
+
+/**
+ * The tree stands in the telescope panel on this platform, in the same column the list stands in
+ * and drawn to the same rows, so the height it is handed is measured the same way. Every other
+ * platform keeps the stock column.
+ */
+const telescopePanel = isMacintosh && isNative;
+
+/**
+ * One row on that panel, said again here because `layout` is handed a budget in pixels and owes
+ * the column a run of whole rows out of it. `quickInputController.ts` is where the figure belongs
+ * and it is 22 there; `style.css` is where a row is drawn to it.
+ */
+const telescopeRowHeight = 22;
 
 class QuickInputTreeIdentityProvider implements IIdentityProvider<IQuickTreeItem> {
 	private readonly _elementIds = new WeakMap<IQuickTreeItem, string>();
@@ -196,9 +211,14 @@ export class QuickInputTreeController extends Disposable {
 	}
 
 	layout(maxHeight?: number): void {
-		this._tree.getHTMLElement().style.maxHeight = maxHeight ? `${
+		this._tree.getHTMLElement().style.maxHeight = maxHeight ? `${telescopePanel
+			// Whole rows, and never a pixel over what was handed in. The cap holds the rows box and
+			// the column's 6px of padding is drawn outside it, so there is nothing to add back on;
+			// and the panel the box stands in hides what overflows it, so a cap over the budget is
+			// not a hint that there is more to scroll but the top row cut into.
+			? Math.floor(maxHeight / telescopeRowHeight) * telescopeRowHeight
 			// Make sure height aligns with list item heights
-			Math.floor(maxHeight / 44) * 44
+			: Math.floor(maxHeight / 44) * 44
 			// Add some extra height so that it's clear there's more to scroll
 			+ 6
 			}px` : '';

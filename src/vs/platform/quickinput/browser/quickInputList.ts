@@ -58,6 +58,13 @@ const $ = dom.$;
  */
 const descendingOrder = isMacintosh && isNative;
 
+/**
+ * One row on the telescope panel, said again here because `layout` is handed a budget in pixels
+ * and owes the column a run of whole rows out of it. `quickInputController.ts` is where the figure
+ * belongs and it is 22 there; `style.css` is where a row is drawn to it.
+ */
+const telescopeRowHeight = 22;
+
 interface IQuickInputItemLazyParts {
 	readonly saneLabel: string;
 	readonly saneSortLabel: string;
@@ -1449,9 +1456,14 @@ export class QuickInputList extends Disposable {
 	}
 
 	layout(maxHeight?: number): void {
-		this._tree.getHTMLElement().style.maxHeight = maxHeight ? `${
+		this._tree.getHTMLElement().style.maxHeight = maxHeight ? `${descendingOrder
+			// Whole rows, and never a pixel over what was handed in. The cap holds the rows box and
+			// the column's 6px of padding is drawn outside it, so there is nothing to add back on;
+			// and the panel the box stands in hides what overflows it, so a cap over the budget is
+			// not a hint that there is more to scroll but the top row cut into.
+			? Math.floor(maxHeight / telescopeRowHeight) * telescopeRowHeight
 			// Make sure height aligns with list item heights
-			Math.floor(maxHeight / 44) * 44
+			: Math.floor(maxHeight / 44) * 44
 			// Add some extra height so that it's clear there's more to scroll
 			+ 6
 			}px` : '';

@@ -788,10 +788,15 @@ body {
  * given and has none to put in the padding, which `overflow: hidden` would otherwise let them
  * through into.
  *
- * This is the cap the column actually stands at. `quickInputController.ts` writes an inline
- * max-height on this same element and inline beats any selector, so the governor there is written
- * to say nothing while the window has the room for the whole column and to speak only for a window
- * too short to hold the panel. */
+ * This is the cap for a window with the room for the whole column, and only there.
+ * `quickInputController.ts` writes an inline max-height on this same element and inline beats any
+ * selector, so wherever the governor there speaks it is its figure the column stands at. The panel
+ * is a share of the window now and not the flat 405 it was drawn to, so it speaks for every window
+ * that share comes out short of the 405 in - all but the ones as tall as the 859 the panel was
+ * drawn in - and what it hands over is the rows the shortened panel has left once the prompt strip
+ * and the air around them come off it, snapped to whole rows the way the sixteen here is a whole
+ * number of them. Split, it pins the panel's own height as well, so the column is as tall as the
+ * panel it stands in and not as tall as its results asked for. */
 .monaco-workbench.mac:not(.web) .quick-input-list .monaco-list,
 .monaco-workbench.mac:not(.web) .quick-input-tree .monaco-list {
 	max-height: calc(16 * 22px);
