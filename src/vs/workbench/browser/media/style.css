@@ -633,12 +633,31 @@ body {
  * moves from the head of the panel to its foot.
  *
  * The panel is one sheet of glass, and the rounding belongs to the sheet. The container carries
- * the coat and the corner both - `quickInput.background` at nine tenths, resolved that way for
- * every consumer in `theme.ts`, on the xLarge radius the stock widget already asks for - so the
- * clip has to be taken here, at the container, or the list and the strip run square out past the
- * curve. Nothing inside the panel wants out of that box: the hovers and the menus a picker opens
- * are put in the workbench container, not in the widget, and the input box is built without a
- * context view, so its validation never leaves the header.
+ * the coat and the corner both - `quickInput.background` at the side bar's own three tenths,
+ * resolved that way for every consumer in `theme.ts`, on the xLarge radius the stock widget
+ * already asks for - so the clip has to be taken here, at the container, or the list and the strip
+ * run square out past the curve. Nothing inside the panel wants out of that box: the hovers and
+ * the menus a picker opens are put in the workbench container, not in the widget, and the input
+ * box is built without a context view, so its validation never leaves the header. Which is what
+ * lets the blur be taken here too: a backdrop filter makes the widget the containing block for
+ * everything absolutely positioned inside it, and nothing inside it was getting out past the
+ * `overflow: hidden` to begin with.
+ *
+ * The blur is the other half of that material and it has to be drawn in CSS. The side bar is glass
+ * because the window is transparent under it and macOS blurs the desktop behind the whole window
+ * (`vibrancy: 'under-window'`); that material is the window's backing and cannot reach inside the
+ * window. The panel stands over the editor, which is opaque on this build, so what is behind it is
+ * workbench paint and only a backdrop filter blurs that. The figures are the ones the rail coat was
+ * approved at - blur 52 and saturate 1.9 over a three tenths coat (D19) - which is this build's
+ * standing approximation of the system material, so the panel and the side bar are drawn to one
+ * recipe from either side of the window.
+ *
+ * A backdrop filter filters what is painted behind the element and nothing the element paints
+ * itself, so the xLarge radius clips the filtered region and the `shadow-xl` the stock widget casts
+ * is untouched. The entrance and the dismiss fade the widget's opacity over the top of it, which is
+ * safe here: Chromium gives an element carrying a backdrop filter its own render surface, filters
+ * the backdrop into that surface and multiplies the finished surface by the animated opacity, so on
+ * 148 the blur fades with the panel instead of popping in at full strength.
  *
  * The width the panel is written to is the box, edge and all - it is measured border box, the way
  * every figure on this panel is - so the sheet's own border is counted inside that width and not
@@ -655,6 +674,7 @@ body {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	overflow: hidden;
+	backdrop-filter: blur(52px) saturate(1.9);
 }
 
 /* With the sheet doing the rounding, the title strip's own corners are dead weight - and they are
@@ -703,13 +723,18 @@ body {
 }
 
 /* The preview pane. `peekViewEditor.background` is the colour a file gets when it is shown inside
- * something else, which is what this is, and it is taken at the panel's own nine tenths so that
+ * something else, which is what this is, and it is taken at the panel's own three tenths so that
  * the pane is glass like the rest of the sheet rather than a solid block set into it. The alpha is
  * put on here and not in the theme: the colour belongs to the peek views as well, and they are
  * real editors on the workbench that have no business being made see-through by this. `color-mix`
  * against nothing is the way the rest of this build takes alpha off a token, so it is the way it
- * is taken here; against the opaque colour a theme gives this token it is the same nine tenths
+ * is taken here; against the opaque colour a theme gives this token it is the same three tenths
  * the panel is coated at.
+ *
+ * The pane asks for no blur of its own. The widget's backdrop filter is taken over the whole sheet,
+ * this half of it included, and the pane's tint lands on top of the filtered result the way any
+ * child paints over what its parent laid down - so the pane is the panel's glass with a second
+ * wash of the peek colour on it, which is exactly the differentiation it is meant to read as.
  *
  * The pane takes no pointer at all. It is a picture of a file and nothing in it can be clicked,
  * scrolled or dragged; the keyboard never reaches it either, since nothing inside is in the tab
@@ -720,7 +745,7 @@ body {
 	min-width: 0;
 	overflow: hidden;
 	pointer-events: none;
-	background: color-mix(in srgb, var(--vscode-peekViewEditor-background) 90%, transparent);
+	background: color-mix(in srgb, var(--vscode-peekViewEditor-background) 30%, transparent);
 }
 
 .monaco-workbench.mac:not(.web) .quick-input-widget.has-preview .quick-input-preview {
@@ -856,6 +881,37 @@ body {
  * which has just gone: the row's own inset is the whole of its placing now. */
 .monaco-workbench.mac:not(.web) .quick-input-list .monaco-tree-sticky-row {
 	padding: 0;
+}
+
+/* The pinned separator's own glass. The strip stands over the rows of its group as they scroll
+ * under it, and the coat it is fed - `quickInput.background`, the panel's own colour, handed to the
+ * tree as `treeStickyScrollBackground` in `quickInputService.ts` - is three tenths now, where it
+ * used to be nine. Three tenths of anything hides nothing, so the rows would read straight through
+ * the heading pinned over them. What hides them instead is a blur of their own, the way a pinned
+ * header in a macOS list carries what it covers as a smear rather than as words.
+ *
+ * 12px of standard deviation is well past the point a 13px line stops being legible, and it is
+ * deliberately nowhere near the sheet's own 52: this is a shield over the panel's own contents, not
+ * a second sheet of window glass laid on the first, and at 52 it would read as one. No `saturate`
+ * with it either - what it filters is the panel's rows and not the desktop, and pushing their
+ * colour would print the list back onto the heading in another form.
+ *
+ * On the container rather than on the pinned row, because the container is the box that spans the
+ * strip: the tree gives it a real height the moment something is pinned (`abstractTree.ts`), while
+ * the row inside it keeps the 8px inset every row on this panel is held to. The feed reaches that
+ * row as well as the container, so the pill sits a shade denser than the gutter either side of it,
+ * and with no border and no shadow fed to the strip that step is the whole of what tells it apart.
+ *
+ * Nothing stock sets a backdrop filter on either element, so there is nothing here to outweigh and
+ * no `!important` to answer. The coat underneath arrives from the tree's own generated rule,
+ * `.monaco-list<domId> .monaco-scrollable-element .monaco-tree-sticky-container`, which already
+ * beats the `sideBar.background` fallback `tree.css` writes one class shorter.
+ *
+ * Both pickers at once: the list and the tree are each a `WorkbenchObjectTree` styled from that
+ * same feed, so one selector under the widget names the pair. The preview's editor has sticky
+ * scroll turned off outright (`quickInputPreview.ts`), so nothing else in the panel answers here. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-tree-sticky-container {
+	backdrop-filter: blur(12px);
 }
 
 /* A match is told by its colour, and the colour is the theme's own on the plain row and on the

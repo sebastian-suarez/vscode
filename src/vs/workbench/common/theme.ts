@@ -696,11 +696,12 @@ export const TITLE_BAR_BORDER = registerColor('titleBar.border', {
 const MAC_TRANSLUCENT_SURFACE_ALPHA = 0.3;
 
 /**
- * The workbench surfaces that reveal the macOS under-window vibrancy. Each of them is the one
- * coat over the region it covers: the material goes on once, over the whole of that region, so
- * that every part of it reads the same. Anything sitting inside such a surface paints no
- * material of its own — a second coat of the same color composites darker than its neighbours
- * and turns the surface into a patchwork. The color theme resolves these through
+ * The surfaces carrying the macOS window material. For the parts of the workbench that is the
+ * under-window vibrancy showing through: they paint with alpha and the desktop reads behind them.
+ * Each of them is the one coat over the region it covers: the material goes on once, over the
+ * whole of that region, so that every part of it reads the same. Anything sitting inside such a
+ * surface paints no material of its own — a second coat of the same color composites darker than
+ * its neighbours and turns the surface into a patchwork. The color theme resolves these through
  * `translucentSurfaceOnMac`, so that every consumer sees the same translucent value: colors
  * defaulting to one of them, the generated CSS variables and the parts painting their container.
  *
@@ -709,6 +710,15 @@ const MAC_TRANSLUCENT_SURFACE_ALPHA = 0.3;
  * and the opaque editor surface starts below it, at the editor body. It carries the same
  * material as the side bar so that the band across the top of the window reads as one row from
  * the window controls to the far edge of the tabs. `style.css` keeps the layers under it clear.
+ *
+ * The quick input is the other exception, and a different kind of one: it is not a part of the
+ * workbench at all but a panel called up over it. It is in this set because the material is meant
+ * to be the side bar's own and not a second glass at a figure of its own - the picker is where
+ * this build goes looking for a file, and it should read as the surface the file tree is drawn
+ * on. What it cannot take from this set is what stands behind the alpha. Under-window vibrancy is
+ * the window's own backing and it reaches only what the window lets through; the panel floats
+ * over the editor, which is opaque on this build, so there is nothing there for the system
+ * material to blur. That blur is drawn in CSS instead, on the widget, in `style.css`.
  */
 export const MAC_TRANSLUCENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_BACKGROUND,
@@ -716,7 +726,8 @@ export const MAC_TRANSLUCENT_SURFACES = new Set<ColorIdentifier>([
 	ACTIVITY_BAR_TOP_BACKGROUND,
 	TITLE_BAR_ACTIVE_BACKGROUND,
 	TITLE_BAR_INACTIVE_BACKGROUND,
-	EDITOR_GROUP_HEADER_TABS_BACKGROUND
+	EDITOR_GROUP_HEADER_TABS_BACKGROUND,
+	quickInputBackground
 ]);
 
 /**
@@ -780,41 +791,6 @@ export function transparentSurfaceOnMac(color: Color): Color {
 	}
 
 	return new Color(new RGBA(color.rgba.r, color.rgba.g, color.rgba.b, MAC_TRANSPARENT_SURFACE_ALPHA));
-}
-
-const MAC_OVERLAY_SURFACE_ALPHA = 0.9;
-
-/**
- * The surfaces that float over the workbench rather than being part of it: an overlay is called
- * up, does its work over whatever the window happens to be showing, and goes away again. They
- * are glass, not vibrancy. The nine tenths is deliberately its own figure and not the 0.3 the
- * parts are coated with (M16): the parts are always on screen, so their material can be thin and
- * the desktop reads through the whole session; an overlay lands on top of the work being done
- * and has to be read against it, so it takes just enough alpha off the coat for the scene behind
- * to stay placed - the file you were looking at is still under the panel, and dimmer, not gone.
- *
- * The single coat law holds here as it does for the parts, and harder, because at nine tenths a
- * second coat of the same color is very nearly opaque: 0.9 over 0.9 is 0.99, a patch of solid
- * paint in the middle of the glass. The quick input container is the one painter of the panel -
- * the list, the sticky rows and the title strip are handled at their own feeds so that nothing
- * repeats it.
- */
-export const MAC_OVERLAY_SURFACES = new Set<ColorIdentifier>([
-	quickInputBackground
-]);
-
-/**
- * Bakes the overlay glass into a resolved surface color on macOS desktop, alongside
- * `translucentSurfaceOnMac` and by the same rule: the alpha is absolute, so a theme or a color
- * customization keeps tinting the glass but cannot paint it solid. A no-op on every other
- * platform and in the web.
- */
-export function overlaySurfaceOnMac(color: Color): Color {
-	if (!isMacintosh || !isNative) {
-		return color;
-	}
-
-	return new Color(new RGBA(color.rgba.r, color.rgba.g, color.rgba.b, MAC_OVERLAY_SURFACE_ALPHA));
 }
 
 // < --- Menubar --- >

@@ -24,12 +24,12 @@ import { isMacintosh, isNative } from '../../../base/common/platform.js';
 
 /**
  * The picker is one sheet of glass on this platform, and the container is the only thing that
- * paints it. The theme resolves `quickInput.background` at nine tenths there, so a second feed of
- * the same color inside the panel would lay the coat down twice - and two nine tenths make
- * ninety-nine hundredths, a patch of solid paint in the shape of whatever was fed. The list is
- * the shape that matters: its rows are held six pixels in from each side, so the second coat
- * would have read as a dark block down the middle of the panel with a lighter margin either
- * side of it. The feeds are dropped where they are made rather than fought with in CSS.
+ * paints it. The theme resolves `quickInput.background` at the side bar's own three tenths there,
+ * so a second feed of the same color inside the panel would lay the coat down twice - and two
+ * three tenths make a little over half, a patch of denser glass in the shape of whatever was fed.
+ * The list is the shape that matters: its rows are held six pixels in from each side, so the
+ * second coat would read as a darker block down the middle of the panel with a lighter margin
+ * either side of it. The feeds are dropped where they are made rather than fought with in CSS.
  */
 const glassPanel = isMacintosh && isNative;
 
@@ -268,10 +268,12 @@ export class QuickInputService extends Themable implements IQuickInputService {
 				// The one place inside the panel that has to paint. A pinned separator stands over
 				// the rows of its own group as they scroll under it, so it needs something behind
 				// it or they read through. It keeps the container's color and so lays a second
-				// coat on that strip - very nearly solid, and meant to be: the strip is the only
-				// part of the panel the scene behind is allowed to be hidden by. Left to the stock
-				// fallback it would take the side bar's color instead, which on this platform is
-				// the thin vibrancy coat and would let the rows through.
+				// coat on that strip - a step in density and no more, now that the coat is three
+				// tenths. What actually hides the rows is the blur `style.css` gives the strip;
+				// this feed is what that blur is drawn over. Left to the stock fallback the strip
+				// would take the side bar's color instead: the same alpha now that the two share a
+				// tier, but the side bar's tint and keyed to the side bar, so it would sit a shade
+				// off the panel it is on and a theme retinting the panel would not move it.
 				treeStickyScrollBackground: quickInputBackground,
 			}),
 			pickerGroup: {

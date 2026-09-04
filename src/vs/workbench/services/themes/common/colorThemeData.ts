@@ -24,7 +24,7 @@ import { CharCode } from '../../../../base/common/charCode.js';
 import { StorageScope, IStorageService, StorageTarget } from '../../../../platform/storage/common/storage.js';
 import { ThemeConfiguration } from './themeConfiguration.js';
 import { ColorScheme, ThemeTypeSelector } from '../../../../platform/theme/common/theme.js';
-import { MAC_OVERLAY_SURFACES, MAC_TRANSLUCENT_SURFACES, MAC_TRANSPARENT_SURFACES, overlaySurfaceOnMac, translucentSurfaceOnMac, transparentSurfaceOnMac } from '../../../common/theme.js';
+import { MAC_TRANSLUCENT_SURFACES, MAC_TRANSPARENT_SURFACES, translucentSurfaceOnMac, transparentSurfaceOnMac } from '../../../common/theme.js';
 import { ColorId, FontStyle, MetadataConsts } from '../../../../editor/common/encodedTokenAttributes.js';
 import { toStandardTokenType } from '../../../../editor/common/languages/supports/tokenization.js';
 
@@ -160,15 +160,10 @@ export class ColorThemeData implements IWorkbenchColorTheme {
 		}
 
 		// The surfaces layered on top of a translucent one are cleared at the same point, so
-		// that they do not paint the translucency over a second time.
+		// that they do not paint the translucency over a second time. An id belongs to at most
+		// one of the two sets, so the order these are asked in never decides anything.
 		if (color && MAC_TRANSPARENT_SURFACES.has(colorId)) {
 			return transparentSurfaceOnMac(color);
-		}
-
-		// The overlays floating over the workbench take their glass here too. An id belongs to
-		// at most one of the three sets, so the order these are asked in never decides anything.
-		if (color && MAC_OVERLAY_SURFACES.has(colorId)) {
-			return overlaySurfaceOnMac(color);
 		}
 
 		return color;
