@@ -633,10 +633,11 @@ body {
  * moves from the head of the panel to its foot.
  *
  * The panel is one sheet of glass, and the rounding belongs to the sheet. The container carries
- * the coat and the corner both - `quickInput.background` at the side bar's own three tenths,
- * resolved that way for every consumer in `theme.ts`, on the xLarge radius the stock widget
- * already asks for - so the clip has to be taken here, at the container, or the list and the strip
- * run square out past the curve. Nothing inside the panel wants out of that box: the hovers and
+ * the corner - the xLarge radius the stock widget already asks for - so the clip has to be taken
+ * here, at the container, or the list and the strip run square out past the curve. The coat is
+ * `quickInput.background` at the side bar's own three tenths, resolved that way for every consumer
+ * in `theme.ts`, and it is laid a layer down on the underlay rather than on the panel itself, for
+ * the reason given further down. Nothing inside the panel wants out of that box: the hovers and
  * the menus a picker opens are put in the workbench container, not in the widget, and the input
  * box is built without a context view, so its validation never leaves the header. That clip is what
  * the blur hangs off as well: the underlay the filter is drawn on is deliberately larger than the
@@ -665,14 +666,28 @@ body {
  * of the underlay, where the blur has every sample it asks for. The `shadow-xl` the stock widget
  * casts is untouched by any of it: a filter paints nothing of the element it is written on.
  *
+ * The coat goes with it, and that is the other half of the same fault. A coat painted on the panel
+ * is painted inside the box the underlay reads back, so it is part of what gets blurred: at the rim
+ * about half of what the blur gathers is uncoated window, the blurred picture comes out carrying
+ * about half the tint, and it is only 104px in that the coat is at its full three tenths. The tint
+ * would feather exactly where the smear used to, and the panel would dim outwards again in another
+ * form. So the panel paints no coat at all (`quickInputController.ts`) and the underlay paints it
+ * as its own background: an element's background is composited over the picture its backdrop filter
+ * hands back and never into it, so the coat stands outside the reading back and is an even three
+ * tenths at every pixel, rim and middle alike, over a blur that is full strength everywhere. The
+ * underlay's box is the panel's with 104px to spare on every side, so what the clip cuts back is
+ * coat the whole way round and the sheet is covered corner to corner.
+ *
  * The underlay is a `::before` and it is taken out of the flow, which is what keeps it out of the
  * way. The panel is a grid and an absolutely positioned child is not a cell in one, so the columns
  * are laid out as though it were not there. `z-index: -1` is what holds it inside the panel rather
  * than behind it: the panel is positioned and stands at 2550, so it is a stacking context of its own
  * and nothing in it can paint out past its box. Inside that box the order comes out the way it is
- * wanted - the panel's coat is laid down first and the underlay reads it back along with the window
- * behind it, and every row and every strip is drawn over the pair of them - so the underlay never
- * blurs the picker's own rows. It takes no pointer either.
+ * wanted - the underlay is drawn first, reading back the window standing behind the panel and
+ * laying its coat over what it read, and every row and every strip is drawn over the top of it - so
+ * the underlay never blurs the picker's own rows, and the pinned separator's own blur gathers the
+ * coat off the underlay's picture exactly as it used to gather it off the panel's background. It
+ * takes no pointer either.
  *
  * The entrance and the dismiss fade the panel's opacity over the top of all this, and the underlay
  * is inside what is faded rather than beside it, so the glass arrives and leaves with the panel it
@@ -701,6 +716,7 @@ body {
 	inset: -104px;
 	z-index: -1;
 	backdrop-filter: blur(52px) saturate(1.9);
+	background: var(--vscode-quickInput-background);
 	pointer-events: none;
 }
 

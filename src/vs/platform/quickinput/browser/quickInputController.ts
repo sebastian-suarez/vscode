@@ -1225,7 +1225,14 @@ export class QuickInputController extends Disposable {
 				quickInputTitleBackground, quickInputBackground, quickInputForeground, widgetBorder,
 			} = this.styles.widget;
 			this.ui.titleBar.style.backgroundColor = quickInputTitleBackground ?? '';
-			this.ui.container.style.backgroundColor = quickInputBackground ?? '';
+			// The telescope panel's coat is not painted here. Its blur is carried on an underlay
+			// standing past the panel on every side (`style.css`), and a backdrop filter reads back
+			// only what is painted inside the box beneath it - a coat on the panel is inside that
+			// box, so at the rim half of what the blur gathers is uncoated window and the tint
+			// thins outwards the way the smear used to. The underlay paints the same coat as its
+			// own background instead, which lands over the picture the filter hands back rather
+			// than inside it: an even three tenths to the very edge.
+			this.ui.container.style.backgroundColor = telescopePanel ? '' : (quickInputBackground ?? '');
 			this.ui.container.style.color = quickInputForeground ?? '';
 			this.ui.container.style.border = widgetBorder ? `1px solid ${widgetBorder}` : '';
 			this.ui.list.style(this.styles.list);
