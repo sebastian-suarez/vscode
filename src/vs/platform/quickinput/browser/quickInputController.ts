@@ -62,42 +62,44 @@ export class QuickInputController extends Disposable {
 	private static readonly MAX_WIDTH = 600; // Max total width of quick input widget
 
 	/**
-	 * The telescope panel, measured off the mockup: 920 wide by 405 tall, border box, drawn in a
-	 * 1280 by 859 window at left 180 and top 163. Centred across, and down the window the free
-	 * height splits 36 above to 64 below - which is what the panel is anchored by, since the
-	 * prompt is on its bottom edge and has to hold that line whether six results stand over it or
-	 * twenty.
+	 * The telescope panel is a share of the window: four fifths of it across, near two thirds of it
+	 * down, centred, and held by its bottom edge - the prompt is on that edge and has to hold that
+	 * line whether six results stand over it or twenty-six.
 	 *
-	 * 405 tall in an 859 tall window is a share of the window, and the share is what the panel is
-	 * held to rather than the figure: in the window the mockup was drawn in it works out at the 405
-	 * itself, and in a shorter window the panel comes down with the window instead of standing at a
-	 * height the window has no room for. A share and not a set of breakpoints, ruled that way
-	 * because a panel that changes size on a threshold changes size in front of you, and there is
-	 * nothing at any threshold worth that.
+	 * The panel was drawn at 920 by 405 in a 1280 by 859 window and was built to those figures.
+	 * Three sizes went up against them - the mockup's own proportions, the mockup's width with more
+	 * height, and a large panel taken as a share of the window - and the large one is the ruling. So
+	 * the 920 and the 405 are superseded: they are not written down here any more and they are no
+	 * ceiling on the shares below. Nothing caps the panel from above except the window it is in.
 	 *
-	 * What the figure is *for* is where the two states part. A panel showing nothing but results is
-	 * as tall as those results make it and this is the ceiling it is not allowed past. A panel that
-	 * has split for a file is held at it exactly: the pane beside the list is the reason the panel
-	 * has a size at all, and a query that matched three files has no business shrinking the picture
-	 * of the one in focus. Both are anchored off the same figure, so the line the prompt sits on is
-	 * the window's answer alone and a split picker and an unsplit one in the same window are read
-	 * off the one line.
+	 * Shares and not breakpoints, because a panel that changes size on a threshold changes size in
+	 * front of you and there is nothing at any threshold worth that. Every window gets the same
+	 * picture at its own scale.
+	 *
+	 * The bottom share is what the panel is anchored by, and it is worked out from the panel the
+	 * window asks for rather than from the panel as it stands. That is the invariant: the line the
+	 * prompt sits on is the window's answer alone, so in one window a picker that has split for a
+	 * file and a picker that has not are read off the same line, and so are a list of three results
+	 * and a list of thirty.
 	 */
-	private static readonly TELESCOPE_WIDTH = 920;
-	private static readonly TELESCOPE_HEIGHT = 405;
-	private static readonly TELESCOPE_HEIGHT_SHARE = 405 / 859;
+	private static readonly TELESCOPE_WIDTH_SHARE = 0.8;
+	private static readonly TELESCOPE_HEIGHT_SHARE = 0.65;
 	private static readonly TELESCOPE_BOTTOM_SHARE = 0.64;
 
 	/**
-	 * What the panel is made of, top to bottom: 6px of padding, sixteen 22px rows and 6px more
-	 * padding is the 364 the results column measures, and 364 with the 39px prompt strip and the
-	 * container's own 1px border top and bottom is the 405 above.
+	 * What the panel is made of, top to bottom: 6px of padding, whole 22px rows, 6px more padding,
+	 * the 39px prompt strip and the container's own 1px border top and bottom. Everything that is
+	 * not rows comes to 53, and how many rows there are is whatever the window's share affords.
 	 *
 	 * `layout` caps the rows and not the column - the padding is drawn outside the box the cap
-	 * holds - so the figure the list is handed is the 352 the rows themselves take, and the 53
-	 * between that and the panel is everything drawn around them. The sixteen row column is written
-	 * down in `style.css` and not here, and an inline max-height would beat it, so the height is
-	 * only ever handed over for a window too short to hold the panel.
+	 * holds - so the figure the list is handed is what the rows themselves may take, the panel's
+	 * height less the 53. It is handed over in every window now and not only in the short ones:
+	 * there is no set column height left for a stylesheet to hold, so this is the only authority on
+	 * how deep the results run. The list snaps what it is given down to whole rows, which is what
+	 * makes the figure honest at every size.
+	 *
+	 * The two added together are the floor under the panel: the prompt strip with a single row over
+	 * it. A panel smaller than that is a panel with nothing in it.
 	 *
 	 * Nothing in the 53 is left for the progress bar, and nothing needs to be: the strip is drawn
 	 * for every picker but stands at no height at all until there is progress to report, which is
@@ -1076,12 +1078,15 @@ export class QuickInputController extends Disposable {
 	private updateLayout() {
 		if (this.ui && this.isVisible()) {
 			const style = this.ui.container.style;
-			// The golden cut has no say in the telescope panel's width: it is a measured figure,
-			// and the cut would hold the panel to 794px in the very window the measurement was
-			// taken in. A window too narrow for it gives the panel everything but a 16px margin
-			// down each side instead.
+			// The golden cut has no say in the telescope panel's width: the panel is four fifths of
+			// the window across, and the cut would hold it a good deal short of that in any window
+			// you like. The 16px margin down each side is a guard and not a size anything is meant
+			// to meet - it only has anything to say in a window under 160 wide, where four fifths
+			// would leave less air than that.
 			let width = telescopePanel
-				? Math.min(QuickInputController.TELESCOPE_WIDTH, this.dimension!.width - 32)
+				? Math.min(
+					Math.round(this.dimension!.width * QuickInputController.TELESCOPE_WIDTH_SHARE),
+					this.dimension!.width - 32)
 				: Math.min(this.dimension!.width * 0.62 /* golden cut */, QuickInputController.MAX_WIDTH);
 			style.width = width + 'px';
 
@@ -1141,30 +1146,30 @@ export class QuickInputController extends Disposable {
 				style.width = `${width}px`;
 				style.height = '';
 			} else if (telescopePanel) {
-				// The one figure the panel is worked out from, and everything below reads it: the
-				// mockup's share of the window, never past the 405 it was drawn at, and never past
-				// what a window keeping a 16px margin top and bottom has to give - the same margin
-				// the width above keeps down the sides, and a guard for the window that is all title
-				// bar rather than something the panel is expected to meet. The floor is the prompt
-				// strip with a single row over it: a panel smaller than that is a panel with nothing
-				// in it. Border box, like every other figure this panel is measured in, so this is
-				// the outer box - the sheet's own border is inside it and not added to it.
+				// The one figure the panel is worked out from, and everything below reads it: near
+				// two thirds of the window, with nothing over it. The 16px margin top and bottom is
+				// the same guard the width above keeps down the sides and bites just as rarely, in
+				// a window under 92 tall; it is there for the window that is all title bar rather
+				// than for anything the panel is expected to meet. The floor is the prompt strip
+				// with a single row over it: a panel smaller than that is a panel with nothing in
+				// it. Border box, like every other figure this panel is measured in, so this is the
+				// outer box - the sheet's own border is inside it and not added to it.
 				const panelHeight = Math.max(
 					QuickInputController.TELESCOPE_LIST_CHROME + QuickInputController.TELESCOPE_ROW_HEIGHT,
 					Math.min(
-						QuickInputController.TELESCOPE_HEIGHT,
 						Math.round(this.dimension!.height * QuickInputController.TELESCOPE_HEIGHT_SHARE),
 						this.dimension!.height - 32));
 
-				// The results column is a constant and `style.css` is where it is written down, so
-				// in a window at least as tall as the one the mockup was drawn in this says nothing
-				// at all and lets the cap there stand - an inline max-height would beat any
-				// selector. It speaks for every window shorter than that, split or not, and then it
-				// hands the list what the panel has left over once the strip and the air around the
-				// rows are taken off it. One row is the floor: below that there is nothing to show.
-				listHeight = panelHeight < QuickInputController.TELESCOPE_HEIGHT
-					? Math.max(QuickInputController.TELESCOPE_ROW_HEIGHT, panelHeight - QuickInputController.TELESCOPE_LIST_CHROME)
-					: undefined;
+				// The results column has no set height any more and `style.css` no longer names one,
+				// so this is the only thing that says how deep the results may run: what the panel
+				// has left once the strip and the air around the rows are taken off it. Handed over
+				// in every window and in both states, and an inline max-height beats any selector,
+				// so the twenty row cap stock writes on this same element never gets to speak. The
+				// list snaps it down to whole rows, so what is written here is what stands. One row
+				// is the floor: below that there is nothing to show.
+				listHeight = Math.max(
+					QuickInputController.TELESCOPE_ROW_HEIGHT,
+					panelHeight - QuickInputController.TELESCOPE_LIST_CHROME);
 
 				// Held by its bottom edge, so the prompt keeps the same line however tall the list
 				// standing over it happens to be. The share is worked out against the whole panel
@@ -1177,16 +1182,17 @@ export class QuickInputController extends Disposable {
 				style.top = 'initial';
 				style.left = `${Math.round((this.dimension!.width * 0.5 /* center */) - (width / 2))}px`;
 				style.right = '';
-				// Split, the panel is held at the figure and not at its contents: the pane beside
-				// the list is what the panel has a size for, and a query that matched three files
-				// would otherwise shrink the picture of the one in focus to the height of three
-				// rows. What a short list leaves over is glass at the head of the results column,
-				// since the column stacks from the bottom up and the space falls above the rows
-				// rather than between them and the prompt. Unsplit there is nothing beside the list
-				// to keep a box for, and a three command palette standing 405 tall would be a sheet
-				// of nothing with three rows at the foot of it - so there the panel is its contents,
-				// as it has been since the panel was drawn. The state is the class the pane is shown
-				// by, read here rather than tracked twice.
+				// Split, the panel is held at the window's figure and not at its contents: the pane
+				// beside the list is what the panel has a size for, and a query that matched three
+				// files would otherwise shrink the picture of the one in focus to the height of
+				// three rows. What a short list leaves over is glass at the head of the results
+				// column, since the column stacks from the bottom up and the space falls above the
+				// rows rather than between them and the prompt. Unsplit there is nothing beside the
+				// list to keep a box for, and a three command palette standing the whole share tall
+				// would be a sheet of nothing with three rows at the foot of it - so there the panel
+				// is its contents, as it has been since the panel was drawn, and what stops it
+				// growing past the share is the cap handed to the list above. The state is the class
+				// the pane is shown by, read here rather than tracked twice.
 				style.height = this.ui.container.classList.contains('has-preview') ? `${panelHeight}px` : '';
 			} else {
 				style.top = `${this.viewState?.top !== undefined ? Math.round(this.dimension!.height * this.viewState.top) : this.titleBarOffset}px`;

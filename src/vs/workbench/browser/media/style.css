@@ -623,9 +623,9 @@ body {
  * stand over it, the best match on the row against the prompt, so the list reads outwards from
  * the line the query is being typed on. Only the painting order turns over here: the input box
  * is still the first thing in the widget, which is what the focus order and a screen reader
- * follow, and neither is touched. The geometry the panel is placed by - 920 wide, centred, held
- * by its bottom edge - and the order the results are ranked in are set under the same platform
- * condition in `quickInputController.ts` and `quickInputList.ts`.
+ * follow, and neither is touched. The geometry the panel is placed by - four fifths of the window
+ * across, centred, held by its bottom edge - and the order the results are ranked in are set under
+ * the same platform condition in `quickInputController.ts` and `quickInputList.ts`.
  *
  * Two things ride along with the turn and are meant to. The validation line sits under the input
  * inside the header, so it comes to rest along the panel's bottom edge rather than between the
@@ -640,9 +640,9 @@ body {
  * are put in the workbench container, not in the widget, and the input box is built without a
  * context view, so its validation never leaves the header.
  *
- * The 920 the panel is written to is the box, edge and all: the mockup measures it border box -
- * 920 by 405, 918 by 403 inside - so the sheet's own border is counted in that width, not added
- * to it.
+ * The width the panel is written to is the box, edge and all - it is measured border box, the way
+ * every figure on this panel is - so the sheet's own border is counted inside that width and not
+ * added to it.
  *
  * The sheet is a grid of columns now, and the turn moves off it onto the column: what is stacked
  * bottom upwards is the picker, and the picker is one column of the sheet. Standing at one column
@@ -675,11 +675,13 @@ body {
 }
 
 /* The second column, and the sheet grows one when the picker in it is offering files: 400 for the
- * results, a hairline, and the rest of the 918 inside the border - 517 - for the preview. The
- * results column keeps every figure it was written with, because they are all written against the
- * column and not against the panel: the rows are 384 wide at `calc(100% - 16px)` and the prompt
- * strip is the column's own 400. The controller writes the 920 on the widget and knows nothing of
- * any of this; the division happens inside what it wrote.
+ * results, a hairline, and everything else inside the border for the preview. The results column is
+ * the fixed one and the pane takes all of the growth - `minmax(0, 1fr)` is what hands it over - so a
+ * wider window is a bigger picture of the file and not a wider list of names. The results column
+ * keeps every figure it was written with, because they are all written against the column and not
+ * against the panel: the rows are 384 wide at `calc(100% - 16px)` and the prompt strip is the
+ * column's own 400. The controller writes a width on the widget and knows nothing of any of this;
+ * the division happens inside what it wrote.
  *
  * The class goes on for a whole set of items and not for the item in focus, so a command sitting
  * among a list of files does not fold the pane away as the eye passes over it
@@ -777,29 +779,22 @@ body {
 	--vscode-editorGutter-background: transparent;
 }
 
-/* The results column is sixteen rows deep: 6px of padding, 16 * 22px of rows, 6px of padding, so
- * 364 - and 364 with the 39px prompt strip under it and the container's own 1px border top and
- * bottom is the 405 the panel is measured at. Twenty rows is what stock stands at, which on this
- * panel would run the column past the height it is drawn to.
+/* The results column is however many whole rows the window's share affords, and no figure for it
+ * is written here at all. `quickInputController.ts` is the one authority: the panel is near two
+ * thirds of the window tall, the strip and the air around the rows come off that, and what is left
+ * goes on this same element as an inline max-height in every window and in both states. Inline
+ * beats any selector, so the twenty row cap stock writes never gets to speak on this platform, and
+ * there is nothing for a fixed cap here to do but lie in the windows it is wrong for. Split, the
+ * governor pins the panel's own height as well, so the column is as tall as the panel it stands in
+ * and not as tall as its results asked for.
  *
- * The cap holds the rows and not the column. `.monaco-list` measures its content box, so the 352
- * here is the viewport the list is virtualised against and the 12px of padding is drawn outside
- * it; the padding survives a scrolled list because the list renders rows for the viewport it was
- * given and has none to put in the padding, which `overflow: hidden` would otherwise let them
- * through into.
- *
- * This is the cap for a window with the room for the whole column, and only there.
- * `quickInputController.ts` writes an inline max-height on this same element and inline beats any
- * selector, so wherever the governor there speaks it is its figure the column stands at. The panel
- * is a share of the window now and not the flat 405 it was drawn to, so it speaks for every window
- * that share comes out short of the 405 in - all but the ones as tall as the 859 the panel was
- * drawn in - and what it hands over is the rows the shortened panel has left once the prompt strip
- * and the air around them come off it, snapped to whole rows the way the sixteen here is a whole
- * number of them. Split, it pins the panel's own height as well, so the column is as tall as the
- * panel it stands in and not as tall as its results asked for. */
+ * The padding stays, and it is the reason this rule stays. The cap holds the rows and not the
+ * column: `.monaco-list` measures its content box, so the figure handed in is the viewport the list
+ * is virtualised against and these 12px are drawn outside it. The padding survives a scrolled list
+ * because the list renders rows for the viewport it was given and has none to put in the padding,
+ * which `overflow: hidden` would otherwise let them through into. */
 .monaco-workbench.mac:not(.web) .quick-input-list .monaco-list,
 .monaco-workbench.mac:not(.web) .quick-input-tree .monaco-list {
-	max-height: calc(16 * 22px);
 	padding: 6px 0;
 }
 
@@ -893,9 +888,9 @@ body {
 
 /* The progress bar is built for every picker and, with the panel turned over, it stands between the
  * list and the prompt. Its 2px are 2px of air over the hairline on a panel with nothing to report,
- * and 2px the panel is taller than the 405 it is measured at. So it is given its height only while
- * it is running: `active` is what the bar puts on itself the moment there is progress to show and
- * takes off again when it stops, and the rest of the time the strip stands at nothing. It is not
+ * and 2px the panel is taller than the height it is worked out at. So it is given its height only
+ * while it is running: `active` is what the bar puts on itself the moment there is progress to show
+ * and takes off again when it stops, and the rest of the time the strip stands at nothing. It is not
  * fighting the bar for anything - the bar shows and hides itself with `display`, which this says
  * nothing about - and a picker that is loading grows the panel by the 2px and draws the bar on the
  * division line. */
