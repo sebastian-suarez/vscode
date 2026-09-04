@@ -30,7 +30,7 @@ import { isMacintosh, isNative } from '../../../base/common/platform.js';
  * container's by hand for ever after. The feeds are dropped where they are made rather than
  * fought with in CSS.
  */
-const glassPanel = isMacintosh && isNative;
+const telescopePanel = isMacintosh && isNative;
 
 export class QuickInputService extends Themable implements IQuickInputService {
 
@@ -252,8 +252,8 @@ export class QuickInputService extends Themable implements IQuickInputService {
 			keybindingLabel: defaultKeybindingLabelStyles,
 			list: getListStyles({
 				// The rows container would repaint the container's own coat over the whole of the
-				// list, so on the glass panel it is left unpainted and the container shows through.
-				listBackground: glassPanel ? undefined : quickInputBackground,
+				// list, so on the telescope panel it is left unpainted and the container shows through.
+				listBackground: telescopePanel ? undefined : quickInputBackground,
 				listFocusBackground: quickInputListFocusBackground,
 				listFocusForeground: quickInputListFocusForeground,
 				// Look like focused when inactive.
