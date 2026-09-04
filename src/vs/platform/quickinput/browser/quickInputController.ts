@@ -65,12 +65,27 @@ export class QuickInputController extends Disposable {
 	 * 1280 by 859 window at left 180 and top 163. Centred across, and down the window the free
 	 * height splits 36 above to 64 below - which is what the panel is anchored by, since the
 	 * prompt is on its bottom edge and has to hold that line whether six results stand over it or
-	 * twenty. The height is only ever used to work that split out: the panel itself is as tall as
-	 * its contents make it.
+	 * twenty. The height is a ceiling and not a size: the panel is as tall as its contents make it,
+	 * and the figure is what the split is worked out from and what the list is not allowed to grow
+	 * the panel past.
 	 */
 	private static readonly TELESCOPE_WIDTH = 920;
 	private static readonly TELESCOPE_HEIGHT = 405;
 	private static readonly TELESCOPE_BOTTOM_SHARE = 0.64;
+
+	/**
+	 * What the panel is made of, top to bottom: 6px of padding, sixteen 22px rows and 6px more
+	 * padding is the 364 the results column measures, and 364 with the 39px prompt strip and the
+	 * container's own 1px border top and bottom is the 405 above.
+	 *
+	 * `layout` caps the rows and not the column - the padding is drawn outside the box the cap
+	 * holds - so the figure the list is handed is the 352 the rows themselves take, and the 53
+	 * between that and the panel is everything drawn around them. The sixteen row column is written
+	 * down in `style.css` and not here, and an inline max-height would beat it, so the height is
+	 * only ever handed over for a window too short to hold the panel.
+	 */
+	private static readonly TELESCOPE_ROW_HEIGHT = 22;
+	private static readonly TELESCOPE_LIST_CHROME = 53;
 
 	private idPrefix: string;
 	private ui: QuickInputUI | undefined;
@@ -983,6 +998,17 @@ export class QuickInputController extends Disposable {
 				style.width = `${width}px`;
 				style.height = '';
 			} else if (telescopePanel) {
+				// The results column is a constant and `style.css` is where it is written down, so
+				// while the window has the room for the whole panel this says nothing at all and
+				// lets the cap there stand - an inline max-height would beat any selector. It speaks
+				// for a window too short to hold the panel, and then it hands the list what is left
+				// of a window keeping a 16px margin top and bottom, the same margin the width above
+				// keeps down the sides. One row is the floor: below that there is nothing to show.
+				const panelHeight = Math.min(QuickInputController.TELESCOPE_HEIGHT, this.dimension!.height - 32);
+				listHeight = panelHeight < QuickInputController.TELESCOPE_HEIGHT
+					? Math.max(QuickInputController.TELESCOPE_ROW_HEIGHT, panelHeight - QuickInputController.TELESCOPE_LIST_CHROME)
+					: undefined;
+
 				// Held by its bottom edge, so the prompt keeps the same line however tall the list
 				// standing over it happens to be. The share is worked out against the full panel and
 				// not against the panel as it stands, so a two result list and a twenty result list

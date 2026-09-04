@@ -651,3 +651,122 @@ body {
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 }
+
+/* The results column is sixteen rows deep: 6px of padding, 16 * 22px of rows, 6px of padding, so
+ * 364 - and 364 with the 39px prompt strip under it and the container's own 1px border top and
+ * bottom is the 405 the panel is measured at. Twenty rows is what stock stands at, which on this
+ * panel would run the column past the height it is drawn to.
+ *
+ * The cap holds the rows and not the column. `.monaco-list` measures its content box, so the 352
+ * here is the viewport the list is virtualised against and the 12px of padding is drawn outside
+ * it; the padding survives a scrolled list because the list renders rows for the viewport it was
+ * given and has none to put in the padding, which `overflow: hidden` would otherwise let them
+ * through into.
+ *
+ * This is the cap the column actually stands at. `quickInputController.ts` writes an inline
+ * max-height on this same element and inline beats any selector, so the governor there is written
+ * to say nothing while the window has the room for the whole column and to speak only for a window
+ * too short to hold the panel. */
+.monaco-workbench.mac:not(.web) .quick-input-list .monaco-list,
+.monaco-workbench.mac:not(.web) .quick-input-tree .monaco-list {
+	max-height: calc(16 * 22px);
+	padding: 6px 0;
+}
+
+/* The rows carry their own inset now, so the column hands them the full width to sit in. Stock
+ * holds the scrolled rows 6px off each side by padding the scrollable element, which is 6px no row
+ * can round; it also leaves the pinned separator standing over that padding rather than inside it,
+ * since the sticky widget is positioned against the padding box and comes out 6px wider than the
+ * rows scrolling under it. With the padding off, both are measured from the same edge. */
+.monaco-workbench.mac:not(.web) .quick-input-list .monaco-scrollable-element {
+	padding: 0;
+}
+
+/* The rows read the way the side bar's do: held 8px off each side and rounded, which is what makes
+ * the focus fill a pill on the glass instead of a band across it. Same idiom as the M3 source list
+ * - a margin and a width on the absolutely positioned row - and it reaches the pinned separator
+ * too, which is a list row of its own; `tree.css` pins those to the full width from five classes
+ * deep, so they are named a second time here to outweigh it. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-list-row,
+.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-tree-sticky-container .monaco-tree-sticky-row.monaco-list-row {
+	width: calc(100% - 16px);
+	margin-left: 8px;
+	border-radius: 7px;
+}
+
+/* The ink inside the pill: 4px in from the rounded left edge, 6px from the right. The separator
+ * drawn as a row of its own keeps the taller air stock gives it and takes the same two sides, so
+ * a group heading lines up with the names underneath it. */
+.monaco-workbench.mac:not(.web) .quick-input-list .quick-input-list-entry,
+.monaco-workbench.mac:not(.web) .quick-input-tree .quick-input-tree-entry {
+	padding: 0 6px 0 4px;
+}
+
+.monaco-workbench.mac:not(.web) .quick-input-list .quick-input-list-separator-as-item {
+	padding: 4px 6px 4px 4px;
+}
+
+/* The pinned separator drops the 5px it was given to stand in for the scrollable element's padding,
+ * which has just gone: the row's own inset is the whole of its placing now. */
+.monaco-workbench.mac:not(.web) .quick-input-list .monaco-tree-sticky-row {
+	padding: 0;
+}
+
+/* A match is told by its colour, and the colour is the theme's own on the plain row and on the
+ * focused one alike. Weight is the same thing said twice, and down a column of file names it reads
+ * as a stutter rather than as an answer to the query. */
+.monaco-workbench.mac:not(.web) .quick-input-list .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
+	font-weight: normal;
+}
+
+/* The cursor is the fill, the way it is in the side bar: the row is already a pill and a line drawn
+ * a pixel inside it reads as a second edge. The rule that draws that line carries `!important`, so
+ * it cannot be outweighed and is starved instead - the colour it asks for is redefined to nothing,
+ * on this widget and nowhere else. `list.focusOutline` is read by two rules inside the panel, the
+ * list's and the tree's, and by the drop feedback, which the picker has none of.
+ *
+ * Not in the high contrast themes: there the ring is the whole of the telling and the fill behind
+ * it is not what the row is meant to be read by. */
+.monaco-workbench.mac:not(.web):not(.hc-black):not(.hc-light) .quick-input-widget {
+	--vscode-list-focusOutline: transparent;
+}
+
+/* The second line of a row is 12px - the folder a file sits in, beside the name, and the detail
+ * under it. Stock sizes the description off the row's own text, 0.9 of 13, and leaves the detail at
+ * full size, so the two are drawn at different sizes for the same job. The tone each is given is
+ * the stock one and is left where it is. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-list-label-meta,
+.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-icon-label > .monaco-icon-label-container > .monaco-icon-description-container > .label-description {
+	font-size: var(--vscode-bodyFontSize-small);
+}
+
+/* The prompt strip: 6px of air all round the input, and a hairline along the top edge which is the
+ * panel's one inner division. `border-top` is the right edge for it even with the strip at the foot
+ * of the panel - `column-reverse` turns over the order the boxes are stacked in, not the edges each
+ * box has, so the strip's top edge is still the one facing the list. The 4px foot stock leaves is
+ * the gap it kept between the prompt and the list standing under it; the strip owns both sides of
+ * its own air now. Not in a picker that hides its input: there is no prompt to divide off, and
+ * stock closes the header up entirely. */
+.monaco-workbench.mac:not(.web) .quick-input-widget:not(.hidden-input) .quick-input-header {
+	padding: 6px;
+	border-top: 1px solid var(--vscode-pickerGroup-border);
+}
+
+/* The input is the 26px box the strip is measured with: 1px of border around a 24px line box, held
+ * there rather than grown out of the workbench's own line height, which is what the box is left to
+ * take otherwise. The height is pinned on the box and not on the strip, so a validation message
+ * still opens under it and pushes the strip taller. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-box .monaco-inputbox {
+	height: 26px;
+	line-height: 16px;
+}
+
+/* The query is typed in the monospace face. A path is read by its shape, and in a proportional face
+ * two of them never line up; the panel is a finder prompt and reads as one. Only the query: the
+ * validation line beside it, the count over it and every name in the list keep the workbench face.
+ * The face is named on the input itself, which is where the workbench font arrives by inheritance,
+ * so it is a shorter way round the cascade than the one the inherited value takes. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-box .monaco-inputbox > .ibwrapper > .input {
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-bodyFontSize);
+}
