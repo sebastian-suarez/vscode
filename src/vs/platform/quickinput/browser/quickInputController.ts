@@ -205,7 +205,14 @@ export class QuickInputController extends Disposable {
 
 		const styleSheet = domStylesheetsJs.createStyleSheet(container);
 
-		const titleBar = dom.append(container, $('.quick-input-titlebar'));
+		// The telescope panel is a sheet of two columns and the picker is the left one of them, so
+		// on this platform everything the widget used to hold goes into a column of its own and the
+		// widget itself holds the columns. Everywhere else the host is the widget, which is to say
+		// there is no column and the DOM is built exactly as it was built before: the elements are
+		// the same elements, in the same order, under the same parent.
+		const host = telescopePanel ? dom.append(container, $('.quick-input-left')) : container;
+
+		const titleBar = dom.append(host, $('.quick-input-titlebar'));
 
 		const leftActionBar = this._register(new ToolBar(titleBar, this.contextMenuService, {
 			hoverDelegate: this.options.hoverDelegate,
@@ -225,7 +232,7 @@ export class QuickInputController extends Disposable {
 		}));
 		rightActionBar.getElement().classList.add('quick-input-right-action-bar');
 
-		const headerContainer = dom.append(container, $('.quick-input-header'));
+		const headerContainer = dom.append(host, $('.quick-input-header'));
 
 		const checkAll = this._register(new TriStateCheckbox(localize('quickInput.checkAll', "Toggle all checkboxes"), false, { ...defaultCheckboxStyles, size: 15 }));
 		dom.append(headerContainer, checkAll.domNode);
@@ -279,17 +286,17 @@ export class QuickInputController extends Disposable {
 
 		const message = dom.append(inputContainer, $(`#${this.idPrefix}message.quick-input-message`));
 
-		const progressBar = this._register(new ProgressBar(container, this.styles.progressBar));
+		const progressBar = this._register(new ProgressBar(host, this.styles.progressBar));
 		progressBar.getContainer().classList.add('quick-input-progress');
 
-		const widget = dom.append(container, $('.quick-input-html-widget'));
+		const widget = dom.append(host, $('.quick-input-html-widget'));
 		widget.tabIndex = -1;
 
-		const description1 = dom.append(container, $('.quick-input-description'));
+		const description1 = dom.append(host, $('.quick-input-description'));
 
 		// List
 		const listId = this.idPrefix + 'list';
-		const list = this._register(this.instantiationService.createInstance(QuickInputList, container, this.options.hoverDelegate, this.options.linkOpenerDelegate, listId, this.styles));
+		const list = this._register(this.instantiationService.createInstance(QuickInputList, host, this.options.hoverDelegate, this.options.linkOpenerDelegate, listId, this.styles));
 		inputBox.setAttribute('aria-controls', listId);
 		this._register(list.onDidChangeFocus(() => {
 			if (inputBox.hasFocus()) {
@@ -333,7 +340,7 @@ export class QuickInputController extends Disposable {
 		// Tree
 		const tree = this._register(this.instantiationService.createInstance(
 			QuickInputTreeController,
-			container,
+			host,
 			this.options.hoverDelegate,
 			this.styles
 		));
@@ -365,6 +372,29 @@ export class QuickInputController extends Disposable {
 			this.onDidAcceptEmitter.fire();
 		}));
 		this._register(tree.tree.onDidChangeContentHeight(() => this.updateLayout()));
+
+		// Preview pane. The panel splits into a results column and a pane beside it when the picker
+		// is offering files, and the two things that stand between them are drawn here: a hairline
+		// and the pane's own cell. Nothing is put in that cell from this layer - the pane is handed
+		// it once and fills it, and what it fills it with is not the panel's business.
+		//
+		// The split is decided by the whole set of items and not by the one in focus, so a command
+		// row sitting among a list of files does not fold the pane away as the eye passes over it.
+		// What the pane *draws* does follow the focus, and an item it cannot draw leaves it blank.
+		if (telescopePanel && this.options.previewRenderer) {
+			const preview = this.options.previewRenderer;
+			dom.append(container, $('.quick-input-preview-separator'));
+			preview.attach(dom.append(container, $('.quick-input-preview')));
+
+			this._register(list.onDidSetItems(items => {
+				const split = preview.setItems(items);
+				if (container.classList.contains('has-preview') !== split) {
+					container.classList.toggle('has-preview', split);
+					this.updateLayout(); // the results column has just changed width
+				}
+			}));
+			this._register(list.onDidChangeFocus(focused => preview.setFocus(focused[0])));
+		}
 
 		const focusTracker = dom.trackFocus(container);
 		this._register(focusTracker);
@@ -936,6 +966,10 @@ export class QuickInputController extends Disposable {
 	 * nobody left to watch the fade and nothing left to hold what it needs - the store the pair
 	 * would be kept in has been disposed, and anything handed to it after that is dropped on the
 	 * floor - so the panel goes off screen the way it does on every other platform.
+	 *
+	 * The end of the fade is also where the preview pane is told to let go of what it is holding.
+	 * Not the hide itself: the pane is still on screen for the length of the dismiss and emptying
+	 * it there would blank the picture halfway through its own fade.
 	 */
 	private playTelescopeDismiss(container: HTMLElement): void {
 		if (this._store.isDisposed) {
@@ -950,6 +984,7 @@ export class QuickInputController extends Disposable {
 		const settle = () => {
 			container.classList.remove('is-hiding');
 			container.style.display = 'none';
+			this.options.previewRenderer?.hide();
 			this.telescopeDismissal.clear();
 		};
 		dismissal.add(dom.addDisposableListener(container, 'animationend', e => {
@@ -1124,6 +1159,12 @@ export class QuickInputController extends Disposable {
 			this.ui.inputBox.layout();
 			this.ui.list.layout(listHeight);
 			this.ui.tree.layout(listHeight);
+			// The pane's cell is measured by the grid and not by anything worked out here: the
+			// panel's width is divided inside it, and how tall the cell is the results column
+			// beside it decides. All it is told is that the moment to measure has come.
+			if (this.ui.container.classList.contains('has-preview')) {
+				this.options.previewRenderer?.layout();
+			}
 		}
 	}
 

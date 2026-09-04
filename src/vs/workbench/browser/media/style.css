@@ -642,11 +642,18 @@ body {
  *
  * The 920 the panel is written to is the box, edge and all: the mockup measures it border box -
  * 920 by 405, 918 by 403 inside - so the sheet's own border is counted in that width, not added
- * to it. */
+ * to it.
+ *
+ * The sheet is a grid of columns now, and the turn moves off it onto the column: what is stacked
+ * bottom upwards is the picker, and the picker is one column of the sheet. Standing at one column
+ * the grid draws what the flex box drew - a single cell as wide as the sheet, holding a box that
+ * is as tall as its contents - and the track is written `minmax(0, 1fr)` so that it is exactly the
+ * sheet's width and not the width of the widest thing in it, which is what a bare `1fr` would let
+ * a long row make it. */
 .monaco-workbench.mac:not(.web) .quick-input-widget {
 	box-sizing: border-box;
-	display: flex;
-	flex-direction: column-reverse;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	overflow: hidden;
 }
 
@@ -655,6 +662,119 @@ body {
 .monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-titlebar {
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
+}
+
+/* The picker's own column: everything the widget used to hold, stacked from the bottom up. The
+ * turn was on the widget until the widget became a grid, and it says exactly what it said there -
+ * the input box is still the first child, so the focus order and what a screen reader walks are
+ * untouched, and only the painting order is reversed. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-left {
+	display: flex;
+	flex-direction: column-reverse;
+	min-width: 0;
+}
+
+/* The second column, and the sheet grows one when the picker in it is offering files: 400 for the
+ * results, a hairline, and the rest of the 918 inside the border - 517 - for the preview. The
+ * results column keeps every figure it was written with, because they are all written against the
+ * column and not against the panel: the rows are 384 wide at `calc(100% - 16px)` and the prompt
+ * strip is the column's own 400. The controller writes the 920 on the widget and knows nothing of
+ * any of this; the division happens inside what it wrote.
+ *
+ * The class goes on for a whole set of items and not for the item in focus, so a command sitting
+ * among a list of files does not fold the pane away as the eye passes over it
+ * (`quickInputController.ts`). */
+.monaco-workbench.mac:not(.web) .quick-input-widget.has-preview {
+	grid-template-columns: 400px 1px minmax(0, 1fr);
+}
+
+/* Drawn for every picker on this platform and shown for the ones that split. Out of the grid
+ * entirely while the panel is one column, so that a panel that is not split is a panel with one
+ * cell in it and nothing to lay out beside. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-preview-separator {
+	display: none;
+	background: var(--vscode-pickerGroup-border);
+}
+
+.monaco-workbench.mac:not(.web) .quick-input-widget.has-preview .quick-input-preview-separator {
+	display: block;
+}
+
+/* The preview pane. `peekViewEditor.background` is the colour a file gets when it is shown inside
+ * something else, which is what this is, and it is taken at the panel's own nine tenths so that
+ * the pane is glass like the rest of the sheet rather than a solid block set into it. The alpha is
+ * put on here and not in the theme: the colour belongs to the peek views as well, and they are
+ * real editors on the workbench that have no business being made see-through by this. `color-mix`
+ * against nothing is the way the rest of this build takes alpha off a token, so it is the way it
+ * is taken here; against the opaque colour a theme gives this token it is the same nine tenths
+ * the panel is coated at.
+ *
+ * The pane takes no pointer at all. It is a picture of a file and nothing in it can be clicked,
+ * scrolled or dragged; the keyboard never reaches it either, since nothing inside is in the tab
+ * order and the panel's focus never leaves the prompt. Interaction is a later question. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-preview {
+	display: none;
+	flex-direction: column;
+	min-width: 0;
+	overflow: hidden;
+	pointer-events: none;
+	background: color-mix(in srgb, var(--vscode-peekViewEditor-background) 90%, transparent);
+}
+
+.monaco-workbench.mac:not(.web) .quick-input-widget.has-preview .quick-input-preview {
+	display: flex;
+}
+
+/* The pane's caption: the file's place in the workspace, drawn as crumbs. 25px all told - 24 and
+ * the hairline under it, the same figure the breadcrumbs bar stands at - and the tone is the one
+ * every secondary caption in the workbench is written in. One line: when there is not room for the
+ * whole path the folders give their width up one after another, and the file name, which is what
+ * says which of the results is being shown, is the one crumb that never shrinks. */
+.monaco-workbench.mac:not(.web) .quick-input-preview-title {
+	box-sizing: border-box;
+	flex: 0 0 25px;
+	display: flex;
+	align-items: center;
+	padding: 0 12px;
+	border-bottom: 1px solid var(--vscode-pickerGroup-border);
+	overflow: hidden;
+	font-size: 11px;
+	color: var(--vscode-descriptionForeground);
+	white-space: nowrap;
+}
+
+.monaco-workbench.mac:not(.web) .quick-input-preview-crumb {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.monaco-workbench.mac:not(.web) .quick-input-preview-crumb:last-child {
+	flex: 0 0 auto;
+}
+
+.monaco-workbench.mac:not(.web) .quick-input-preview-crumb-separator {
+	flex: 0 0 auto;
+	margin: 0 3px;
+	font-size: 10px;
+	opacity: 0.55;
+}
+
+/* The file itself, in a real editor. The pane is the painter and the editor draws on it, so the
+ * two colours an editor lays down over its own box - the one behind the text and the one behind
+ * the gutter - are starved rather than fought with: they are redefined to nothing inside this box
+ * and nowhere else, so every editor anywhere else in the window keeps them. Same move the row
+ * cursor is turned off by further up this block.
+ *
+ * The box gives up no height of its own - `flex: 1 1 0` against a floor of nothing - so the pane
+ * is as tall as the results column beside it and the editor is laid out into whatever that leaves,
+ * rather than the editor's content deciding how tall the panel is. */
+.monaco-workbench.mac:not(.web) .quick-input-preview-body {
+	flex: 1 1 0;
+	min-height: 0;
+	overflow: hidden;
+	--vscode-editor-background: transparent;
+	--vscode-editorGutter-background: transparent;
 }
 
 /* The results column is sixteen rows deep: 6px of padding, 16 * 22px of rows, 6px of padding, so

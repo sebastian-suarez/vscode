@@ -724,6 +724,15 @@ export class QuickInputList extends Disposable {
 	*/
 	readonly onLeave: Event<void> = this._onLeave.event;
 
+	private readonly _onDidSetItems = this._register(new Emitter<readonly QuickPickItem[]>());
+	/**
+	 * The set of items a picker has just handed over, said once each time it hands them over.
+	 * Not the same question as `onChangedVisibleCount`, which answers for the query being typed:
+	 * this is the picker's whole offer, filter or no filter, and it is what the telescope panel's
+	 * preview pane is opened and closed by (`quickInputController.ts`).
+	*/
+	readonly onDidSetItems: Event<readonly QuickPickItem[]> = this._onDidSetItems.event;
+
 	private readonly _visibleCountObservable = observableValue('VisibleCount', 0);
 	readonly onChangedVisibleCount: Event<number> = Event.fromObservable(this._visibleCountObservable, this._store);
 
@@ -1183,6 +1192,8 @@ export class QuickInputList extends Disposable {
 				}
 			}, 0, this._elementDisposable);
 		}
+
+		this._onDidSetItems.fire(inputElements);
 	}
 
 	setFocusedElements(items: IQuickPickItem[]) {

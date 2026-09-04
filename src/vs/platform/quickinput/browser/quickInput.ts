@@ -25,7 +25,7 @@ import Severity from '../../../base/common/severity.js';
 import { ThemeIcon } from '../../../base/common/themables.js';
 import './media/quickInput.css';
 import { localize } from '../../../nls.js';
-import { IInputBox, IKeyMods, IQuickInput, IQuickInputButton, IQuickInputHideEvent, IQuickNavigateConfiguration, IQuickPick, IQuickPickDidAcceptEvent, IQuickPickItem, IQuickPickItemButtonEvent, IQuickPickSeparator, IQuickPickSeparatorButtonEvent, IQuickPickWillAcceptEvent, IQuickWidget, ItemActivation, NO_KEY_MODS, QuickInputButtonLocation, QuickInputHideReason, QuickInputType, QuickPickFocus } from '../common/quickInput.js';
+import { IInputBox, IKeyMods, IQuickInput, IQuickInputButton, IQuickInputHideEvent, IQuickNavigateConfiguration, IQuickPick, IQuickPickDidAcceptEvent, IQuickPickItem, IQuickPickItemButtonEvent, IQuickPickSeparator, IQuickPickSeparatorButtonEvent, IQuickPickWillAcceptEvent, IQuickWidget, ItemActivation, NO_KEY_MODS, QuickInputButtonLocation, QuickInputHideReason, QuickInputType, QuickPickFocus, QuickPickItem } from '../common/quickInput.js';
 import { QuickInputBox } from './quickInputBox.js';
 import { quickInputButtonToAction, quickInputButtonsToActionArrays, renderQuickInputDescription } from './quickInputUtils.js';
 import { IConfigurationService } from '../../configuration/common/configuration.js';
@@ -62,6 +62,48 @@ export const endOfQuickInputBoxContextKeyValue = 'cursorAtEndOfQuickInputBox';
 export const EndOfQuickInputBoxContextKey = new RawContextKey<boolean>(endOfQuickInputBoxContextKeyValue, false, localize('cursorAtEndOfQuickInputBox', "Whether the cursor in the quick input is at the end of the input box"));
 export const endOfQuickInputBoxContext = ContextKeyExpr.has(endOfQuickInputBoxContextKeyValue);
 
+/**
+ * The preview pane beside the results, as much of it as the quick input is allowed to know
+ * (M16). The panel makes room for a pane and tells it three things - the items a picker has
+ * just been given, the item the list is standing on, and that it should measure itself again -
+ * and what goes into the pane is none of the panel's business. That is the whole of the point:
+ * what the pane holds is a file, drawn by an editor, and `vs/platform` may not so much as name
+ * one, so the knowledge sits in `vs/workbench` and only this shape crosses between them.
+ *
+ * Optional, and its absence is the whole of the answer: a controller built without one is the
+ * controller that was there before, down to the DOM.
+ */
+export interface IQuickInputPreview {
+
+	/**
+	 * The pane's own element, handed over once, when the widget is built. It is a cell of the
+	 * panel's grid and stands empty until the panel splits.
+	 */
+	attach(slot: HTMLElement): void;
+
+	/**
+	 * The items a picker has just been given, and the answer says whether the panel splits.
+	 * It is asked of the whole set and not of the item in focus, so that walking a list of files
+	 * past the one row that is a command does not fold the pane away and open it again.
+	 */
+	setItems(items: readonly QuickPickItem[]): boolean;
+
+	/**
+	 * The item the list is standing on, or nothing at all. What the pane draws follows this and
+	 * nothing else, and an item it cannot draw leaves the pane blank rather than folding it.
+	 */
+	setFocus(item: IQuickPickItem | undefined): void;
+
+	/** The panel has been laid out, so the pane's cell may be a different size than it was. */
+	layout(): void;
+
+	/**
+	 * The panel has finished leaving the screen - not the moment it is hidden, the moment the
+	 * dismiss has run and there is nothing on show. Everything the pane is holding can go.
+	 */
+	hide(): void;
+}
+
 export interface IQuickInputOptions {
 	idPrefix: string;
 	container: HTMLElement;
@@ -76,6 +118,11 @@ export interface IQuickInputOptions {
 	 */
 	hoverDelegate: IHoverDelegate;
 	styles: IQuickInputStyles;
+	/**
+	 * The pane the telescope panel splits to show, if whoever built the controller has one to
+	 * give. It is owned by its maker and disposed there; the controller only ever drives it.
+	 */
+	previewRenderer?: IQuickInputPreview;
 }
 
 export interface IQuickInputStyles {
