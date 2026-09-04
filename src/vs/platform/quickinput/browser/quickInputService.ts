@@ -23,13 +23,12 @@ import { IObservable, autorun, observableValue } from '../../../base/common/obse
 import { isMacintosh, isNative } from '../../../base/common/platform.js';
 
 /**
- * The picker is one sheet of glass on this platform, and the container is the only thing that
- * paints it. The theme resolves `quickInput.background` at the side bar's own three tenths there,
- * so a second feed of the same color inside the panel would lay the coat down twice - and two
- * three tenths make a little over half, a patch of denser glass in the shape of whatever was fed.
- * The list is the shape that matters: its rows are held six pixels in from each side, so the
- * second coat would read as a darker block down the middle of the panel with a lighter margin
- * either side of it. The feeds are dropped where they are made rather than fought with in CSS.
+ * The picker is one surface on this platform, and the container is the only thing that paints it.
+ * A second feed of the same color inside the panel is a second painter of the one surface: with
+ * the coat opaque the two come out the same color and nothing shows for it, so it buys nothing,
+ * and it puts a part of the panel at the mercy of a feed that has to be kept in step with the
+ * container's by hand for ever after. The feeds are dropped where they are made rather than
+ * fought with in CSS.
  */
 const glassPanel = isMacintosh && isNative;
 
@@ -267,15 +266,12 @@ export class QuickInputService extends Themable implements IQuickInputService {
 				listInactiveFocusOutline: activeContrastBorder,
 				// The one place inside the panel that has to paint. A pinned separator stands over
 				// the rows of its own group as they scroll under it, so it needs something behind
-				// it or they read through. The coat lands on the pinned row: the tree writes this
-				// feed for the row and for the container both, and `style.css` starves the
-				// container's copy, because two coats over the one strip made a band. Three tenths
-				// hides nothing on its own, so what keeps the rows passing beneath the separator a
-				// smear rather than words is the backdrop blur `style.css` gives that same row,
-				// drawn over this coat. Left to the stock fallback the strip would take the side
-				// bar's color instead: the same alpha now that the two share a tier, but the side
-				// bar's tint and keyed to the side bar, so it would sit a shade off the panel it
-				// is on and a theme retinting the panel would not move it.
+				// it or they read through. This feed is the whole of what covers them: the tree
+				// writes it for the row and for the container both, `style.css` starves the
+				// container's copy so that one box paints the strip, and the row's coat is the
+				// panel's own color at full strength, which hides what passes beneath it outright.
+				// Left to the stock fallback the strip would take the side bar's color instead,
+				// which on this platform is the thin vibrancy coat and would let the rows through.
 				treeStickyScrollBackground: quickInputBackground,
 			}),
 			pickerGroup: {

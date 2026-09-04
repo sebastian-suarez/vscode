@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from '../../nls.js';
-import { ColorIdentifier, registerColor, editorBackground, contrastBorder, transparent, editorWidgetBackground, textLinkForeground, lighten, darken, focusBorder, activeContrastBorder, editorWidgetForeground, editorErrorForeground, editorWarningForeground, editorInfoForeground, treeIndentGuidesStroke, errorForeground, listActiveSelectionBackground, listActiveSelectionForeground, editorForeground, toolbarHoverBackground, inputBorder, widgetBorder, scrollbarShadow, quickInputBackground, quickInputTitleBackground } from '../../platform/theme/common/colorRegistry.js';
+import { ColorIdentifier, registerColor, editorBackground, contrastBorder, transparent, editorWidgetBackground, textLinkForeground, lighten, darken, focusBorder, activeContrastBorder, editorWidgetForeground, editorErrorForeground, editorWarningForeground, editorInfoForeground, treeIndentGuidesStroke, errorForeground, listActiveSelectionBackground, listActiveSelectionForeground, editorForeground, toolbarHoverBackground, inputBorder, widgetBorder, scrollbarShadow, quickInputTitleBackground } from '../../platform/theme/common/colorRegistry.js';
 import { IColorTheme } from '../../platform/theme/common/themeService.js';
 import { Color, RGBA } from '../../base/common/color.js';
 import { isMacintosh, isNative } from '../../base/common/platform.js';
@@ -696,12 +696,11 @@ export const TITLE_BAR_BORDER = registerColor('titleBar.border', {
 const MAC_TRANSLUCENT_SURFACE_ALPHA = 0.3;
 
 /**
- * The surfaces carrying the macOS window material. For the parts of the workbench that is the
- * under-window vibrancy showing through: they paint with alpha and the desktop reads behind them.
- * Each of them is the one coat over the region it covers: the material goes on once, over the
- * whole of that region, so that every part of it reads the same. Anything sitting inside such a
- * surface paints no material of its own — a second coat of the same color composites darker than
- * its neighbours and turns the surface into a patchwork. The color theme resolves these through
+ * The workbench surfaces that reveal the macOS under-window vibrancy. Each of them is the one
+ * coat over the region it covers: the material goes on once, over the whole of that region, so
+ * that every part of it reads the same. Anything sitting inside such a surface paints no
+ * material of its own — a second coat of the same color composites darker than its neighbours
+ * and turns the surface into a patchwork. The color theme resolves these through
  * `translucentSurfaceOnMac`, so that every consumer sees the same translucent value: colors
  * defaulting to one of them, the generated CSS variables and the parts painting their container.
  *
@@ -710,15 +709,6 @@ const MAC_TRANSLUCENT_SURFACE_ALPHA = 0.3;
  * and the opaque editor surface starts below it, at the editor body. It carries the same
  * material as the side bar so that the band across the top of the window reads as one row from
  * the window controls to the far edge of the tabs. `style.css` keeps the layers under it clear.
- *
- * The quick input is the other exception, and a different kind of one: it is not a part of the
- * workbench at all but a panel called up over it. It is in this set because the material is meant
- * to be the side bar's own and not a second glass at a figure of its own - the picker is where
- * this build goes looking for a file, and it should read as the surface the file tree is drawn
- * on. What it cannot take from this set is what stands behind the alpha. Under-window vibrancy is
- * the window's own backing and it reaches only what the window lets through; the panel floats
- * over the editor, which is opaque on this build, so there is nothing there for the system
- * material to blur. That blur is drawn in CSS instead, on the widget, in `style.css`.
  */
 export const MAC_TRANSLUCENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_BACKGROUND,
@@ -726,8 +716,7 @@ export const MAC_TRANSLUCENT_SURFACES = new Set<ColorIdentifier>([
 	ACTIVITY_BAR_TOP_BACKGROUND,
 	TITLE_BAR_ACTIVE_BACKGROUND,
 	TITLE_BAR_INACTIVE_BACKGROUND,
-	EDITOR_GROUP_HEADER_TABS_BACKGROUND,
-	quickInputBackground
+	EDITOR_GROUP_HEADER_TABS_BACKGROUND
 ]);
 
 /**
@@ -764,11 +753,12 @@ const MAC_TRANSPARENT_SURFACE_ALPHA = 0;
  * kinds of tab. Only the inactive fills: hover feedback, drop feedback, the modified markers and
  * every border are left exactly as they are.
  *
- * The quick input title strip is the same law inside the picker (M16). The panel is one sheet of
- * glass and the container carries the whole of it; the strip is a caption on that glass, and the
- * default theme paints it in the very color the container is painted in, so a fill of its own
- * would print a band of double coat across the panel. It shows only in a multi step picker, and
- * on this platform it sits at the foot of the panel, where a band would be read as a floor.
+ * The quick input title strip is the same law inside the picker (M16). The panel is one surface
+ * and the container carries the whole of it; the strip is a caption on that surface and not a
+ * second coat of it. The theme this build ships paints it in the very color the container is
+ * painted in, so its own fill has nothing to say, and a theme handing it a color of its own would
+ * band the panel with it. It shows only in a multi step picker, and on this platform it sits at
+ * the foot of the panel, where a band would be read as a floor.
  */
 export const MAC_TRANSPARENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_TITLE_BACKGROUND,

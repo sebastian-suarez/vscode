@@ -632,66 +632,22 @@ body {
  * prompt and the list. And the title bar, which only a multi step picker shows anything in,
  * moves from the head of the panel to its foot.
  *
- * The panel is one sheet of glass, and the rounding belongs to the sheet. The container carries
- * the corner - the xLarge radius the stock widget already asks for - so the clip has to be taken
- * here, at the container, or the list and the strip run square out past the curve. The coat is
- * `quickInput.background` at the side bar's own three tenths, resolved that way for every consumer
- * in `theme.ts`, and it is laid a layer down on the underlay rather than on the panel itself, for
- * the reason given further down. Nothing inside the panel wants out of that box: the hovers and
- * the menus a picker opens are put in the workbench container, not in the widget, and the input
- * box is built without a context view, so its validation never leaves the header. That clip is what
- * the blur hangs off as well: the underlay the filter is drawn on is deliberately larger than the
- * panel, and this `overflow: hidden` and this corner are what cut it back to the sheet.
+ * The panel is one opaque surface, and the rounding belongs to the surface. The container carries
+ * the coat and the corner both - `quickInput.background` as the theme writes it, put on the node by
+ * `quickInputController.ts` the way it is on every other platform, on the xLarge radius the stock
+ * widget already asks for - so the clip has to be taken here, at the container, or the list and the
+ * strip run square out past the curve. Nothing inside the panel wants out of that box: the hovers
+ * and the menus a picker opens are put in the workbench container, not in the widget, and the input
+ * box is built without a context view, so its validation never leaves the header.
  *
- * The blur is the other half of that material and it has to be drawn in CSS. The side bar is glass
- * because the window is transparent under it and macOS blurs the desktop behind the whole window
- * (`vibrancy: 'under-window'`); that material is the window's backing and cannot reach inside the
- * window. The panel stands over the editor, which is opaque on this build, so what is behind it is
- * workbench paint and only a backdrop filter blurs that. The figures are the ones the rail coat was
- * approved at - blur 52 and saturate 1.9 over a three tenths coat (D19) - which is this build's
- * standing approximation of the system material, so the panel and the side bar are drawn to one
- * recipe from either side of the window.
- *
- * The filter is not written on the panel itself, and the reason is the one thing a backdrop filter
- * is worst at. What it reads back is only what is painted inside the box of the element carrying it,
- * so at the edge of that box the blur runs out of picture to gather and takes the edge pixel over
- * and over in place of what it cannot see. The smear comes out full strength in the middle of the
- * element and thins the whole way to the rim: a panel that is glass at the centre and glazing at the
- * edges, which is what was ruled against here.
- *
- * So the filter moves off the panel and onto an underlay standing 104px past it on every side, two
- * blurs' worth of the 52 it is drawn at, and the panel's own `overflow: hidden` and corner cut that
- * underlay back to the sheet at the moment it goes on screen. The reading back is done over the
- * underlay's box and the showing over the panel's, so every pixel that is seen comes off the middle
- * of the underlay, where the blur has every sample it asks for. The `shadow-xl` the stock widget
- * casts is untouched by any of it: a filter paints nothing of the element it is written on.
- *
- * The coat goes with it, and that is the other half of the same fault. A coat painted on the panel
- * is painted inside the box the underlay reads back, so it is part of what gets blurred: at the rim
- * about half of what the blur gathers is uncoated window, the blurred picture comes out carrying
- * about half the tint, and it is only 104px in that the coat is at its full three tenths. The tint
- * would feather exactly where the smear used to, and the panel would dim outwards again in another
- * form. So the panel paints no coat at all (`quickInputController.ts`) and the underlay paints it
- * as its own background: an element's background is composited over the picture its backdrop filter
- * hands back and never into it, so the coat stands outside the reading back and is an even three
- * tenths at every pixel, rim and middle alike, over a blur that is full strength everywhere. The
- * underlay's box is the panel's with 104px to spare on every side, so what the clip cuts back is
- * coat the whole way round and the sheet is covered corner to corner.
- *
- * The underlay is a `::before` and it is taken out of the flow, which is what keeps it out of the
- * way. The panel is a grid and an absolutely positioned child is not a cell in one, so the columns
- * are laid out as though it were not there. `z-index: -1` is what holds it inside the panel rather
- * than behind it: the panel is positioned and stands at 2550, so it is a stacking context of its own
- * and nothing in it can paint out past its box. Inside that box the order comes out the way it is
- * wanted - the underlay is drawn first, reading back the window standing behind the panel and
- * laying its coat over what it read, and every row and every strip is drawn over the top of it - so
- * the underlay never blurs the picker's own rows, and the pinned separator's own blur gathers the
- * coat off the underlay's picture exactly as it used to gather it off the panel's background. It
- * takes no pointer either.
- *
- * The entrance and the dismiss fade the panel's opacity over the top of all this, and the underlay
- * is inside what is faded rather than beside it, so the glass arrives and leaves with the panel it
- * belongs to.
+ * The material is that colour and nothing else - no alpha under it, no filter over it. The panel is
+ * called up over the editor, which is opaque on this build, so there is no window vibrancy behind it
+ * to show through and any translucency here would have had to be drawn in CSS over workbench paint.
+ * That was built and ruled against: the picker reads as a surface standing over the work, not as a
+ * sheet with the work carried through it. So `quickInput.background` stands in none of the macOS
+ * surface sets in `theme.ts` and resolves exactly as the theme writes it, and no part of this panel
+ * carries a backdrop filter. The `shadow-xl` the stock widget casts is what stands it off the work
+ * underneath, and it is the stock one.
  *
  * The width the panel is written to is the box, edge and all - it is measured border box, the way
  * every figure on this panel is - so the sheet's own border is counted inside that width and not
@@ -708,16 +664,6 @@ body {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	overflow: hidden;
-}
-
-.monaco-workbench.mac:not(.web) .quick-input-widget::before {
-	content: '';
-	position: absolute;
-	inset: -104px;
-	z-index: -1;
-	backdrop-filter: blur(52px) saturate(1.9);
-	background: var(--vscode-quickInput-background);
-	pointer-events: none;
 }
 
 /* With the sheet doing the rounding, the title strip's own corners are dead weight - and they are
@@ -766,18 +712,9 @@ body {
 }
 
 /* The preview pane. `peekViewEditor.background` is the colour a file gets when it is shown inside
- * something else, which is what this is, and it is taken at the panel's own three tenths so that
- * the pane is glass like the rest of the sheet rather than a solid block set into it. The alpha is
- * put on here and not in the theme: the colour belongs to the peek views as well, and they are
- * real editors on the workbench that have no business being made see-through by this. `color-mix`
- * against nothing is the way the rest of this build takes alpha off a token, so it is the way it
- * is taken here; against the opaque colour a theme gives this token it is the same three tenths
- * the panel is coated at.
- *
- * The pane asks for no blur of its own. The widget's backdrop filter is taken over the whole sheet,
- * this half of it included, and the pane's tint lands on top of the filtered result the way any
- * child paints over what its parent laid down - so the pane is the panel's glass with a second
- * wash of the peek colour on it, which is exactly the differentiation it is meant to read as.
+ * something else, which is what this is, and it is taken as the theme writes it. The pane is a
+ * block of that colour set into the panel, a shade off the results column beside it, and with only
+ * a hairline between the two halves that step in tone is the whole of what tells them apart.
  *
  * The pane takes no pointer at all. It is a picture of a file and nothing in it can be clicked,
  * scrolled or dragged; the keyboard never reaches it either, since nothing inside is in the tab
@@ -788,7 +725,7 @@ body {
 	min-width: 0;
 	overflow: hidden;
 	pointer-events: none;
-	background: color-mix(in srgb, var(--vscode-peekViewEditor-background) 30%, transparent);
+	background: var(--vscode-peekViewEditor-background);
 }
 
 .monaco-workbench.mac:not(.web) .quick-input-widget.has-preview .quick-input-preview {
@@ -876,7 +813,7 @@ body {
 }
 
 /* The rows read the way the side bar's do: held 8px off each side and rounded, which is what makes
- * the focus fill a pill on the glass instead of a band across it. Same idiom as the M3 source list
+ * the focus fill a pill on the panel instead of a band across it. Same idiom as the M3 source list
  * - a margin and a width on the absolutely positioned row - and it reaches the pinned separator
  * too, which is a list row of its own; `tree.css` pins those to the full width from five classes
  * deep, so they are named a second time here to outweigh it. */
@@ -929,14 +866,14 @@ body {
 /* The strip is painted once, on the pinned row, and the box that spans it paints nothing at all.
  * The tree writes its tint twice from the one feed - `abstractTree.ts` hands the same colour to the
  * container and to the row inside it, `quickInput.background` reaching the tree as
- * `treeStickyScrollBackground` from `quickInputService.ts` - and letting both of them speak is what
- * turns the strip into a band. The row is held 8px off each side like every other row on this panel,
- * so the container's coat is what shows in the gutters either side of the pill: three tenths laid
- * over the sheet's own three tenths there, denser again inside the pill where the row's coat is
- * stacked on that as well, against the three tenths the panel is drawn at everywhere else. Two
- * painters, three densities, one strip. So the container is starved and the row is left as the only
- * painter - a trap worth naming, because feeding the container is the obvious thing to do and it
- * puts the band straight back.
+ * `treeStickyScrollBackground` from `quickInputService.ts` - and the row is the one of the two that
+ * is the shape of the strip: it is held 8px off each side and rounded like every other row on this
+ * panel, where the container spans the column edge to edge. Its coat is the panel's own colour at
+ * full strength, and that is the whole of what covers the rows passing beneath the heading. The
+ * container's copy of it would land in the gutters either side of the pill, in the colour that is
+ * already there, so nothing on screen turns on this rule - it is here to keep one painter to the
+ * strip, so that what the pill is drawn in is answered in one place and not in two that have to be
+ * kept in step.
  *
  * Starving it is enough on weight alone: five classes against the four of the generated
  * `.monaco-list<domId> .monaco-scrollable-element .monaco-tree-sticky-container`, so there is no
@@ -949,49 +886,6 @@ body {
  * scroll turned off outright (`quickInputPreview.ts`), so nothing else in the panel answers here. */
 .monaco-workbench.mac:not(.web) .quick-input-widget .monaco-tree-sticky-container {
 	background-color: transparent;
-}
-
-/* The pinned separator's own glass, carried on an underlay of the pill's. The strip stands over the
- * rows of its group as they scroll under it, and the coat it is fed is three tenths now, where it
- * used to be nine. Three tenths of anything hides nothing, so the rows would read straight through
- * the heading pinned over them. What hides them instead is a blur of their own, the way a pinned
- * header in a macOS list carries what it covers as a smear rather than as words.
- *
- * 12px of standard deviation is well past the point a 13px line stops being legible, and it is
- * deliberately nowhere near the sheet's own 52: this is a shield over the panel's own contents, not
- * a second sheet of window glass laid on the first, and at 52 it would read as one. No `saturate`
- * with it either - what it filters is the panel's rows and not the desktop, and pushing their
- * colour would print the list back onto the heading in another form.
- *
- * The filter is the whole of what is written here, and it is written on an underlay rather than on
- * the pill, for the reason the sheet's own blur is: a backdrop filter reads back only what is inside
- * the box it is carried on, and at the edge of that box it has nothing further to gather and repeats
- * the edge instead. The sheet loses its blur at the rim that way. A pill a single row tall is all
- * rim - 12px of standard deviation over a box shorter than the blur is wide - so the smear was weak
- * the whole way across it and there was no middle for it to be strong in. The underlay stands 24px
- * past the pill on every side, two blurs' worth again, and the row's own `overflow: hidden` -
- * written twice over, in `list.css` and once more in `tree.css` - cuts it back to the pill, the 7px
- * corner and all, so the smear is held to the heading and the rows beside it are left alone.
- *
- * The underlay is drawn under the coat and not over it, which is where the smear was already going
- * and is what the coat is there for. `z-index: -1` is what puts it there: the row is positioned but
- * names no z of its own, so it is no stacking context, and a negative z inside it falls to the
- * sticky container's order, where it is drawn before any of the pinned rows are. It is cut to its
- * own row all the same - what clips a box is the one it is positioned against and not the order it
- * is painted in. So the pill reads as it always did, the rows passing under it smeared and the coat
- * laid over the top, and only the strength of the smear changes.
- *
- * The coat itself arrives from the tree's second generated rule, the one naming the row, which beats
- * the `sideBar.background` fallback `tree.css` writes at the same weight by standing later in the
- * document - the tree appends its style element into the list's own node. The selector is the shape
- * the inset above is written with, so the two rules are speaking about the one row. */
-.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-tree-sticky-container .monaco-tree-sticky-row.monaco-list-row::before {
-	content: '';
-	position: absolute;
-	inset: -24px;
-	z-index: -1;
-	backdrop-filter: blur(12px);
-	pointer-events: none;
 }
 
 /* A match is told by its colour, and the colour is the theme's own on the plain row and on the
