@@ -638,10 +638,9 @@ body {
  * already asks for - so the clip has to be taken here, at the container, or the list and the strip
  * run square out past the curve. Nothing inside the panel wants out of that box: the hovers and
  * the menus a picker opens are put in the workbench container, not in the widget, and the input
- * box is built without a context view, so its validation never leaves the header. Which is what
- * lets the blur be taken here too: a backdrop filter makes the widget the containing block for
- * everything absolutely positioned inside it, and nothing inside it was getting out past the
- * `overflow: hidden` to begin with.
+ * box is built without a context view, so its validation never leaves the header. That clip is what
+ * the blur hangs off as well: the underlay the filter is drawn on is deliberately larger than the
+ * panel, and this `overflow: hidden` and this corner are what cut it back to the sheet.
  *
  * The blur is the other half of that material and it has to be drawn in CSS. The side bar is glass
  * because the window is transparent under it and macOS blurs the desktop behind the whole window
@@ -652,12 +651,32 @@ body {
  * standing approximation of the system material, so the panel and the side bar are drawn to one
  * recipe from either side of the window.
  *
- * A backdrop filter filters what is painted behind the element and nothing the element paints
- * itself, so the xLarge radius clips the filtered region and the `shadow-xl` the stock widget casts
- * is untouched. The entrance and the dismiss fade the widget's opacity over the top of it, which is
- * safe here: Chromium gives an element carrying a backdrop filter its own render surface, filters
- * the backdrop into that surface and multiplies the finished surface by the animated opacity, so on
- * 148 the blur fades with the panel instead of popping in at full strength.
+ * The filter is not written on the panel itself, and the reason is the one thing a backdrop filter
+ * is worst at. What it reads back is only what is painted inside the box of the element carrying it,
+ * so at the edge of that box the blur runs out of picture to gather and takes the edge pixel over
+ * and over in place of what it cannot see. The smear comes out full strength in the middle of the
+ * element and thins the whole way to the rim: a panel that is glass at the centre and glazing at the
+ * edges, which is what was ruled against here.
+ *
+ * So the filter moves off the panel and onto an underlay standing 104px past it on every side, two
+ * blurs' worth of the 52 it is drawn at, and the panel's own `overflow: hidden` and corner cut that
+ * underlay back to the sheet at the moment it goes on screen. The reading back is done over the
+ * underlay's box and the showing over the panel's, so every pixel that is seen comes off the middle
+ * of the underlay, where the blur has every sample it asks for. The `shadow-xl` the stock widget
+ * casts is untouched by any of it: a filter paints nothing of the element it is written on.
+ *
+ * The underlay is a `::before` and it is taken out of the flow, which is what keeps it out of the
+ * way. The panel is a grid and an absolutely positioned child is not a cell in one, so the columns
+ * are laid out as though it were not there. `z-index: -1` is what holds it inside the panel rather
+ * than behind it: the panel is positioned and stands at 2550, so it is a stacking context of its own
+ * and nothing in it can paint out past its box. Inside that box the order comes out the way it is
+ * wanted - the panel's coat is laid down first and the underlay reads it back along with the window
+ * behind it, and every row and every strip is drawn over the pair of them - so the underlay never
+ * blurs the picker's own rows. It takes no pointer either.
+ *
+ * The entrance and the dismiss fade the panel's opacity over the top of all this, and the underlay
+ * is inside what is faded rather than beside it, so the glass arrives and leaves with the panel it
+ * belongs to.
  *
  * The width the panel is written to is the box, edge and all - it is measured border box, the way
  * every figure on this panel is - so the sheet's own border is counted inside that width and not
@@ -674,7 +693,15 @@ body {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	overflow: hidden;
+}
+
+.monaco-workbench.mac:not(.web) .quick-input-widget::before {
+	content: '';
+	position: absolute;
+	inset: -104px;
+	z-index: -1;
 	backdrop-filter: blur(52px) saturate(1.9);
+	pointer-events: none;
 }
 
 /* With the sheet doing the rounding, the title strip's own corners are dead weight - and they are
@@ -908,11 +935,11 @@ body {
 	background-color: transparent;
 }
 
-/* The pinned separator's own glass, carried by the pill itself. The strip stands over the rows of
- * its group as they scroll under it, and the coat it is fed is three tenths now, where it used to be
- * nine. Three tenths of anything hides nothing, so the rows would read straight through the heading
- * pinned over them. What hides them instead is a blur of their own, the way a pinned header in a
- * macOS list carries what it covers as a smear rather than as words.
+/* The pinned separator's own glass, carried on an underlay of the pill's. The strip stands over the
+ * rows of its group as they scroll under it, and the coat it is fed is three tenths now, where it
+ * used to be nine. Three tenths of anything hides nothing, so the rows would read straight through
+ * the heading pinned over them. What hides them instead is a blur of their own, the way a pinned
+ * header in a macOS list carries what it covers as a smear rather than as words.
  *
  * 12px of standard deviation is well past the point a 13px line stops being legible, and it is
  * deliberately nowhere near the sheet's own 52: this is a shield over the panel's own contents, not
@@ -920,15 +947,35 @@ body {
  * with it either - what it filters is the panel's rows and not the desktop, and pushing their
  * colour would print the list back onto the heading in another form.
  *
- * The filter is the whole of what is written here. The coat the smear is drawn under arrives from
- * the tree's second generated rule, the one naming the row, which beats the `sideBar.background`
- * fallback `tree.css` writes at the same weight by standing later in the document - the tree appends
- * its style element into the list's own node. A backdrop filter is clipped to the element's rounded
- * box, so the 7px the row is given with every other row on this panel holds the smear to the pill,
- * and the pill blurs the rows passing under it and nothing beside them. The selector is the shape
+ * The filter is the whole of what is written here, and it is written on an underlay rather than on
+ * the pill, for the reason the sheet's own blur is: a backdrop filter reads back only what is inside
+ * the box it is carried on, and at the edge of that box it has nothing further to gather and repeats
+ * the edge instead. The sheet loses its blur at the rim that way. A pill a single row tall is all
+ * rim - 12px of standard deviation over a box shorter than the blur is wide - so the smear was weak
+ * the whole way across it and there was no middle for it to be strong in. The underlay stands 24px
+ * past the pill on every side, two blurs' worth again, and the row's own `overflow: hidden` -
+ * written twice over, in `list.css` and once more in `tree.css` - cuts it back to the pill, the 7px
+ * corner and all, so the smear is held to the heading and the rows beside it are left alone.
+ *
+ * The underlay is drawn under the coat and not over it, which is where the smear was already going
+ * and is what the coat is there for. `z-index: -1` is what puts it there: the row is positioned but
+ * names no z of its own, so it is no stacking context, and a negative z inside it falls to the
+ * sticky container's order, where it is drawn before any of the pinned rows are. It is cut to its
+ * own row all the same - what clips a box is the one it is positioned against and not the order it
+ * is painted in. So the pill reads as it always did, the rows passing under it smeared and the coat
+ * laid over the top, and only the strength of the smear changes.
+ *
+ * The coat itself arrives from the tree's second generated rule, the one naming the row, which beats
+ * the `sideBar.background` fallback `tree.css` writes at the same weight by standing later in the
+ * document - the tree appends its style element into the list's own node. The selector is the shape
  * the inset above is written with, so the two rules are speaking about the one row. */
-.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-tree-sticky-container .monaco-tree-sticky-row.monaco-list-row {
+.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-tree-sticky-container .monaco-tree-sticky-row.monaco-list-row::before {
+	content: '';
+	position: absolute;
+	inset: -24px;
+	z-index: -1;
 	backdrop-filter: blur(12px);
+	pointer-events: none;
 }
 
 /* A match is told by its colour, and the colour is the theme's own on the plain row and on the
