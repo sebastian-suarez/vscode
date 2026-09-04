@@ -9,9 +9,10 @@ import { ToolBar } from '../../../base/browser/ui/toolbar/toolbar.js';
 import { Button } from '../../../base/browser/ui/button/button.js';
 import { CountBadge } from '../../../base/browser/ui/countBadge/countBadge.js';
 import { ProgressBar } from '../../../base/browser/ui/progressbar/progressbar.js';
+import { disposableTimeout } from '../../../base/common/async.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
 import { Emitter, Event } from '../../../base/common/event.js';
-import { Disposable, DisposableStore, dispose } from '../../../base/common/lifecycle.js';
+import { Disposable, DisposableStore, dispose, MutableDisposable } from '../../../base/common/lifecycle.js';
 import Severity from '../../../base/common/severity.js';
 import { isString } from '../../../base/common/types.js';
 import { isModifierKey } from '../../../base/common/keyCodes.js';
@@ -83,9 +84,24 @@ export class QuickInputController extends Disposable {
 	 * between that and the panel is everything drawn around them. The sixteen row column is written
 	 * down in `style.css` and not here, and an inline max-height would beat it, so the height is
 	 * only ever handed over for a window too short to hold the panel.
+	 *
+	 * Nothing in the 53 is left for the progress bar, and nothing needs to be: the strip is drawn
+	 * for every picker but stands at no height at all until there is progress to report, which is
+	 * `style.css` again. A picker that is loading is 2px taller than the figure here for as long
+	 * as it loads, and the bar it has grown by is the division line.
 	 */
 	private static readonly TELESCOPE_ROW_HEIGHT = 22;
 	private static readonly TELESCOPE_LIST_CHROME = 53;
+
+	/**
+	 * The panel is taken off screen on the dismiss written in `style.css`, and the figure is said
+	 * again here because the node has to go back to `display: none` at the end of it and a
+	 * stylesheet cannot do that. The grace on top is for the frame the animation has finished in
+	 * but not yet reported; the report is what usually ends the fade, and this is the floor under
+	 * it for the times the node is hidden or reparented before it arrives.
+	 */
+	private static readonly TELESCOPE_DISMISS = 120;
+	private static readonly TELESCOPE_DISMISS_GRACE = 40;
 
 	private idPrefix: string;
 	private ui: QuickInputUI | undefined;
@@ -112,6 +128,9 @@ export class QuickInputController extends Disposable {
 	readonly onHide = this.onHideEmitter.event;
 
 	private previousFocusElement?: HTMLElement;
+
+	/** Holds the one in-flight dismiss: the end of the fade, and the fallback that ends it anyway. */
+	private readonly telescopeDismissal = this._register(new MutableDisposable<DisposableStore>());
 
 	private viewState: QuickInputViewState | undefined;
 	private dndController: QuickInputDragAndDropController | undefined;
@@ -766,6 +785,9 @@ export class QuickInputController extends Disposable {
 		const backKeybindingLabel = this.options.backKeybindingLabel();
 		backButton.tooltip = backKeybindingLabel ? localize('quickInput.backWithKeybinding', "Back ({0})", backKeybindingLabel) : localize('quickInput.back', "Back");
 
+		if (telescopePanel) {
+			this.playTelescopeEntrance(ui.container);
+		}
 		ui.container.style.display = '';
 		this.updateLayout();
 		// Anchored inputs never took the drag, and the telescope panel does not take it either:
@@ -786,8 +808,17 @@ export class QuickInputController extends Disposable {
 		this.quickInputTypeContext.set(controller.type);
 	}
 
+	/**
+	 * A panel playing its dismiss is still on screen and is not visible. Everything the hide means
+	 * has already happened by then - the controller is gone, `onHide` has fired, the focus is back
+	 * where it came from - and only the picture is still standing, so the picture is not what this
+	 * is allowed to answer from. Every caller wants the same thing of it and gets it: `focus`,
+	 * `toggle`, `toggleHover` and `navigate` all keep their hands off a panel on its way out, the
+	 * layout stops being rewritten under it, and the container swap in `quickInputService.ts` is
+	 * free to re-lay it out. There is no such class off this platform and the read is the stock one.
+	 */
 	isVisible(): boolean {
-		return !!this.ui && this.ui.container.style.display !== 'none';
+		return !!this.ui && this.ui.container.style.display !== 'none' && !this.ui.container.classList.contains('is-hiding');
 	}
 
 	private setVisibilities(visibilities: Visibilities) {
@@ -850,7 +881,11 @@ export class QuickInputController extends Disposable {
 		this.controller = null;
 		this.onHideEmitter.fire();
 		if (container) {
-			container.style.display = 'none';
+			if (telescopePanel) {
+				this.playTelescopeDismiss(container);
+			} else {
+				container.style.display = 'none';
+			}
 		}
 		if (!focusChanged) {
 			let currentElement = this.previousFocusElement;
@@ -865,6 +900,65 @@ export class QuickInputController extends Disposable {
 			}
 		}
 		controller.didHide(reason);
+	}
+
+	/**
+	 * The panel comes in on the entrance written in `style.css`, and the class is what plays it. A
+	 * class the node is already wearing plays nothing, and that is the whole of the rule for when
+	 * the entrance is played again and when it is not. A panel that went off screen - hidden
+	 * outright, or still fading out of the last dismiss - gave the class up on the way out and takes
+	 * it back here, so it enters. A picker handing over to another picker never gave it up, and the
+	 * panel it is already standing in holds still while its contents change, which is what a surface
+	 * that is already there should do. A dismiss caught in flight is called off first, and because
+	 * the two classes are exchanged in the one turn the browser sees a different animation and
+	 * starts it from the top.
+	 */
+	private playTelescopeEntrance(container: HTMLElement): void {
+		this.telescopeDismissal.clear();
+		container.classList.remove('is-hiding');
+		container.classList.add('is-showing');
+	}
+
+	/**
+	 * The dismiss is the one thing that lingers. `hide` has done all of it by the time this is
+	 * called and this is handed the picture alone: the panel keeps its box for the length of the
+	 * fade with nothing able to click through to it, and goes back to `display: none` at the end.
+	 * `isVisible` reads the class and says no the whole way, so nothing takes the standing node for
+	 * a live panel.
+	 *
+	 * The end of the animation is what ordinarily ends it. `dom.EventType.ANIMATION_END` is the
+	 * prefixed name on anything calling itself AppleWebKit, which this build does, and Chromium
+	 * fires only the plain one - so the plain one is written out. Behind it is the timeout that ends
+	 * the fade when the event never comes at all, which is what hiding or reparenting the node mid
+	 * fade does to it. Both are held in the one store, and a panel shown again clears it.
+	 *
+	 * A hide that arrives as the controller itself is being torn down gets none of this. There is
+	 * nobody left to watch the fade and nothing left to hold what it needs - the store the pair
+	 * would be kept in has been disposed, and anything handed to it after that is dropped on the
+	 * floor - so the panel goes off screen the way it does on every other platform.
+	 */
+	private playTelescopeDismiss(container: HTMLElement): void {
+		if (this._store.isDisposed) {
+			container.style.display = 'none';
+			return;
+		}
+
+		container.classList.remove('is-showing');
+		container.classList.add('is-hiding');
+
+		const dismissal = new DisposableStore();
+		const settle = () => {
+			container.classList.remove('is-hiding');
+			container.style.display = 'none';
+			this.telescopeDismissal.clear();
+		};
+		dismissal.add(dom.addDisposableListener(container, 'animationend', e => {
+			if (e.target === container) {
+				settle();
+			}
+		}));
+		dismissal.add(disposableTimeout(settle, QuickInputController.TELESCOPE_DISMISS + QuickInputController.TELESCOPE_DISMISS_GRACE));
+		this.telescopeDismissal.value = dismissal;
 	}
 
 	focus() {

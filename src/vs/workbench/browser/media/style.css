@@ -706,6 +706,27 @@ body {
 	padding: 4px 6px 4px 4px;
 }
 
+/* On from the entry's own 4px: the icon 2px further in, and the name 21px past that, which stands
+ * the two marks a row is read by on 6 and 27 from the pill's left edge. Stock walks them out to 9
+ * and 31 - 5px of margin on the rows box and a 6px tail on the icon - and a column of file names
+ * that far off the edge it is rounded against reads as a gap rather than as an inset.
+ *
+ * The icon is drawn two ways depending on where the item got it: `::before` on the label carries the
+ * one the picker looks up from the file icon theme, and the div beside it the one an item names for
+ * itself. Both are a 16px box with a tail, and both tails are shortened by the same pixel, or a
+ * command list and a file list would part company down the same column. The tree builds its rows
+ * out of the same two pieces and is told the same thing. */
+.monaco-workbench.mac:not(.web) .quick-input-list .quick-input-list-rows,
+.monaco-workbench.mac:not(.web) .quick-input-tree .quick-input-tree-rows {
+	margin-left: 2px;
+}
+
+.monaco-workbench.mac:not(.web) .quick-input-widget .monaco-icon-label::before,
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-list-icon,
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-tree-icon {
+	padding-right: 5px;
+}
+
 /* The pinned separator drops the 5px it was given to stand in for the scrollable element's padding,
  * which has just gone: the row's own inset is the whole of its placing now. */
 .monaco-workbench.mac:not(.web) .quick-input-list .monaco-tree-sticky-row {
@@ -740,6 +761,18 @@ body {
 	font-size: var(--vscode-bodyFontSize-small);
 }
 
+/* The progress bar is built for every picker and, with the panel turned over, it stands between the
+ * list and the prompt. Its 2px are 2px of air over the hairline on a panel with nothing to report,
+ * and 2px the panel is taller than the 405 it is measured at. So it is given its height only while
+ * it is running: `active` is what the bar puts on itself the moment there is progress to show and
+ * takes off again when it stops, and the rest of the time the strip stands at nothing. It is not
+ * fighting the bar for anything - the bar shows and hides itself with `display`, which this says
+ * nothing about - and a picker that is loading grows the panel by the 2px and draws the bar on the
+ * division line. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-progress:not(.active) {
+	height: 0;
+}
+
 /* The prompt strip: 6px of air all round the input, and a hairline along the top edge which is the
  * panel's one inner division. `border-top` is the right edge for it even with the strip at the foot
  * of the panel - `column-reverse` turns over the order the boxes are stacked in, not the edges each
@@ -769,4 +802,68 @@ body {
 .monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-box .monaco-inputbox > .ibwrapper > .input {
 	font-family: var(--monaco-monospace-font);
 	font-size: var(--vscode-bodyFontSize);
+}
+
+/* The panel arrives and leaves under its own power. It comes in over 180ms out of nothing and three
+ * hundredths under its size, on the strong ease out this build draws all its motion with, and goes
+ * back out over 120ms the same way, barely shrinking. It is scaled about its own centre, which is
+ * the default and is what the panel wants: a surface arriving in the middle of the window, not
+ * something unfolding out of whatever opened it.
+ *
+ * Nothing moves but `transform` and `opacity`. The panel's box is written straight onto the node -
+ * `bottom`, `left` and `width` are rewritten on every open and every time the window is laid out -
+ * and a transition over any of those would turn dragging the window's edge into an animation.
+ * Keyframes rather than a transition for a second reason as well: an animation is played by its
+ * class arriving, which is what lets the entrance be played again on a panel that never left.
+ *
+ * `is-hiding` goes on at the moment of the hide and comes off when the fade has run, and for that
+ * length the panel is a picture with nothing behind it - the picker is already gone, so the pointer
+ * is let through to whatever it is standing over. `quickInputController.ts` is what puts the node
+ * back to `display: none` at the end of it, and what keeps the class off every other platform.
+ *
+ * With motion turned down both keep their timing and give up the scale: the panel still fades in and
+ * out, and nothing on screen moves. */
+.monaco-workbench.mac:not(.web) .quick-input-widget.is-showing {
+	animation: quick-input-telescope-in 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes quick-input-telescope-in {
+	from {
+		opacity: 0;
+		transform: scale(0.97);
+	}
+}
+
+.monaco-workbench.mac:not(.web) .quick-input-widget.is-hiding {
+	pointer-events: none;
+	animation: quick-input-telescope-out 120ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes quick-input-telescope-out {
+	to {
+		opacity: 0;
+		transform: scale(0.985);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.monaco-workbench.mac:not(.web) .quick-input-widget.is-showing {
+		animation-name: quick-input-telescope-in-fade;
+	}
+
+	.monaco-workbench.mac:not(.web) .quick-input-widget.is-hiding {
+		animation-name: quick-input-telescope-out-fade;
+	}
+}
+
+@keyframes quick-input-telescope-in-fade {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes quick-input-telescope-out-fade {
+	to {
+		opacity: 0;
+	}
 }
