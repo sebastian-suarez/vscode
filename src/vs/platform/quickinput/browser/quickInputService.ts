@@ -20,6 +20,18 @@ import { QuickInputController, IQuickInputControllerHost } from './quickInputCon
 import { IConfigurationService } from '../../configuration/common/configuration.js';
 import { getWindow } from '../../../base/browser/dom.js';
 import { IObservable, autorun, observableValue } from '../../../base/common/observable.js';
+import { isMacintosh, isNative } from '../../../base/common/platform.js';
+
+/**
+ * The picker is one sheet of glass on this platform, and the container is the only thing that
+ * paints it. The theme resolves `quickInput.background` at nine tenths there, so a second feed of
+ * the same color inside the panel would lay the coat down twice - and two nine tenths make
+ * ninety-nine hundredths, a patch of solid paint in the shape of whatever was fed. The list is
+ * the shape that matters: its rows are held six pixels in from each side, so the second coat
+ * would have read as a dark block down the middle of the panel with a lighter margin either
+ * side of it. The feeds are dropped where they are made rather than fought with in CSS.
+ */
+const glassPanel = isMacintosh && isNative;
 
 export class QuickInputService extends Themable implements IQuickInputService {
 
@@ -240,7 +252,9 @@ export class QuickInputService extends Themable implements IQuickInputService {
 			progressBar: defaultProgressBarStyles,
 			keybindingLabel: defaultKeybindingLabelStyles,
 			list: getListStyles({
-				listBackground: quickInputBackground,
+				// The rows container would repaint the container's own coat over the whole of the
+				// list, so on the glass panel it is left unpainted and the container shows through.
+				listBackground: glassPanel ? undefined : quickInputBackground,
 				listFocusBackground: quickInputListFocusBackground,
 				listFocusForeground: quickInputListFocusForeground,
 				// Look like focused when inactive.
@@ -251,6 +265,13 @@ export class QuickInputService extends Themable implements IQuickInputService {
 				listInactiveSelectionForeground: quickInputListFocusForeground,
 				listFocusOutline: activeContrastBorder,
 				listInactiveFocusOutline: activeContrastBorder,
+				// The one place inside the panel that has to paint. A pinned separator stands over
+				// the rows of its own group as they scroll under it, so it needs something behind
+				// it or they read through. It keeps the container's color and so lays a second
+				// coat on that strip - very nearly solid, and meant to be: the strip is the only
+				// part of the panel the scene behind is allowed to be hidden by. Left to the stock
+				// fallback it would take the side bar's color instead, which on this platform is
+				// the thin vibrancy coat and would let the rows through.
 				treeStickyScrollBackground: quickInputBackground,
 			}),
 			pickerGroup: {

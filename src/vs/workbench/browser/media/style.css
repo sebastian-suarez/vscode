@@ -630,8 +630,24 @@ body {
  * Two things ride along with the turn and are meant to. The validation line sits under the input
  * inside the header, so it comes to rest along the panel's bottom edge rather than between the
  * prompt and the list. And the title bar, which only a multi step picker shows anything in,
- * moves from the head of the panel to its foot. */
+ * moves from the head of the panel to its foot.
+ *
+ * The panel is one sheet of glass, and the rounding belongs to the sheet. The container carries
+ * the coat and the corner both - `quickInput.background` at nine tenths, resolved that way for
+ * every consumer in `theme.ts`, on the xLarge radius the stock widget already asks for - so the
+ * clip has to be taken here, at the container, or the list and the strip run square out past the
+ * curve. Nothing inside the panel wants out of that box: the hovers and the menus a picker opens
+ * are put in the workbench container, not in the widget, and the input box is built without a
+ * context view, so its validation never leaves the header. */
 .monaco-workbench.mac:not(.web) .quick-input-widget {
 	display: flex;
 	flex-direction: column-reverse;
+	overflow: hidden;
+}
+
+/* With the sheet doing the rounding, the title strip's own corners are dead weight - and they are
+ * the wrong two corners now, since the strip sits at the foot of the panel. */
+.monaco-workbench.mac:not(.web) .quick-input-widget .quick-input-titlebar {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
 }

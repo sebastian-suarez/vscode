@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from '../../nls.js';
-import { ColorIdentifier, registerColor, editorBackground, contrastBorder, transparent, editorWidgetBackground, textLinkForeground, lighten, darken, focusBorder, activeContrastBorder, editorWidgetForeground, editorErrorForeground, editorWarningForeground, editorInfoForeground, treeIndentGuidesStroke, errorForeground, listActiveSelectionBackground, listActiveSelectionForeground, editorForeground, toolbarHoverBackground, inputBorder, widgetBorder, scrollbarShadow } from '../../platform/theme/common/colorRegistry.js';
+import { ColorIdentifier, registerColor, editorBackground, contrastBorder, transparent, editorWidgetBackground, textLinkForeground, lighten, darken, focusBorder, activeContrastBorder, editorWidgetForeground, editorErrorForeground, editorWarningForeground, editorInfoForeground, treeIndentGuidesStroke, errorForeground, listActiveSelectionBackground, listActiveSelectionForeground, editorForeground, toolbarHoverBackground, inputBorder, widgetBorder, scrollbarShadow, quickInputBackground, quickInputTitleBackground } from '../../platform/theme/common/colorRegistry.js';
 import { IColorTheme } from '../../platform/theme/common/themeService.js';
 import { Color, RGBA } from '../../base/common/color.js';
 import { isMacintosh, isNative } from '../../base/common/platform.js';
@@ -752,6 +752,12 @@ const MAC_TRANSPARENT_SURFACE_ALPHA = 0;
  * background. Both unfocused variants go with them, since an unfocused group draws the same two
  * kinds of tab. Only the inactive fills: hover feedback, drop feedback, the modified markers and
  * every border are left exactly as they are.
+ *
+ * The quick input title strip is the same law inside the picker (M16). The panel is one sheet of
+ * glass and the container carries the whole of it; the strip is a caption on that glass, and the
+ * default theme paints it in the very color the container is painted in, so a fill of its own
+ * would print a band of double coat across the panel. It shows only in a multi step picker, and
+ * on this platform it sits at the foot of the panel, where a band would be read as a floor.
  */
 export const MAC_TRANSPARENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_TITLE_BACKGROUND,
@@ -759,7 +765,8 @@ export const MAC_TRANSPARENT_SURFACES = new Set<ColorIdentifier>([
 	SIDE_BAR_STICKY_SCROLL_BACKGROUND,
 	SIDE_BAR_STICKY_SCROLL_SHADOW,
 	TAB_INACTIVE_BACKGROUND,
-	TAB_UNFOCUSED_INACTIVE_BACKGROUND
+	TAB_UNFOCUSED_INACTIVE_BACKGROUND,
+	quickInputTitleBackground
 ]);
 
 /**
@@ -773,6 +780,41 @@ export function transparentSurfaceOnMac(color: Color): Color {
 	}
 
 	return new Color(new RGBA(color.rgba.r, color.rgba.g, color.rgba.b, MAC_TRANSPARENT_SURFACE_ALPHA));
+}
+
+const MAC_OVERLAY_SURFACE_ALPHA = 0.9;
+
+/**
+ * The surfaces that float over the workbench rather than being part of it: an overlay is called
+ * up, does its work over whatever the window happens to be showing, and goes away again. They
+ * are glass, not vibrancy. The nine tenths is deliberately its own figure and not the 0.3 the
+ * parts are coated with (M16): the parts are always on screen, so their material can be thin and
+ * the desktop reads through the whole session; an overlay lands on top of the work being done
+ * and has to be read against it, so it takes just enough alpha off the coat for the scene behind
+ * to stay placed - the file you were looking at is still under the panel, and dimmer, not gone.
+ *
+ * The single coat law holds here as it does for the parts, and harder, because at nine tenths a
+ * second coat of the same color is very nearly opaque: 0.9 over 0.9 is 0.99, a patch of solid
+ * paint in the middle of the glass. The quick input container is the one painter of the panel -
+ * the list, the sticky rows and the title strip are handled at their own feeds so that nothing
+ * repeats it.
+ */
+export const MAC_OVERLAY_SURFACES = new Set<ColorIdentifier>([
+	quickInputBackground
+]);
+
+/**
+ * Bakes the overlay glass into a resolved surface color on macOS desktop, alongside
+ * `translucentSurfaceOnMac` and by the same rule: the alpha is absolute, so a theme or a color
+ * customization keeps tinting the glass but cannot paint it solid. A no-op on every other
+ * platform and in the web.
+ */
+export function overlaySurfaceOnMac(color: Color): Color {
+	if (!isMacintosh || !isNative) {
+		return color;
+	}
+
+	return new Color(new RGBA(color.rgba.r, color.rgba.g, color.rgba.b, MAC_OVERLAY_SURFACE_ALPHA));
 }
 
 // < --- Menubar --- >
