@@ -66,12 +66,26 @@ export class QuickInputController extends Disposable {
 	 * 1280 by 859 window at left 180 and top 163. Centred across, and down the window the free
 	 * height splits 36 above to 64 below - which is what the panel is anchored by, since the
 	 * prompt is on its bottom edge and has to hold that line whether six results stand over it or
-	 * twenty. The height is a ceiling and not a size: the panel is as tall as its contents make it,
-	 * and the figure is what the split is worked out from and what the list is not allowed to grow
-	 * the panel past.
+	 * twenty.
+	 *
+	 * 405 tall in an 859 tall window is a share of the window, and the share is what the panel is
+	 * held to rather than the figure: in the window the mockup was drawn in it works out at the 405
+	 * itself, and in a shorter window the panel comes down with the window instead of standing at a
+	 * height the window has no room for. A share and not a set of breakpoints, ruled that way
+	 * because a panel that changes size on a threshold changes size in front of you, and there is
+	 * nothing at any threshold worth that.
+	 *
+	 * What the figure is *for* is where the two states part. A panel showing nothing but results is
+	 * as tall as those results make it and this is the ceiling it is not allowed past. A panel that
+	 * has split for a file is held at it exactly: the pane beside the list is the reason the panel
+	 * has a size at all, and a query that matched three files has no business shrinking the picture
+	 * of the one in focus. Both are anchored off the same figure, so the line the prompt sits on is
+	 * the window's answer alone and a split picker and an unsplit one in the same window are read
+	 * off the one line.
 	 */
 	private static readonly TELESCOPE_WIDTH = 920;
 	private static readonly TELESCOPE_HEIGHT = 405;
+	private static readonly TELESCOPE_HEIGHT_SHARE = 405 / 859;
 	private static readonly TELESCOPE_BOTTOM_SHARE = 0.64;
 
 	/**
@@ -1127,27 +1141,53 @@ export class QuickInputController extends Disposable {
 				style.width = `${width}px`;
 				style.height = '';
 			} else if (telescopePanel) {
+				// The one figure the panel is worked out from, and everything below reads it: the
+				// mockup's share of the window, never past the 405 it was drawn at, and never past
+				// what a window keeping a 16px margin top and bottom has to give - the same margin
+				// the width above keeps down the sides, and a guard for the window that is all title
+				// bar rather than something the panel is expected to meet. The floor is the prompt
+				// strip with a single row over it: a panel smaller than that is a panel with nothing
+				// in it. Border box, like every other figure this panel is measured in, so this is
+				// the outer box - the sheet's own border is inside it and not added to it.
+				const panelHeight = Math.max(
+					QuickInputController.TELESCOPE_LIST_CHROME + QuickInputController.TELESCOPE_ROW_HEIGHT,
+					Math.min(
+						QuickInputController.TELESCOPE_HEIGHT,
+						Math.round(this.dimension!.height * QuickInputController.TELESCOPE_HEIGHT_SHARE),
+						this.dimension!.height - 32));
+
 				// The results column is a constant and `style.css` is where it is written down, so
-				// while the window has the room for the whole panel this says nothing at all and
-				// lets the cap there stand - an inline max-height would beat any selector. It speaks
-				// for a window too short to hold the panel, and then it hands the list what is left
-				// of a window keeping a 16px margin top and bottom, the same margin the width above
-				// keeps down the sides. One row is the floor: below that there is nothing to show.
-				const panelHeight = Math.min(QuickInputController.TELESCOPE_HEIGHT, this.dimension!.height - 32);
+				// in a window at least as tall as the one the mockup was drawn in this says nothing
+				// at all and lets the cap there stand - an inline max-height would beat any
+				// selector. It speaks for every window shorter than that, split or not, and then it
+				// hands the list what the panel has left over once the strip and the air around the
+				// rows are taken off it. One row is the floor: below that there is nothing to show.
 				listHeight = panelHeight < QuickInputController.TELESCOPE_HEIGHT
 					? Math.max(QuickInputController.TELESCOPE_ROW_HEIGHT, panelHeight - QuickInputController.TELESCOPE_LIST_CHROME)
 					: undefined;
 
 				// Held by its bottom edge, so the prompt keeps the same line however tall the list
-				// standing over it happens to be. The share is worked out against the full panel and
-				// not against the panel as it stands, so a two result list and a twenty result list
-				// are both read off the same line.
-				const freeHeight = this.dimension!.height - QuickInputController.TELESCOPE_HEIGHT;
+				// standing over it happens to be. The share is worked out against the whole panel
+				// and not against the panel as it stands, so a two result list and a twenty result
+				// list are both read off the same line - and since the panel it is worked out from
+				// is the window's own answer and not the picker's, the picker that splits and the
+				// picker that does not are read off that same line as well.
+				const freeHeight = this.dimension!.height - panelHeight;
 				style.bottom = `${Math.max(0, Math.round(freeHeight * QuickInputController.TELESCOPE_BOTTOM_SHARE))}px`;
 				style.top = 'initial';
 				style.left = `${Math.round((this.dimension!.width * 0.5 /* center */) - (width / 2))}px`;
 				style.right = '';
-				style.height = '';
+				// Split, the panel is held at the figure and not at its contents: the pane beside
+				// the list is what the panel has a size for, and a query that matched three files
+				// would otherwise shrink the picture of the one in focus to the height of three
+				// rows. What a short list leaves over is glass at the head of the results column,
+				// since the column stacks from the bottom up and the space falls above the rows
+				// rather than between them and the prompt. Unsplit there is nothing beside the list
+				// to keep a box for, and a three command palette standing 405 tall would be a sheet
+				// of nothing with three rows at the foot of it - so there the panel is its contents,
+				// as it has been since the panel was drawn. The state is the class the pane is shown
+				// by, read here rather than tracked twice.
+				style.height = this.ui.container.classList.contains('has-preview') ? `${panelHeight}px` : '';
 			} else {
 				style.top = `${this.viewState?.top !== undefined ? Math.round(this.dimension!.height * this.viewState.top) : this.titleBarOffset}px`;
 				style.left = `${Math.round((this.dimension!.width * (this.viewState?.left ?? 0.5 /* center */)) - (width / 2))}px`;
